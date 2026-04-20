@@ -1064,9 +1064,6 @@ body {
 .actor-selector-list thead tr {
     background-color: var(--sidebar-bg);
     height: 40px;
-    position: sticky;
-    top: 0;
-    z-index: 1;
 }
 
 .actor-selector-list th {

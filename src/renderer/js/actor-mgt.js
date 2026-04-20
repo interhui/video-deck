@@ -177,6 +177,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td>${escapeHtml(actor.nickname || '')}</td>
                 <td>${escapeHtml(actor.birthday || '')}</td>
                 <td>${escapeHtml(actor.memo || '')}</td>
+                <td class="actor-table-rating">${actor.rating ? '<span class="actor-rating-display-table">' + '★'.repeat(actor.rating) + '</span>' : ''}</td>
+                <td class="actor-table-favorite"><span class="actor-favorite-tag-table ${actor.favorites ? 'favorited' : ''}">${actor.favorites ? '❤' : '♡'}</span></td>
                 <td class="actor-table-actions">
                     <button class="btn btn-small" onclick="editActor('${escapeHtml(actor.name)}')">编辑</button>
                     <button class="btn btn-small btn-danger" onclick="deleteActorConfirm('${escapeHtml(actor.name)}')">删除</button>
