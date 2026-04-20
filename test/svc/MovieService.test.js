@@ -264,22 +264,22 @@ describe('MovieService', () => {
 
         test('SVC-MOVIE-030a: 使用movieName作为目录名，带年份', () => {
             const folderName = service.generateFolderName('movie-123', 'Test Movie', '2024', 'movieName');
-            expect(folderName).toBe('test-movie-2024');
+            expect(folderName).toBe('Test Movie(2024)');
         });
 
         test('SVC-MOVIE-030b: 使用movieName作为目录名，不带年份', () => {
             const folderName = service.generateFolderName('movie-123', 'Test Movie', '', 'movieName');
-            expect(folderName).toBe('test-movie');
+            expect(folderName).toBe('Test Movie');
         });
 
         test('SVC-MOVIE-030c: 电影名称含特殊字符', () => {
             const folderName = service.generateFolderName('movie-123', 'Avatar: The Way of Water', '2022', 'movieName');
-            expect(folderName).toBe('avatar-the-way-of-water-2022');
+            expect(folderName).toBe('Avatar- The Way of Water(2022)');
         });
 
         test('SVC-MOVIE-030d: 电影名称为中文', () => {
             const folderName = service.generateFolderName('movie-456', '星际穿越', '2014', 'movieName');
-            expect(folderName).toBe('星际穿越-2014');
+            expect(folderName).toBe('星际穿越(2014)');
         });
 
         test('SVC-MOVIE-030e: 默认使用movieId方式', () => {
@@ -434,19 +434,19 @@ describe('MovieService', () => {
         });
 
         test('SVC-MOVIE-043: 特殊字符转为连字符', () => {
-            expect(service.sanitizeFolderName('Movie: Title?')).toBe('movie-title');
+            expect(service.sanitizeFolderName('Movie: Title?')).toBe('Movie- Title');
         });
 
         test('SVC-MOVIE-044: 多个连字符合并为一个', () => {
-            expect(service.sanitizeFolderName('Movie---Title')).toBe('movie-title');
+            expect(service.sanitizeFolderName('Movie---Title')).toBe('Movie-Title');
         });
 
         test('SVC-MOVIE-045: 首尾连字符去除', () => {
-            expect(service.sanitizeFolderName('-Movie Title-')).toBe('movie-title');
+            expect(service.sanitizeFolderName('-Movie Title-')).toBe('Movie Title');
         });
 
-        test('SVC-MOVIE-046: 大写转小写', () => {
-            expect(service.sanitizeFolderName('MOVIETITLE')).toBe('movietitle');
+        test('SVC-MOVIE-046: 保留大小写', () => {
+            expect(service.sanitizeFolderName('MOVIETITLE')).toBe('MOVIETITLE');
         });
     });
 

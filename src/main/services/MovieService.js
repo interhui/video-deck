@@ -876,8 +876,7 @@ class MovieService {
 
         for (const folderInfo of movieFolders) {
             try {
-                // 读取movie.nfo内容
-                const movieData = await this.fileService.readMovieNfo(folderInfo.folderPath);
+                const movieData = await this.fileService.readMovieNfo(folderInfo.nfoPath, false);
 
                 if (!movieData) {
                     console.warn(`Skipping folder without valid NFO: ${folderInfo.folderPath}`);
@@ -1026,14 +1025,13 @@ class MovieService {
     }
 
     /**
-     * 清理文件夹名称，只允许字母、数字、中文、括号和连字符
+     * 清理文件夹名称，只允许字母、数字、中文、括号、空格和连字符
      * @param {string} name - 原始名称
      * @returns {string} 清理后的名称
      */
     sanitizeFolderName(name) {
         return name
-            .toLowerCase()
-            .replace(/[^a-z0-9\u4e00-\u9fa5()]/g, '-')
+            .replace(/[^a-zA-Z0-9\u4e00-\u9fa5() -]/g, '-')
             .replace(/-+/g, '-')
             .replace(/^-|-$/g, '');
     }

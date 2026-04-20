@@ -35,7 +35,7 @@ beforeAll(() => {
     };
 
     // Import LazyLoader
-    LazyLoader = require('../../src/renderer/js/utils/LazyLoader');
+    LazyLoader = require('../../src/renderer/js/utils/lazy-loader');
 });
 
 afterAll(() => {

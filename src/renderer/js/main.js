@@ -378,6 +378,16 @@ function confirmActorFilter() {
 }
 
 /**
+ * 取消演员过滤选择，重置为"全部演员"
+ */
+function cancelActorFilter() {
+    state.currentActorFilter = [];
+    updateActorFilterDisplay();
+    closeActorFilterModal();
+    loadMovies();
+}
+
+/**
  * 切换演员选中状态
  */
 function toggleActorSelection(actorName) {
@@ -528,6 +538,11 @@ async function toggleActorFavorite(actorName) {
 function updateActorFilterDisplay() {
     const count = state.currentActorFilter.length;
     if (count === 0) {
+        // 重置为默认选项（全部演员）
+        elements.actorFilter.innerHTML = `
+            <option value="">全部演员</option>
+            <option value="select">选择演员</option>
+        `;
         elements.actorFilter.value = '';
     } else {
         // 设置显示为"选择演员(N)"
@@ -1473,10 +1488,10 @@ function bindEvents() {
 
     // 演员过滤模态窗关闭
     elements.closeActorFilter.addEventListener('click', closeActorFilterModal);
-    elements.cancelActorFilter.addEventListener('click', closeActorFilterModal);
+    elements.cancelActorFilter.addEventListener('click', cancelActorFilter);
     elements.actorFilterModal.addEventListener('click', (e) => {
         if (e.target === elements.actorFilterModal) {
-            closeActorFilterModal();
+            cancelActorFilter();
         }
     });
 

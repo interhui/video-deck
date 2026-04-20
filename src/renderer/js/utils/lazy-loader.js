@@ -29,7 +29,7 @@ class LazyLoader {
         this.hasMore = true;
         this.allMovies = [];
 
-        console.log('LazyLoader: Initialized with scrollContainer:', this.scrollContainer);
+        console.debug('LazyLoader: Initialized with scrollContainer:', this.scrollContainer);
         this.bindScrollEvent();
     }
 
@@ -37,16 +37,16 @@ class LazyLoader {
      * 加载第一页数据
      */
     async loadFirstPage() {
-        console.log('LazyLoader: loadFirstPage called');
+        console.debug('LazyLoader: loadFirstPage called');
         if (this.isLoading) return;
 
         this.isLoading = true;
         this.currentPage = 1;
 
         try {
-            console.log('LazyLoader: Calling loadPage with page:', this.currentPage, 'pageSize:', this.pageSize);
+            console.debug('LazyLoader: Calling loadPage with page:', this.currentPage, 'pageSize:', this.pageSize);
             const result = await this.loadPage(this.currentPage, this.pageSize);
-            console.log('LazyLoader: loadPage returned', result);
+            console.debug('LazyLoader: loadPage returned', result);
             this.handleLoadResult(result, false);
         } catch (error) {
             console.error('LazyLoader: loadPage error', error);
@@ -60,19 +60,19 @@ class LazyLoader {
      * 加载下一页数据
      */
     async loadNextPage() {
-        console.log('LazyLoader: loadNextPage called', { isLoading: this.isLoading, hasMore: this.hasMore });
+        console.debug('LazyLoader: loadNextPage called', { isLoading: this.isLoading, hasMore: this.hasMore });
         if (this.isLoading || !this.hasMore) {
-            console.log('LazyLoader: Skipping loadNextPage');
+            console.debug('LazyLoader: Skipping loadNextPage');
             return;
         }
 
         this.isLoading = true;
         this.currentPage++;
-        console.log('LazyLoader: Calling loadPage with page:', this.currentPage, 'pageSize:', this.pageSize);
+        console.debug('LazyLoader: Calling loadPage with page:', this.currentPage, 'pageSize:', this.pageSize);
 
         try {
             const result = await this.loadPage(this.currentPage, this.pageSize);
-            console.log('LazyLoader: loadPage returned', result);
+            console.debug('LazyLoader: loadPage returned', result);
             this.handleLoadResult(result, true);
         } catch (error) {
             console.error('LazyLoader: loadPage error', error);
@@ -89,7 +89,7 @@ class LazyLoader {
      * @param {boolean} isAppend - 是否追加模式
      */
     handleLoadResult(result, isAppend) {
-        console.log('LazyLoader: handleLoadResult called', { isAppend, result });
+        console.debug('LazyLoader: handleLoadResult called', { isAppend, result });
         if (!result || result.error) {
             this.onError(new Error(result?.error || 'Unknown error'));
             return;
@@ -98,7 +98,7 @@ class LazyLoader {
         const { movies, total, totalPages } = result;
         this.totalPages = totalPages || Math.ceil(total / this.pageSize);
 
-        console.log('LazyLoader: totalPages:', this.totalPages, 'currentPage:', this.currentPage);
+        console.debug('LazyLoader: totalPages:', this.totalPages, 'currentPage:', this.currentPage);
 
         if (isAppend) {
             this.allMovies = [...this.allMovies, ...movies];
@@ -107,7 +107,7 @@ class LazyLoader {
         }
 
         this.hasMore = this.currentPage < this.totalPages;
-        console.log('LazyLoader: hasMore set to:', this.hasMore);
+        console.debug('LazyLoader: hasMore set to:', this.hasMore);
 
         // 调用渲染回调
         this.onRender(movies, isAppend);
@@ -122,10 +122,10 @@ class LazyLoader {
      * 检测滚动是否到达底部
      */
     handleScroll() {
-        console.log('LazyLoader: handleScroll called', { isLoading: this.isLoading, hasMore: this.hasMore });
+        console.debug('LazyLoader: handleScroll called', { isLoading: this.isLoading, hasMore: this.hasMore });
 
         if (this.isLoading || !this.hasMore) {
-            console.log('LazyLoader: Skipping - isLoading:', this.isLoading, 'hasMore:', this.hasMore);
+            console.debug('LazyLoader: Skipping - isLoading:', this.isLoading, 'hasMore:', this.hasMore);
             return;
         }
 
@@ -141,13 +141,13 @@ class LazyLoader {
             scrollTop = window.pageYOffset || document.documentElement.scrollTop;
             scrollHeight = document.documentElement.scrollHeight;
             clientHeight = window.innerHeight;
-            console.log('LazyLoader: Using window scroll', { scrollTop, scrollHeight, clientHeight });
+            console.debug('LazyLoader: Using window scroll', { scrollTop, scrollHeight, clientHeight });
         } else {
             // 元素滚动
             scrollTop = this.scrollContainer.scrollTop;
             scrollHeight = this.scrollContainer.scrollHeight;
             clientHeight = this.scrollContainer.clientHeight;
-            console.log('LazyLoader: Using element scroll', {
+            console.debug('LazyLoader: Using element scroll', {
                 scrollTop, scrollHeight, clientHeight,
                 tagName: this.scrollContainer.tagName,
                 threshold: this.threshold
@@ -156,10 +156,10 @@ class LazyLoader {
 
         // 检测是否接近底部
         const distanceToBottom = scrollHeight - (scrollTop + clientHeight);
-        console.log('LazyLoader: Distance to bottom:', distanceToBottom, 'threshold:', this.threshold);
+        console.debug('LazyLoader: Distance to bottom:', distanceToBottom, 'threshold:', this.threshold);
 
         if (scrollTop + clientHeight >= scrollHeight - this.threshold) {
-            console.log('LazyLoader: Loading next page...');
+            console.debug('LazyLoader: Loading next page...');
             this.loadNextPage();
         }
     }
@@ -171,7 +171,7 @@ class LazyLoader {
         this.scrollHandler = () => this.handleScroll();
         if (this.scrollContainer) {
             this.scrollContainer.addEventListener('scroll', this.scrollHandler);
-            console.log('LazyLoader: Scroll event listener added to', this.scrollContainer.tagName || 'window');
+            console.debug('LazyLoader: Scroll event listener added to', this.scrollContainer.tagName || 'window');
         } else {
             console.warn('LazyLoader: No scroll container found, using window');
             window.addEventListener('scroll', this.scrollHandler);

@@ -1423,9 +1423,6 @@ body {
 .actor-selector-list thead tr {
     background-color: var(--sidebar-bg);
     height: 40px;
-    position: sticky;
-    top: 0;
-    z-index: 1;
 }
 
 .actor-selector-list th {
@@ -2186,9 +2183,41 @@ body {
     width: 200px;
 }
 
-.actor-table th:nth-child(6),  /* 操作 */
+.actor-table th:nth-child(6),  /* 评分 */
 .actor-table td:nth-child(6) {
     width: 80px;
+    text-align: center;
+}
+
+.actor-table th:nth-child(7),  /* 收藏 */
+.actor-table td:nth-child(7) {
+    width: 50px;
+    text-align: center;
+}
+
+.actor-table th:nth-child(8),  /* 操作 */
+.actor-table td:nth-child(8) {
+    width: 80px;
+}
+
+.actor-rating-display-table {
+    color: #f5c518;
+    font-size: 18px;
+}
+
+.actor-favorite-tag-table {
+    font-size: 26px;
+    cursor: pointer;
+    transition: transform 0.2s, color 0.2s;
+}
+
+.actor-favorite-tag-table:hover {
+    transform: scale(1.1);
+}
+
+.actor-favorite-tag-table.favorited {
+    color: #e74c3c;
+    font-size: 20px;
 }
 
 /* 演员模态框 */

@@ -12,7 +12,8 @@
       "Bash(npm install:*)",
       "Bash(find:*)",
       "Bash(npm ls:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(npm list:*)"
     ]
   }
 }

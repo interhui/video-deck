@@ -5,6 +5,77 @@
 const fs = require('fs').promises;
 const fsSync = require('fs');
 const path = require('path');
+const xml2js = require('xml2js');
+
+// ============================================================================
+// XML解析与生成配置
+// ============================================================================
+
+/**
+ * xml2js解析器配置
+ * explicitArray: false - 确保单个子元素不放在数组中
+ * mergeAttrs: true - 将属性合并到对象中
+ * normalizeTags: true - 将标签名转为小写，便于字段匹配
+ * 验证: 测试用例 SVC-FILE-013 至 SVC-FILE-022
+ */
+const XML_PARSER_OPTIONS = {
+    explicitArray: false,      // 不将单个元素包装成数组，便于访问
+    mergeAttrs: true,          // 合并属性到对象中
+    trim: true,                // 去除文本值两端的空白字符
+    normalizeTags: true,       // 将标签名转为小写，确保与字段名匹配
+    strict: false              // 允许非严格XML解析，提高容错性
+};
+
+/**
+ * xml2js生成器配置
+ * xmldec: 自定义XML声明头
+ * headless: true - 不在根元素前添加额外换行
+ * indent: '    ' - 使用4空格缩进
+ * 验证: 测试用例 SVC-FILE-017 至 SVC-FILE-020
+ */
+const XML_BUILDER_OPTIONS = {
+    xmldec: {
+        version: '1.0',
+        encoding: 'UTF-8',
+        standalone: true
+    },
+    headless: true,            // 不在XML声明后添加额外换行
+    indent: '    ',             // 4空格缩进
+    newline: '\n'               // 换行符
+};
+
+/**
+ * NFO电影对象中支持的所有简单文本字段列表
+ * 这些字段在NFO XML中以<field>value</field>形式存储
+ * 验证: 测试用例 SVC-FILE-013, SVC-FILE-014
+ */
+const NFO_TEXT_FIELDS = [
+    'id',
+    'title',
+    'year',
+    'outline',
+    'sorttitle',
+    'runtime',
+    'studio',
+    'director',
+    'original_filename',
+    'description'
+];
+
+/**
+ * 从NFO对象中提取的顶级字段（不出现在生成逻辑中）
+ * 这些字段在generateMovieNfo中需要特殊处理
+ */
+const NFO_INTERNAL_FIELDS = [
+    'tag',
+    'actors',
+    'fileinfo',
+    'fileset',
+    'videoCodec',
+    'videoWidth',
+    'videoHeight',
+    'videoDuration'
+];
 
 class FileService {
     constructor() {
@@ -66,20 +137,22 @@ class FileService {
     }
 
     /**
-     * 读取 movie.nfo 文件内容（XML格式）
+     * 读取 NFO 文件内容（XML格式）
      * @param {string} moviePath - 电影文件夹路径
+     * @param {boolean} isMovieNfo - 是否强制读取movie.nfo文件（保持向后兼容）
+     * 
      * @returns {Promise<object>} 返回电影信息对象
      */
-    async readMovieNfo(moviePath) {
+    async readMovieNfo(moviePath, isMovieNfo = true) {
         try {
-            const movieNfoPath = path.join(moviePath, 'movie.nfo');
+            const movieNfoPath = isMovieNfo ? path.join(moviePath, 'movie.nfo') : moviePath;
             const exists = await this.fileExists(movieNfoPath);
             if (!exists) {
                 return null;
             }
 
             const content = await fs.readFile(movieNfoPath, 'utf-8');
-            return this.parseMovieNfo(content);
+            return await this._parseMovieNfoXmlAsync(content);
         } catch (error) {
             console.error('Error reading movie.nfo:', error);
             throw error;
@@ -87,7 +160,85 @@ class FileService {
     }
 
     /**
-     * 解析 movie.nfo XML 内容
+     * 使用xml2js异步解析movie.nfo XML内容为JavaScript对象（内部方法）
+     *
+     * @description
+     * 该方法使用xml2js库将NFO XML格式的电影信息解析为结构化的JavaScript对象。
+     * 由于xml2js.parseString是异步回调模式，该方法返回Promise。
+     * 支持解析的字段包括：
+     * - 简单文本字段：id, title, year, outline, sorttitle, runtime, studio, director, original_filename, description
+     * - 标签列表：tag (多个标签以数组形式返回)
+     * - 演员列表：actors (从<actor><name>结构中提取所有演员名)
+     * - 视频信息：videoCodec, videoWidth, videoHeight, videoDuration (从fileinfo中提取)
+     * - 文件集：fileset (包含多个文件的完整信息)
+     *
+     * @private
+     * @param {string} xmlContent - NFO格式的XML内容字符串
+     * @returns {Promise<object>} 解析后的电影数据对象
+     */
+    async _parseMovieNfoXmlAsync(xmlContent) {
+        /**
+         * 将xml2js回调结果转换为Promise
+         * @param {string} xml - XML字符串
+         * @returns {Promise<object>} 解析后的对象
+         */
+        const parseXmlToObject = (xml) => {
+            return new Promise((resolve, reject) => {
+                xml2js.parseString(xml, XML_PARSER_OPTIONS, (err, result) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(result);
+                    }
+                });
+            });
+        };
+
+        // Step 1: 使用xml2js解析XML为JS对象
+        const parsedResult = await parseXmlToObject(xmlContent);
+
+        // Step 2: 安全获取movie根节点
+        const movieNode = parsedResult.movie;
+        if (!movieNode) {
+            return {};
+        }
+
+        // Step 3: 构建返回对象
+        const movie = {};
+
+        // 3.1 解析简单文本字段
+        for (const field of NFO_TEXT_FIELDS) {
+            if (movieNode[field] !== undefined && movieNode[field] !== null) {
+                const fieldValue = this._extractTextValue(movieNode[field]);
+                if (fieldValue) {
+                    movie[field] = fieldValue;
+                }
+            }
+        }
+
+        // 3.2 解析标签列表（可能有多个<tag>）
+        movie.tag = this._extractTags(movieNode);
+
+        // 3.3 解析演员列表（从<actor><name>结构中提取）
+        movie.actors = this._extractActors(movieNode);
+
+        // 3.4 解析视频信息（从fileinfo中提取）
+        const videoInfo = this._extractVideoInfo(movieNode);
+        Object.assign(movie, videoInfo);
+
+        // 3.5 解析fileset（关联文件列表）
+        movie.fileset = this._extractFileset(movieNode);
+
+        return movie;
+    }
+
+    /**
+     * 解析 movie.nfo XML 内容（同步方法，保持向后兼容）
+     *
+     * @description
+     * 注意：此方法为保持向后兼容性而保留，使用正则表达式进行解析。
+     * 建议使用异步方法 _parseMovieNfoXmlAsync 以获得更好的XML解析支持。
+     *
      * @param {string} xmlContent - XML内容
      * @returns {object} 电影数据对象
      */
@@ -111,7 +262,7 @@ class FileService {
             return match ? match[1] : '';
         }).filter(t => t);
 
-        // 解析演员（可能有多个）
+        // 解析演员（可能有多个）- 使用优化的正则表达式
         const actorMatches = xmlContent.match(/<actor>[\s\S]*?<\/actor>/gi) || [];
         movie.actors = [];
         for (const actorBlock of actorMatches) {
@@ -160,8 +311,6 @@ class FileService {
             }
         }
 
-        
-
         // 解析 fileset（关联文件列表）
         const filesetMatch = xmlContent.match(/<fileset>([\s\S]*?)<\/fileset>/i);
         if (filesetMatch) {
@@ -202,6 +351,279 @@ class FileService {
     }
 
     /**
+     * 从movie节点中提取标签列表
+     * @private
+     * @param {object} movieNode - 解析后的movie节点对象
+     * @returns {string[]} 标签数组
+     */
+    _extractTags(movieNode) {
+        const tags = [];
+
+        // 处理tag字段（可能是字符串、字符串数组或对象）
+        const tagField = movieNode.tag;
+        if (tagField === undefined || tagField === null) {
+            return tags;
+        }
+
+        // 如果是数组，直接收集所有标签
+        if (Array.isArray(tagField)) {
+            for (const tagItem of tagField) {
+                const tagValue = this._extractTextValue(tagItem);
+                if (tagValue) {
+                    tags.push(tagValue);
+                }
+            }
+        } else {
+            // 单个标签
+            const tagValue = this._extractTextValue(tagField);
+            if (tagValue) {
+                tags.push(tagValue);
+            }
+        }
+
+        return tags;
+    }
+
+    /**
+     * 从movie节点中提取演员列表
+     * @private
+     * @param {object} movieNode - 解析后的movie节点对象
+     * @returns {string[]} 演员姓名数组
+     */
+    _extractActors(movieNode) {
+        const actors = [];
+
+        // 处理actor字段（可能是对象或对象数组）
+        const actorField = movieNode.actor;
+        if (actorField === undefined || actorField === null) {
+            return actors;
+        }
+
+        // 获取所有actor节点的列表
+        const actorList = Array.isArray(actorField) ? actorField : [actorField];
+
+        for (const actorNode of actorList) {
+            if (typeof actorNode !== 'object') {
+                continue;
+            }
+
+            // 从actor节点中提取所有<name>子元素
+            const nameField = actorNode.name;
+            if (nameField === undefined || nameField === null) {
+                continue;
+            }
+
+            // name可能是单个字符串或数组
+            if (Array.isArray(nameField)) {
+                for (const nameItem of nameField) {
+                    const nameValue = this._extractTextValue(nameItem);
+                    if (nameValue) {
+                        actors.push(nameValue);
+                    }
+                }
+            } else {
+                const nameValue = this._extractTextValue(nameField);
+                if (nameValue) {
+                    actors.push(nameValue);
+                }
+            }
+        }
+
+        return actors;
+    }
+
+    /**
+     * 从movie节点中提取视频信息
+     * @private
+     * @param {object} movieNode - 解析后的movie节点对象
+     * @returns {object} 包含videoCodec, videoWidth, videoHeight, videoDuration的对象
+     */
+    _extractVideoInfo(movieNode) {
+        const videoInfo = {
+            videoCodec: undefined,
+            videoWidth: undefined,
+            videoHeight: undefined,
+            videoDuration: undefined,
+            fileinfo: undefined
+        };
+
+        // 获取fileinfo节点
+        const fileinfoNode = movieNode.fileinfo;
+        if (!fileinfoNode) {
+            return videoInfo;
+        }
+
+        // 保存原始fileinfo字符串（如果有）
+        if (typeof fileinfoNode === 'string') {
+            videoInfo.fileinfo = fileinfoNode;
+        }
+
+        // 导航到 video 节点: fileinfo > streamdetails > video
+        let videoNode = null;
+
+        // 处理不同的结构形式
+        if (fileinfoNode.streamdetails) {
+            const streamdetails = fileinfoNode.streamdetails;
+            // streamdetails.video 可能是单个对象或数组
+            if (streamdetails.video) {
+                videoNode = Array.isArray(streamdetails.video)
+                    ? streamdetails.video[0]
+                    : streamdetails.video;
+            }
+        }
+
+        if (!videoNode) {
+            return videoInfo;
+        }
+
+        // 提取视频属性
+        if (videoNode.codec !== undefined && videoNode.codec !== null) {
+            const codecValue = this._extractTextValue(videoNode.codec);
+            if (codecValue) {
+                videoInfo.videoCodec = codecValue.toUpperCase();
+            }
+        }
+
+        if (videoNode.width !== undefined && videoNode.width !== null) {
+            const widthValue = this._extractTextValue(videoNode.width);
+            if (widthValue) {
+                videoInfo.videoWidth = String(widthValue);
+            }
+        }
+
+        if (videoNode.height !== undefined && videoNode.height !== null) {
+            const heightValue = this._extractTextValue(videoNode.height);
+            if (heightValue) {
+                videoInfo.videoHeight = String(heightValue);
+            }
+        }
+
+        if (videoNode.durationinseconds !== undefined && videoNode.durationinseconds !== null) {
+            const durationValue = this._extractTextValue(videoNode.durationinseconds);
+            if (durationValue) {
+                videoInfo.videoDuration = String(durationValue);
+            }
+        }
+
+        return videoInfo;
+    }
+
+    /**
+     * 从movie节点中提取fileset（关联文件列表）
+     * @private
+     * @param {object} movieNode - 解析后的movie节点对象
+     * @returns {object[]} 文件数组，每项包含filename, fullpath, type, videoCodec, videoWidth, videoHeight, videoDuration, memo
+     */
+    _extractFileset(movieNode) {
+        const fileset = [];
+
+        // 获取fileset节点
+        const filesetNode = movieNode.fileset;
+        if (!filesetNode) {
+            return fileset;
+        }
+
+        // 获取所有file节点的列表
+        const fileList = filesetNode.file;
+        if (!fileList) {
+            return fileset;
+        }
+
+        // 确保是数组形式
+        const fileArray = Array.isArray(fileList) ? fileList : [fileList];
+
+        for (const fileNode of fileArray) {
+            if (typeof fileNode !== 'object') {
+                continue;
+            }
+
+            const file = {};
+
+            // 提取各字段
+            if (fileNode.filename !== undefined && fileNode.filename !== null) {
+                const value = this._extractTextValue(fileNode.filename);
+                if (value) file.filename = value;
+            }
+
+            if (fileNode.fullpath !== undefined && fileNode.fullpath !== null) {
+                const value = this._extractTextValue(fileNode.fullpath);
+                if (value) file.fullpath = value;
+            }
+
+            if (fileNode.type !== undefined && fileNode.type !== null) {
+                const value = this._extractTextValue(fileNode.type);
+                if (value) file.type = value;
+            }
+
+            if (fileNode.videocodec !== undefined && fileNode.videocodec !== null) {
+                const value = this._extractTextValue(fileNode.videocodec);
+                if (value) file.videoCodec = value.toUpperCase();
+            }
+
+            if (fileNode.videowidth !== undefined && fileNode.videowidth !== null) {
+                const value = this._extractTextValue(fileNode.videowidth);
+                if (value) file.videoWidth = String(value);
+            }
+
+            if (fileNode.videoheight !== undefined && fileNode.videoheight !== null) {
+                const value = this._extractTextValue(fileNode.videoheight);
+                if (value) file.videoHeight = String(value);
+            }
+
+            if (fileNode.videoduration !== undefined && fileNode.videoduration !== null) {
+                const value = this._extractTextValue(fileNode.videoduration);
+                if (value) file.videoDuration = String(value);
+            }
+
+            if (fileNode.memo !== undefined && fileNode.memo !== null) {
+                const value = this._extractTextValue(fileNode.memo);
+                if (value) file.memo = value;
+            }
+
+            fileset.push(file);
+        }
+
+        return fileset;
+    }
+
+    /**
+     * 从xml2js解析的节点中提取文本值
+     * xml2js在某些情况下会将文本值包装在对象中（如{_:'text'}或{'$':{...},'_':'text'}）
+     * @private
+     * @param {any} node - xml2js解析的节点
+     * @returns {string} 提取的文本值
+     */
+    _extractTextValue(node) {
+        if (node === undefined || node === null) {
+            return '';
+        }
+
+        // 如果是字符串，直接返回
+        if (typeof node === 'string') {
+            return node;
+        }
+
+        // 如果是数字，转换为字符串
+        if (typeof node === 'number') {
+            return String(node);
+        }
+
+        // 如果是对象，尝试提取文本值
+        if (typeof node === 'object') {
+            // 常见格式：{_: 'text'} 或 { '$': {...}, '_': 'text' }
+            if (node._ !== undefined) {
+                return String(node._);
+            }
+            // 也可能有 value 属性
+            if (node.value !== undefined) {
+                return String(node.value);
+            }
+        }
+
+        return '';
+    }
+
+    /**
      * 写入 movie.nfo 文件（XML格式）
      * @param {string} moviePath - 电影文件夹路径
      * @param {object} movieData - 电影数据对象
@@ -218,19 +640,92 @@ class FileService {
     }
 
     /**
-     * 生成 movie.nfo XML 内容
-     * @param {object} movieData - 电影数据对象
-     * @returns {string} XML内容
+     * 使用xml2js生成movie.nfo XML内容
+     *
+     * @description
+     * 该方法将电影数据对象转换为NFO格式的XML字符串。
+     * 生成的XML包含以下结构：
+     * - 简单文本字段：id, title, year, outline, sorttitle, runtime, studio, director, original_filename, description
+     * - 标签：多个<tag>元素
+     * - 演员：<actor><name>结构
+     * - 视频信息：<fileinfo><streamdetails><video>结构
+     * - 文件集：<fileset><file>结构
+     *
+     * 特殊处理逻辑：
+     * - 如果fileset中存在Main类型的文件，其视频信息会被提取到movie级别的fileinfo中
+     * - original_filename优先使用Main文件的fullpath
+     * - 非Main类型的文件会保留在fileset中
+     *
+     * @param {object} movieData - 电影数据对象，支持的字段：
+     * @param {string} [movieData.id] - 电影ID
+     * @param {string} [movieData.title] - 电影标题
+     * @param {string} [movieData.year] - 发行年份
+     * @param {string} [movieData.outline] - 电影概述
+     * @param {string} [movieData.sorttitle] - 排序标题
+     * @param {string} [movieData.runtime] - 运行时长(分钟)
+     * @param {string} [movieData.studio] - 制作公司
+     * @param {string} [movieData.director] - 导演
+     * @param {string} [movieData.original_filename] - 原始文件名
+     * @param {string} [movieData.description] - 详细描述
+     * @param {string[]} [movieData.tags] - 标签数组（也支持movieData.tag）
+     * @param {string[]} [movieData.actors] - 演员姓名数组
+     * @param {string} [movieData.videoCodec] - 视频编码
+     * @param {string} [movieData.videoWidth] - 视频宽度
+     * @param {string} [movieData.videoHeight] - 视频高度
+     * @param {string} [movieData.videoDuration] - 视频时长(秒)
+     * @param {string} [movieData.fileinfo] - 原始fileinfo字符串（当没有独立视频字段时使用）
+     * @param {object[]} [movieData.fileset] - 文件集数组，每项包含filename, fullpath, type, videoCodec, videoWidth, videoHeight, videoDuration, memo
+     * @returns {string} NFO格式的XML内容字符串
+     *
+     * @example
+     * const movieData = {
+     *     title: '星际穿越',
+     *     year: '2014',
+     *     director: '克里斯托弗·诺兰',
+     *     actors: ['马修·麦康纳', '安妮·海瑟薇'],
+     *     tags: ['科幻', '冒险'],
+     *     videoCodec: 'H264',
+     *     videoWidth: '1920',
+     *     videoHeight: '1080'
+     * };
+     * const xml = fileService.generateMovieNfo(movieData);
      */
     generateMovieNfo(movieData) {
-        let xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<movie>\n';
+        // Step 1: 从fileset中分离Main文件和非Main文件
+        const { mainFile, nonMainFiles } = this._separateMainFile(movieData);
 
-        // 从 fileset 中提取 Main 文件的信息，写入到 movie 级别
+        // Step 2: 构建movie对象的JS结构
+        const movieObj = this._buildMovieObject(movieData, mainFile, nonMainFiles);
+
+        // Step 3: 使用xml2js.Builder生成XML
+        // 注意：xml2js.Builder需要以'movie'作为根键名的对象
+        const builder = new xml2js.Builder(XML_BUILDER_OPTIONS);
+        const xmlObj = { movie: movieObj };
+        let xml = builder.buildObject(xmlObj);
+
+        // Step 4: 确保XML声明头正确
+        if (!xml.startsWith('<?xml')) {
+            xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + xml;
+        }
+
+        return xml;
+    }
+
+    /**
+     * 从movieData的fileset中分离Main文件和非Main文件
+     * 注意：只保留第一个Main文件，其余Main文件会归入nonMainFiles
+     * @private
+     * @param {object} movieData - 电影数据对象
+     * @returns {object} 包含mainFile和nonMainFiles的对象
+     */
+    _separateMainFile(movieData) {
         let mainFile = null;
         const nonMainFiles = [];
+
         if (movieData.fileset && Array.isArray(movieData.fileset)) {
             for (const file of movieData.fileset) {
-                if (file.type === 'Main') {
+                if (file.type === 'Main' && !mainFile) {
+                    // 只保留第一个Main文件
                     mainFile = file;
                 } else {
                     nonMainFiles.push(file);
@@ -238,105 +733,165 @@ class FileService {
             }
         }
 
-        // 写入简单字段（注意：如果有 Main 文件，original_filename 从 Main 文件获取）
-        const textFields = ['id', 'title', 'year', 'outline', 'sorttitle', 'runtime', 'studio', 'director', 'description'];
-        for (const field of textFields) {
+        return { mainFile, nonMainFiles };
+    }
+
+    /**
+     * 构建用于xml2js生成XML的movie对象结构
+     * @private
+     * @param {object} movieData - 原始电影数据对象
+     * @param {object} mainFile - Main文件对象（可为null）
+     * @param {object[]} nonMainFiles - 非Main文件数组
+     * @returns {object} 用于生成XML的JS对象
+     */
+    _buildMovieObject(movieData, mainFile, nonMainFiles) {
+        const movie = {};
+
+        // 2.1 添加简单文本字段（排除internal字段和original_filename）
+        const fieldsToInclude = NFO_TEXT_FIELDS.filter(f => f !== 'original_filename');
+        for (const field of fieldsToInclude) {
             if (movieData[field]) {
-                xml += `    <${field}>${this.escapeXml(movieData[field])}</${field}>\n`;
+                movie[field] = this._sanitizeValue(movieData[field]);
             }
         }
 
-        // 写入 original_filename（如果存在 Main 文件，使用 Main 文件的 fullpath）
-        if (mainFile && mainFile.fullpath) {
-            xml += `    <original_filename>${this.escapeXml(mainFile.fullpath)}</original_filename>\n`;
-        } else if (movieData.original_filename) {
-            xml += `    <original_filename>${this.escapeXml(movieData.original_filename)}</original_filename>\n`;
+        // 2.2 处理original_filename（优先使用Main文件的fullpath）
+        const originalFilename = this._getOriginalFilename(movieData, mainFile);
+        if (originalFilename) {
+            movie.original_filename = originalFilename;
         }
 
-        // 写入标签
-        if (movieData.tags && Array.isArray(movieData.tags)) {
-            for (const tag of movieData.tags) {
-                xml += `    <tag>${this.escapeXml(tag)}</tag>\n`;
-            }
+        // 2.3 添加标签
+        const tags = movieData.tags || movieData.tag;
+        if (tags && Array.isArray(tags)) {
+            movie.tag = tags.map(tag => this._sanitizeValue(tag));
         }
 
-        // 写入演员
-        if (movieData.actors && Array.isArray(movieData.actors)) {
-            xml += '    <actor>\n';
-            for (const actor of movieData.actors) {
-                xml += `        <name>${this.escapeXml(actor)}</name>\n`;
-            }
-            xml += '    </actor>\n';
+        // 2.4 添加演员（使用嵌套结构）
+        if (movieData.actors && Array.isArray(movieData.actors) && movieData.actors.length > 0) {
+            movie.actor = {
+                name: movieData.actors.map(actor => this._sanitizeValue(actor))
+            };
         }
 
-        // 写入 fileinfo（包含视频信息，从 Main 文件获取）
-        const videoCodec = mainFile ? (mainFile.videoCodec || movieData.videoCodec || '') : (movieData.videoCodec || '');
-        const videoWidth = mainFile ? (mainFile.videoWidth || movieData.videoWidth || '') : (movieData.videoWidth || '');
-        const videoHeight = mainFile ? (mainFile.videoHeight || movieData.videoHeight || '') : (movieData.videoHeight || '');
-        const videoDuration = mainFile ? (mainFile.videoDuration || movieData.videoDuration || '') : (movieData.videoDuration || '');
-
-        if (videoCodec || videoWidth || videoHeight || videoDuration) {
-            xml += '    <fileinfo>\n';
-            xml += '        <streamdetails>\n';
-            xml += '            <video>\n';
-            if (videoCodec) {
-                xml += `                <codec>${this.escapeXml(videoCodec)}</codec>\n`;
-            }
-            if (videoWidth) {
-                xml += `                <width>${this.escapeXml(videoWidth)}</width>\n`;
-            }
-            if (videoHeight) {
-                xml += `                <height>${this.escapeXml(videoHeight)}</height>\n`;
-            }
-            if (videoDuration) {
-                xml += `                <durationinseconds>${this.escapeXml(videoDuration)}</durationinseconds>\n`;
-            }
-            xml += '            </video>\n';
-            xml += '        </streamdetails>\n';
-            xml += '    </fileinfo>\n';
+        // 2.5 添加视频信息（从Main文件或movieData获取）
+        const videoInfo = this._collectVideoInfo(movieData, mainFile);
+        if (this._hasVideoInfo(videoInfo)) {
+            movie.fileinfo = {
+                streamdetails: {
+                    video: {
+                        codec: videoInfo.videoCodec,
+                        width: videoInfo.videoWidth,
+                        height: videoInfo.videoHeight,
+                        durationinseconds: videoInfo.videoDuration
+                    }
+                }
+            };
         } else if (movieData.fileinfo) {
-            // 如果没有独立的视频信息字段但有原始fileinfo字符串
-            xml += `    <fileinfo>${movieData.fileinfo}</fileinfo>\n`;
+            // 如果没有独立视频信息但有原始fileinfo字符串
+            movie.fileinfo = movieData.fileinfo;
         }
 
-        // 写入 fileset（仅包含非 Main 类型的文件）
+        // 2.6 添加fileset（仅非Main文件）
         if (nonMainFiles.length > 0) {
-            xml += '    <fileset>\n';
-            for (const file of nonMainFiles) {
-                xml += '        <file>\n';
-                if (file.filename) {
-                    xml += `            <filename>${this.escapeXml(file.filename)}</filename>\n`;
-                }
-                if (file.fullpath) {
-                    xml += `            <fullpath>${this.escapeXml(file.fullpath)}</fullpath>\n`;
-                }
-                if (file.type) {
-                    xml += `            <type>${this.escapeXml(file.type)}</type>\n`;
-                }
-                if (file.videoCodec) {
-                    xml += `            <videocodec>${this.escapeXml(file.videoCodec)}</videocodec>\n`;
-                }
-                if (file.videoWidth) {
-                    xml += `            <videowidth>${this.escapeXml(file.videoWidth)}</videowidth>\n`;
-                }
-                if (file.videoHeight) {
-                    xml += `            <videoheight>${this.escapeXml(file.videoHeight)}</videoheight>\n`;
-                }
-                if (file.videoDuration) {
-                    xml += `            <videoduration>${this.escapeXml(file.videoDuration)}</videoduration>\n`;
-                }
-                if (file.memo) {
-                    xml += `            <memo>${this.escapeXml(file.memo)}</memo>\n`;
-                }
-                xml += '        </file>\n';
-            }
-            xml += '    </fileset>\n';
+            movie.fileset = {
+                file: nonMainFiles.map(file => this._buildFileNode(file))
+            };
         }
 
-        
+        return movie;
+    }
 
-        xml += '</movie>';
-        return xml;
+    /**
+     * 获取original_filename的值
+     * @private
+     * @param {object} movieData - 电影数据对象
+     * @param {object} mainFile - Main文件对象（可为null）
+     * @returns {string} original_filename值
+     */
+    _getOriginalFilename(movieData, mainFile) {
+        if (mainFile && mainFile.fullpath) {
+            return mainFile.fullpath;
+        }
+        return movieData.original_filename || '';
+    }
+
+    /**
+     * 收集视频信息（优先从Main文件获取）
+     * @private
+     * @param {object} movieData - 电影数据对象
+     * @param {object} mainFile - Main文件对象（可为null）
+     * @returns {object} 视频信息对象
+     */
+    _collectVideoInfo(movieData, mainFile) {
+        return {
+            videoCodec: mainFile ? (mainFile.videoCodec || movieData.videoCodec || '') : (movieData.videoCodec || ''),
+            videoWidth: mainFile ? (mainFile.videoWidth || movieData.videoWidth || '') : (movieData.videoWidth || ''),
+            videoHeight: mainFile ? (mainFile.videoHeight || movieData.videoHeight || '') : (movieData.videoHeight || ''),
+            videoDuration: mainFile ? (mainFile.videoDuration || movieData.videoDuration || '') : (movieData.videoDuration || '')
+        };
+    }
+
+    /**
+     * 检查视频信息对象是否有有效数据
+     * @private
+     * @param {object} videoInfo - 视频信息对象
+     * @returns {boolean} 是否有有效数据
+     */
+    _hasVideoInfo(videoInfo) {
+        return !!(videoInfo.videoCodec || videoInfo.videoWidth || videoInfo.videoHeight || videoInfo.videoDuration);
+    }
+
+    /**
+     * 构建单个file节点的JS对象
+     * @private
+     * @param {object} file - 文件数据对象
+     * @returns {object} file节点对象
+     */
+    _buildFileNode(file) {
+        const fileNode = {};
+
+        if (file.filename) {
+            fileNode.filename = this._sanitizeValue(file.filename);
+        }
+        if (file.fullpath) {
+            fileNode.fullpath = this._sanitizeValue(file.fullpath);
+        }
+        if (file.type) {
+            fileNode.type = this._sanitizeValue(file.type);
+        }
+        if (file.videoCodec) {
+            fileNode.videocodec = this._sanitizeValue(file.videoCodec);
+        }
+        if (file.videoWidth) {
+            fileNode.videowidth = this._sanitizeValue(file.videoWidth);
+        }
+        if (file.videoHeight) {
+            fileNode.videoheight = this._sanitizeValue(file.videoHeight);
+        }
+        if (file.videoDuration) {
+            fileNode.videoduration = this._sanitizeValue(file.videoDuration);
+        }
+        if (file.memo) {
+            fileNode.memo = this._sanitizeValue(file.memo);
+        }
+
+        return fileNode;
+    }
+
+    /**
+     * 清理和转换值，确保适合XML输出
+     * xml2js.Builder会自动处理XML转义，因此这里只做类型转换和空值处理
+     * @private
+     * @param {any} value - 要清理的值
+     * @returns {string} 清理后的字符串值
+     */
+    _sanitizeValue(value) {
+        if (value === undefined || value === null) {
+            return '';
+        }
+        // 转换为字符串
+        return String(value);
     }
 
     /**
@@ -710,9 +1265,10 @@ class FileService {
     }
 
     /**
-     * 递归扫描目录，查找包含movie.nfo的文件夹
+     * 递归扫描目录，查找包含nfo文件的文件夹
+     * 优先查找movie.nfo，如果不存在则查找*.nfo
      * @param {string} dirPath - 目录路径
-     * @returns {Promise<object[]>} 包含movie.nfo的文件夹信息数组
+     * @returns {Promise<object[]>} 包含nfo文件的文件夹信息数组
      */
     async scanDirectoryRecursively(dirPath) {
         const movieFolders = [];
@@ -734,12 +1290,22 @@ class FileService {
                     const fullPath = path.join(currentDir, entry.name);
 
                     if (entry.isDirectory()) {
-                        // 检查是否是电影文件夹（包含movie.nfo）
-                        const nfoPath = path.join(fullPath, 'movie.nfo');
-                        const hasNfo = await this.fileExists(nfoPath);
+                        let nfoPath = null;
+                        
+                        const movieNfoPath = path.join(fullPath, 'movie.nfo');
+                        const hasMovieNfo = await this.fileExists(movieNfoPath);
+                        
+                        if (hasMovieNfo) {
+                            nfoPath = movieNfoPath;
+                        } else {
+                            const files = await fs.readdir(fullPath);
+                            const nfoFile = files.find(f => typeof f === 'string' && f.toLowerCase().endsWith('.nfo'));
+                            if (nfoFile) {
+                                nfoPath = path.join(fullPath, nfoFile);
+                            }
+                        }
 
-                        if (hasNfo) {
-                            // 找到电影文件夹，查找海报文件
+                        if (nfoPath) {
                             const posterInfo = await this.findMoviePoster(fullPath);
                             movieFolders.push({
                                 folderPath: fullPath,
@@ -749,7 +1315,6 @@ class FileService {
                                 posterExt: posterInfo.posterExt
                             });
                         } else {
-                            // 继续递归扫描子文件夹
                             await scanRecursive.call(this, fullPath);
                         }
                     }
