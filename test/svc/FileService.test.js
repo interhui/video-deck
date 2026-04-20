@@ -541,6 +541,39 @@ describe('FileService', () => {
             const result = await service.scanDirectoryRecursively(path.join(testDataDir, 'notExists'));
             expect(result).toEqual([]);
         });
+
+        test('SVC-FILE-052-1: 优先查找movie.nfo，不存在时查找其他nfo文件', async () => {
+            const movieDir1 = path.join(testDataDir, 'movieWithMovieNfo');
+            const movieDir2 = path.join(testDataDir, 'movieWithOtherNfo');
+
+            fs.mkdirSync(movieDir1, { recursive: true });
+            fs.mkdirSync(movieDir2, { recursive: true });
+
+            fs.writeFileSync(path.join(movieDir1, 'movie.nfo'), '<?xml version="1.0"?><movie><title>Movie 1</title></movie>');
+            fs.writeFileSync(path.join(movieDir2, 'custom.nfo'), '<?xml version="1.0"?><movie><title>Movie 2</title></movie>');
+
+            const result = await service.scanDirectoryRecursively(testDataDir);
+
+            expect(result.length).toBe(2);
+            const movie1 = result.find(m => m.folderName === 'movieWithMovieNfo');
+            const movie2 = result.find(m => m.folderName === 'movieWithOtherNfo');
+
+            expect(movie1.nfoPath).toBe(path.join(movieDir1, 'movie.nfo'));
+            expect(movie2.nfoPath).toBe(path.join(movieDir2, 'custom.nfo'));
+        });
+
+        test('SVC-FILE-052-2: movie.nfo优先于其他nfo文件', async () => {
+            const movieDir = path.join(testDataDir, 'movieWithBoth');
+
+            fs.mkdirSync(movieDir, { recursive: true });
+            fs.writeFileSync(path.join(movieDir, 'movie.nfo'), '<?xml version="1.0"?><movie><title>Main</title></movie>');
+            fs.writeFileSync(path.join(movieDir, 'custom.nfo'), '<?xml version="1.0"?><movie><title>Custom</title></movie>');
+
+            const result = await service.scanDirectoryRecursively(testDataDir);
+
+            const movie = result.find(m => m.folderName === 'movieWithBoth');
+            expect(movie.nfoPath).toBe(path.join(movieDir, 'movie.nfo'));
+        });
     });
 
     describe('findMoviePoster', () => {

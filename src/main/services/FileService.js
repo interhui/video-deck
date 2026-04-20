@@ -137,13 +137,15 @@ class FileService {
     }
 
     /**
-     * 读取 movie.nfo 文件内容（XML格式）
+     * 读取 NFO 文件内容（XML格式）
      * @param {string} moviePath - 电影文件夹路径
+     * @param {boolean} isMovieNfo - 是否强制读取movie.nfo文件（保持向后兼容）
+     * 
      * @returns {Promise<object>} 返回电影信息对象
      */
-    async readMovieNfo(moviePath) {
+    async readMovieNfo(moviePath, isMovieNfo = true) {
         try {
-            const movieNfoPath = path.join(moviePath, 'movie.nfo');
+            const movieNfoPath = isMovieNfo ? path.join(moviePath, 'movie.nfo') : moviePath;
             const exists = await this.fileExists(movieNfoPath);
             if (!exists) {
                 return null;
@@ -1263,9 +1265,10 @@ class FileService {
     }
 
     /**
-     * 递归扫描目录，查找包含movie.nfo的文件夹
+     * 递归扫描目录，查找包含nfo文件的文件夹
+     * 优先查找movie.nfo，如果不存在则查找*.nfo
      * @param {string} dirPath - 目录路径
-     * @returns {Promise<object[]>} 包含movie.nfo的文件夹信息数组
+     * @returns {Promise<object[]>} 包含nfo文件的文件夹信息数组
      */
     async scanDirectoryRecursively(dirPath) {
         const movieFolders = [];
@@ -1287,12 +1290,22 @@ class FileService {
                     const fullPath = path.join(currentDir, entry.name);
 
                     if (entry.isDirectory()) {
-                        // 检查是否是电影文件夹（包含movie.nfo）
-                        const nfoPath = path.join(fullPath, 'movie.nfo');
-                        const hasNfo = await this.fileExists(nfoPath);
+                        let nfoPath = null;
+                        
+                        const movieNfoPath = path.join(fullPath, 'movie.nfo');
+                        const hasMovieNfo = await this.fileExists(movieNfoPath);
+                        
+                        if (hasMovieNfo) {
+                            nfoPath = movieNfoPath;
+                        } else {
+                            const files = await fs.readdir(fullPath);
+                            const nfoFile = files.find(f => typeof f === 'string' && f.toLowerCase().endsWith('.nfo'));
+                            if (nfoFile) {
+                                nfoPath = path.join(fullPath, nfoFile);
+                            }
+                        }
 
-                        if (hasNfo) {
-                            // 找到电影文件夹，查找海报文件
+                        if (nfoPath) {
                             const posterInfo = await this.findMoviePoster(fullPath);
                             movieFolders.push({
                                 folderPath: fullPath,
@@ -1302,7 +1315,6 @@ class FileService {
                                 posterExt: posterInfo.posterExt
                             });
                         } else {
-                            // 继续递归扫描子文件夹
                             await scanRecursive.call(this, fullPath);
                         }
                     }

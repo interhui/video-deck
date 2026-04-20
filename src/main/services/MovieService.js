@@ -876,8 +876,7 @@ class MovieService {
 
         for (const folderInfo of movieFolders) {
             try {
-                // 读取movie.nfo内容
-                const movieData = await this.fileService.readMovieNfo(folderInfo.folderPath);
+                const movieData = await this.fileService.readMovieNfo(folderInfo.nfoPath, false);
 
                 if (!movieData) {
                     console.warn(`Skipping folder without valid NFO: ${folderInfo.folderPath}`);
@@ -1014,7 +1013,7 @@ class MovieService {
      * @param {string} dirNaming - 目录命名方式：'movieId'（电影ID）或 'movieName'（电影名称/年份）
      * @returns {string} 生成的文件夹名称
      */
-generateFolderName(movieId, title, year, dirNaming) {
+    generateFolderName(movieId, title, year, dirNaming) {
         // 使用电影名称/年份作为目录名，格式：电影名(发行年份)
         if (dirNaming === 'movieName' && title) {
             const nameWithYear = year ? `${title}(${year})` : title;
@@ -1030,7 +1029,7 @@ generateFolderName(movieId, title, year, dirNaming) {
      * @param {string} name - 原始名称
      * @returns {string} 清理后的名称
      */
-sanitizeFolderName(name) {
+    sanitizeFolderName(name) {
         return name
             .replace(/[^a-zA-Z0-9\u4e00-\u9fa5() -]/g, '-')
             .replace(/-+/g, '-')
