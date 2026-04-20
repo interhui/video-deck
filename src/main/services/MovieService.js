@@ -1014,7 +1014,7 @@ class MovieService {
      * @param {string} dirNaming - 目录命名方式：'movieId'（电影ID）或 'movieName'（电影名称/年份）
      * @returns {string} 生成的文件夹名称
      */
-    generateFolderName(movieId, title, year, dirNaming) {
+generateFolderName(movieId, title, year, dirNaming) {
         // 使用电影名称/年份作为目录名，格式：电影名(发行年份)
         if (dirNaming === 'movieName' && title) {
             const nameWithYear = year ? `${title}(${year})` : title;
@@ -1026,14 +1026,13 @@ class MovieService {
     }
 
     /**
-     * 清理文件夹名称，只允许字母、数字、中文、括号和连字符
+     * 清理文件夹名称，只允许字母、数字、中文、括号、空格和连字符
      * @param {string} name - 原始名称
      * @returns {string} 清理后的名称
      */
-    sanitizeFolderName(name) {
+sanitizeFolderName(name) {
         return name
-            .toLowerCase()
-            .replace(/[^a-z0-9\u4e00-\u9fa5()]/g, '-')
+            .replace(/[^a-zA-Z0-9\u4e00-\u9fa5() -]/g, '-')
             .replace(/-+/g, '-')
             .replace(/^-|-$/g, '');
     }
