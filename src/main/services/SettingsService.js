@@ -12,7 +12,7 @@ class SettingsService {
         this.fileService = new FileService();
         this.hardCodeService = new HardCodeService();
         // 同步设置默认配置，保证 getSettings() 能立即返回有效值
-        this.settings = this.getDefaultSettings();
+        this.settings = this.hardCodeService.getDefaultSettings();
         // 异步加载用户配置并合并
         this.loadSettings();
     }
@@ -22,7 +22,7 @@ class SettingsService {
      */
     async loadSettings() {
         try {
-            const defaultSettings = this.getDefaultSettings();
+            const defaultSettings = this.hardCodeService.getDefaultSettings();
             const settings = await this.fileService.readJson(this.settingsPath);
 
             if (settings) {
@@ -38,7 +38,7 @@ class SettingsService {
             return this.settings;
         } catch (error) {
             console.error('Error loading settings:', error);
-            this.settings = this.getDefaultSettings();
+            this.settings = this.hardCodeService.getDefaultSettings();
             return this.settings;
         }
     }
@@ -234,14 +234,6 @@ class SettingsService {
     }
 
     /**
-     * 获取默认配置
-     * @returns {object} 默认配置
-     */
-    getDefaultSettings() {
-        return this.hardCodeService.getDefaultSettings();
-    }
-
-    /**
      * 深度合并对象
      * @param {object} target - 目标对象
      * @param {object} source - 源对象
@@ -280,7 +272,7 @@ class SettingsService {
      * 重置为默认配置
      */
     resetToDefaults() {
-        this.settings = this.getDefaultSettings();
+        this.settings = this.hardCodeService.getDefaultSettings();
         this.saveSettings(this.settings);
     }
 

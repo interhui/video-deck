@@ -830,20 +830,6 @@ class FileService {
     }
 
     /**
-     * 写入文件
-     * @param {string} filePath - 文件路径
-     * @param {string} content - 文件内容
-     */
-    async writeFile(filePath, content) {
-        try {
-            await fs.writeFile(filePath, content, 'utf-8');
-        } catch (error) {
-            console.error('Error writing file:', error);
-            throw error;
-        }
-    }
-
-    /**
      * 读取文件
      * @param {string} filePath - 文件路径
      * @returns {Promise<string>} 文件内容
@@ -885,20 +871,6 @@ class FileService {
             }
         } catch (error) {
             console.error('Error deleting directory:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * 复制文件
-     * @param {string} srcPath - 源路径
-     * @param {string} destPath - 目标路径
-     */
-    async copyFile(srcPath, destPath) {
-        try {
-            await fs.copyFile(srcPath, destPath);
-        } catch (error) {
-            console.error('Error copying file:', error);
             throw error;
         }
     }
@@ -1343,20 +1315,6 @@ class FileService {
             return destPath;
         } catch (error) {
             console.error('Error copying file:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * 读取文件内容
-     * @param {string} filePath - 文件路径
-     * @returns {Promise<string>} 文件内容
-     */
-    async readFile(filePath) {
-        try {
-            return await fs.readFile(filePath, 'utf-8');
-        } catch (error) {
-            console.error('Error reading file:', error);
             throw error;
         }
     }

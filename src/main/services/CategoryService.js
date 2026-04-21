@@ -32,7 +32,7 @@ class CategoryService {
                 this.categoriesCache = config.categories;
             } else {
                 // 如果配置文件不存在或格式错误，使用默认分类
-                this.categoriesCache = this.getDefaultCategories();
+                this.categoriesCache = this.hardCodeService.getDefaultCategories();
                 // 保存默认分类到配置文件
                 await this.saveCategories(this.categoriesCache);
             }
@@ -40,7 +40,7 @@ class CategoryService {
             return this.categoriesCache;
         } catch (error) {
             console.error('Error loading categories:', error);
-            this.categoriesCache = this.getDefaultCategories();
+            this.categoriesCache = this.hardCodeService.getDefaultCategories();
             return this.categoriesCache;
         }
     }
@@ -58,13 +58,13 @@ class CategoryService {
                 if (fs.existsSync(this.categoryConfigPath)) {
                     const content = fs.readFileSync(this.categoryConfigPath, 'utf-8');
                     const config = JSON.parse(content);
-                    this.categoriesCache = config.categories || this.getDefaultCategories();
+                    this.categoriesCache = config.categories || this.hardCodeService.getDefaultCategories();
                 } else {
-                    this.categoriesCache = this.getDefaultCategories();
+                    this.categoriesCache = this.hardCodeService.getDefaultCategories();
                 }
             } catch (error) {
                 console.error('Error reading categories synchronously:', error);
-                this.categoriesCache = this.getDefaultCategories();
+                this.categoriesCache = this.hardCodeService.getDefaultCategories();
             }
         }
         return this.categoriesCache;
@@ -138,14 +138,6 @@ class CategoryService {
             console.error('Error saving categories:', error);
             throw error;
         }
-    }
-
-    /**
-     * 获取默认分类列表
-     * @returns {Array} 默认分类数组
-     */
-    getDefaultCategories() {
-        return this.hardCodeService.getDefaultCategories();
     }
 
     /**

@@ -32,7 +32,7 @@ class TagService {
                 this.tagsCache = tags;
             } else {
                 // 如果配置文件不存在或格式错误，使用默认标签
-                this.tagsCache = this.getDefaultTags();
+                this.tagsCache = this.hardCodeService.getDefaultTags();
                 // 保存默认标签到配置文件
                 await this.saveTags(this.tagsCache);
             }
@@ -40,7 +40,7 @@ class TagService {
             return this.tagsCache;
         } catch (error) {
             console.error('Error loading tags:', error);
-            this.tagsCache = this.getDefaultTags();
+            this.tagsCache = this.hardCodeService.getDefaultTags();
             return this.tagsCache;
         }
     }
@@ -59,11 +59,11 @@ class TagService {
                     const content = fs.readFileSync(this.tagsPath, 'utf-8');
                     this.tagsCache = JSON.parse(content);
                 } else {
-                    this.tagsCache = this.getDefaultTags();
+                    this.tagsCache = this.hardCodeService.getDefaultTags();
                 }
             } catch (error) {
                 console.error('Error reading tags synchronously:', error);
-                this.tagsCache = this.getDefaultTags();
+                this.tagsCache = this.hardCodeService.getDefaultTags();
             }
         }
         return this.tagsCache;
@@ -106,14 +106,6 @@ class TagService {
             console.error('Error saving tags:', error);
             throw error;
         }
-    }
-
-    /**
-     * 获取默认标签
-     * @returns {Array} 默认标签数组
-     */
-    getDefaultTags() {
-        return this.hardCodeService.getDefaultTags();
     }
 
     /**
