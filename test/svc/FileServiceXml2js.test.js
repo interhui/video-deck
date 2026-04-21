@@ -26,9 +26,9 @@ describe('FileService Xml2js Optimization', () => {
     });
 
     // ========================================================================
-    // _parseMovieNfoXmlAsync 测试 - 使用xml2js的异步解析方法
+    // parseMovieNfo 测试 - 使用xml2js的异步解析方法
     // ========================================================================
-    describe('_parseMovieNfoXmlAsync', () => {
+    describe('parseMovieNfo', () => {
         test('SVC-XML2JS-001: 异步解析简单NFO', async () => {
             const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <movie>
@@ -38,7 +38,7 @@ describe('FileService Xml2js Optimization', () => {
     <director>Test Director</director>
 </movie>`;
 
-            const result = await service._parseMovieNfoXmlAsync(xml);
+            const result = await service.parseMovieNfo(xml);
 
             expect(result.id).toBe('test-async-id');
             expect(result.title).toBe('Async Test Movie');
@@ -55,7 +55,7 @@ describe('FileService Xml2js Optimization', () => {
     <tag>drama</tag>
 </movie>`;
 
-            const result = await service._parseMovieNfoXmlAsync(xml);
+            const result = await service.parseMovieNfo(xml);
 
             expect(result.tag).toEqual(['sci-fi', 'adventure', 'drama']);
         });
@@ -67,7 +67,7 @@ describe('FileService Xml2js Optimization', () => {
     <actor><name>Actor 1</name><name>Actor 2</name></actor>
 </movie>`;
 
-            const result = await service._parseMovieNfoXmlAsync(xml);
+            const result = await service.parseMovieNfo(xml);
 
             expect(result.actors).toEqual(['Actor 1', 'Actor 2']);
         });
@@ -93,7 +93,7 @@ describe('FileService Xml2js Optimization', () => {
     </actor>
 </movie>`;
 
-            const result = await service._parseMovieNfoXmlAsync(xml);
+            const result = await service.parseMovieNfo(xml);
 
             expect(result.actors).toEqual(['Louis Jourdan', 'Kristina Wayborn']);
             expect(result.actors.length).toBe(2);
@@ -110,7 +110,7 @@ describe('FileService Xml2js Optimization', () => {
     </actor>
 </movie>`;
 
-            const result = await service._parseMovieNfoXmlAsync(xml);
+            const result = await service.parseMovieNfo(xml);
 
             expect(result.actors).toEqual(['Louis Jourdan', 'Kristina Wayborn']);
             expect(result.actors.length).toBe(2);
@@ -130,7 +130,7 @@ describe('FileService Xml2js Optimization', () => {
     </actor>
 </movie>`;
 
-            const result = await service._parseMovieNfoXmlAsync(xml);
+            const result = await service.parseMovieNfo(xml);
 
             expect(result.actors).toEqual(['Louis Jourdan', 'Kristina Wayborn', '另一位演员']);
             expect(result.actors.length).toBe(3);
@@ -153,7 +153,7 @@ describe('FileService Xml2js Optimization', () => {
     </fileinfo>
 </movie>`;
 
-            const result = await service._parseMovieNfoXmlAsync(xml);
+            const result = await service.parseMovieNfo(xml);
 
             expect(result.videoCodec).toBe('H265');
             expect(result.videoWidth).toBe('3840');
@@ -182,7 +182,7 @@ describe('FileService Xml2js Optimization', () => {
     </fileset>
 </movie>`;
 
-            const result = await service._parseMovieNfoXmlAsync(xml);
+            const result = await service.parseMovieNfo(xml);
 
             expect(result.fileset).toBeDefined();
             expect(result.fileset.length).toBe(2);
@@ -196,7 +196,7 @@ describe('FileService Xml2js Optimization', () => {
         test('SVC-XML2JS-006: 异步解析处理缺失字段', async () => {
             const xml = `<?xml version="1.0"?><movie><title>Only Title</title></movie>`;
 
-            const result = await service._parseMovieNfoXmlAsync(xml);
+            const result = await service.parseMovieNfo(xml);
 
             expect(result.title).toBe('Only Title');
             expect(result.id).toBeUndefined();
@@ -208,7 +208,7 @@ describe('FileService Xml2js Optimization', () => {
         test('SVC-XML2JS-007: 异步解析处理空movie节点', async () => {
             const xml = `<?xml version="1.0"?><movie></movie>`;
 
-            const result = await service._parseMovieNfoXmlAsync(xml);
+            const result = await service.parseMovieNfo(xml);
 
             expect(result).toEqual({});
         });
@@ -228,7 +228,7 @@ describe('FileService Xml2js Optimization', () => {
     <description>This is a description</description>
 </movie>`;
 
-            const result = await service._parseMovieNfoXmlAsync(xml);
+            const result = await service.parseMovieNfo(xml);
 
             expect(result.id).toBe('full-test-id');
             expect(result.title).toBe('Full Test');
@@ -464,13 +464,11 @@ describe('FileService Xml2js Optimization', () => {
 </movie>`;
 
             // 解析
-            const parsed = await service._parseMovieNfoXmlAsync(originalXml);
+            const parsed = await service.parseMovieNfo(originalXml);
 
-            // 生成
             const generatedXml = service.generateMovieNfo(parsed);
 
-            // 再次解析
-            const reParsed = await service._parseMovieNfoXmlAsync(generatedXml);
+            const reParsed = await service.parseMovieNfo(generatedXml);
 
             // 验证数据完整性
             expect(reParsed.id).toBe(parsed.id);

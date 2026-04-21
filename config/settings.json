@@ -17,7 +17,8 @@
     "sortOrder": "asc"
   },
   "library": {
-    "moviesDir": "D:\\Develop\\Workspace\\movie-mgt\\movies",
+    "moviesDir": "D:\\git\\movie-mgt\\movies",
+    "actorPhotoDir": "D:\\git\\movie-mgt\\actor",
     "scanOnStartup": true,
     "autoRefresh": false,
     "showHiddenFiles": false,
@@ -25,14 +26,13 @@
   },
   "shortcuts": {
     "openSearch": "Ctrl+F",
-    "focusSearch": "Ctrl+K",
     "launchMovie": "Enter",
     "movieDetails": "Ctrl+D",
     "editMovie": "Ctrl+E",
     "deleteMovie": "Delete",
-    "refreshLibrary": "R",
-    "openSettings": "Ctrl+Comma",
-    "toggleFavorite": "F"
+    "refreshLibrary": "Ctrl+R",
+    "openSettings": "Ctrl+S",
+    "toggleFavorite": "Ctrl+F"
   },
   "notifications": {
     "enableStartup": true,
@@ -44,6 +44,6 @@
     "importPaths": []
   },
   "moviebox": {
-    "movieboxDir": "D:\\Develop\\Workspace\\movie-mgt\\boxes"
+    "movieboxDir": "D:\\git\\movie-mgt\\boxes"
   }
 }

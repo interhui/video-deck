@@ -90,6 +90,39 @@ describe('CLI Category Commands', () => {
 
             expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('"id"'));
         });
+
+        test('CLI-CATEGORY-LIST-003: 空分类列表（边界条件）', async () => {
+            mockCategoryService.loadCategories.mockResolvedValue([]);
+            mockFileService.fileExists.mockReturnValue(false);
+
+            const services = {
+                categoryService: mockCategoryService,
+                fileService: mockFileService,
+                getMoviesDir: () => MOVIES_DIR
+            };
+
+            await categoryCommands.listCategories(services, {});
+
+            expect(consoleLogSpy).toHaveBeenCalled();
+        });
+
+        test('CLI-CATEGORY-LIST-004: 分类列表服务异常处理', async () => {
+            mockCategoryService.loadCategories.mockRejectedValue(new Error('分类列表服务异常'));
+
+            const services = {
+                categoryService: mockCategoryService,
+                fileService: mockFileService,
+                getMoviesDir: () => MOVIES_DIR
+            };
+
+            try {
+                await categoryCommands.listCategories(services, {});
+            } catch (e) {
+                expect(e.message).toContain('分类列表服务异常');
+            }
+
+            expect(consoleErrorSpy).toHaveBeenCalled();
+        });
     });
 
     describe('category show', () => {
@@ -122,6 +155,34 @@ describe('CLI Category Commands', () => {
             await categoryCommands.showCategory(services, 'non-exist');
 
             expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('不存在'));
+        });
+
+        test('CLI-CATEGORY-SHOW-003: 无效分类ID（含特殊字符）', async () => {
+            mockCategoryService.getCategoryById.mockReturnValue(null);
+
+            const services = {
+                categoryService: mockCategoryService
+            };
+
+            await categoryCommands.showCategory(services, '分类-测试@#$');
+
+            expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('不存在'));
+        });
+
+        test('CLI-CATEGORY-SHOW-004: 分类详情服务异常处理', async () => {
+            mockCategoryService.getCategoryById.mockImplementation(() => {
+                throw new Error('分类详情服务异常');
+            });
+
+            const services = {
+                categoryService: mockCategoryService
+            };
+
+            try {
+                await categoryCommands.showCategory(services, 'movie');
+            } catch (e) {
+                expect(e.message).toContain('分类详情服务异常');
+            }
         });
     });
 });

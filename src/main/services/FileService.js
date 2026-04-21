@@ -152,31 +152,14 @@ class FileService {
             }
 
             const content = await fs.readFile(movieNfoPath, 'utf-8');
-            return await this._parseMovieNfoXmlAsync(content);
+            return await this.parseMovieNfo(content);
         } catch (error) {
             console.error('Error reading movie.nfo:', error);
             throw error;
         }
     }
 
-    /**
-     * 使用xml2js异步解析movie.nfo XML内容为JavaScript对象（内部方法）
-     *
-     * @description
-     * 该方法使用xml2js库将NFO XML格式的电影信息解析为结构化的JavaScript对象。
-     * 由于xml2js.parseString是异步回调模式，该方法返回Promise。
-     * 支持解析的字段包括：
-     * - 简单文本字段：id, title, year, outline, sorttitle, runtime, studio, director, original_filename, description
-     * - 标签列表：tag (多个标签以数组形式返回)
-     * - 演员列表：actors (从<actor><name>结构中提取所有演员名)
-     * - 视频信息：videoCodec, videoWidth, videoHeight, videoDuration (从fileinfo中提取)
-     * - 文件集：fileset (包含多个文件的完整信息)
-     *
-     * @private
-     * @param {string} xmlContent - NFO格式的XML内容字符串
-     * @returns {Promise<object>} 解析后的电影数据对象
-     */
-    async _parseMovieNfoXmlAsync(xmlContent) {
+    async parseMovieNfo(xmlContent) {
         /**
          * 将xml2js回调结果转换为Promise
          * @param {string} xml - XML字符串
@@ -228,124 +211,6 @@ class FileService {
 
         // 3.5 解析fileset（关联文件列表）
         movie.fileset = this._extractFileset(movieNode);
-
-        return movie;
-    }
-
-    /**
-     * 解析 movie.nfo XML 内容（同步方法，保持向后兼容）
-     *
-     * @description
-     * 注意：此方法为保持向后兼容性而保留，使用正则表达式进行解析。
-     * 建议使用异步方法 _parseMovieNfoXmlAsync 以获得更好的XML解析支持。
-     *
-     * @param {string} xmlContent - XML内容
-     * @returns {object} 电影数据对象
-     */
-    parseMovieNfo(xmlContent) {
-        const movie = {};
-
-        // 解析简单文本字段
-        const textFields = ['id', 'title', 'year', 'outline', 'sorttitle', 'runtime', 'studio', 'director', 'original_filename', 'description'];
-        for (const field of textFields) {
-            const regex = new RegExp(`<${field}>([^<]*)</${field}>`, 'i');
-            const match = xmlContent.match(regex);
-            if (match) {
-                movie[field] = match[1];
-            }
-        }
-
-        // 解析标签（可能有多个）
-        const tagMatches = xmlContent.match(/<tag>([^<]*)<\/tag>/gi) || [];
-        movie.tag = tagMatches.map(m => {
-            const match = m.match(/<tag>([^<]*)<\/tag>/i);
-            return match ? match[1] : '';
-        }).filter(t => t);
-
-        // 解析演员（可能有多个）- 使用优化的正则表达式
-        const actorMatches = xmlContent.match(/<actor>[\s\S]*?<\/actor>/gi) || [];
-        movie.actors = [];
-        for (const actorBlock of actorMatches) {
-            const nameMatches = actorBlock.match(/<name>([^<]*)<\/name>/gi) || [];
-            for (const nameTag of nameMatches) {
-                const match = nameTag.match(/<name>([^<]*)<\/name>/i);
-                if (match && match[1]) {
-                    movie.actors.push(match[1]);
-                }
-            }
-        }
-
-        // 解析 fileinfo - 包含视频信息
-        const fileinfoMatch = xmlContent.match(/<fileinfo>([\s\S]*?)<\/fileinfo>/i);
-        if (fileinfoMatch) {
-            movie.fileinfo = fileinfoMatch[1];
-
-            // 解析视频信息
-            const videoMatch = fileinfoMatch[1].match(/<video>[\s\S]*?<\/video>/i);
-            if (videoMatch) {
-                const videoContent = videoMatch[0];
-
-                // 解析 codec
-                const codecMatch = videoContent.match(/<codec>([^<]*)<\/codec>/i);
-                if (codecMatch) {
-                    movie.videoCodec = codecMatch[1].toUpperCase();
-                }
-
-                // 解析 width
-                const widthMatch = videoContent.match(/<width>([^<]*)<\/width>/i);
-                if (widthMatch) {
-                    movie.videoWidth = widthMatch[1];
-                }
-
-                // 解析 height
-                const heightMatch = videoContent.match(/<height>([^<]*)<\/height>/i);
-                if (heightMatch) {
-                    movie.videoHeight = heightMatch[1];
-                }
-
-                // 解析 durationinseconds
-                const durationMatch = videoContent.match(/<durationinseconds>([^<]*)<\/durationinseconds>/i);
-                if (durationMatch) {
-                    movie.videoDuration = durationMatch[1];
-                }
-            }
-        }
-
-        // 解析 fileset（关联文件列表）
-        const filesetMatch = xmlContent.match(/<fileset>([\s\S]*?)<\/fileset>/i);
-        if (filesetMatch) {
-            const filesetContent = filesetMatch[1];
-            const fileMatches = filesetContent.match(/<file>[\s\S]*?<\/file>/gi) || [];
-            movie.fileset = [];
-            for (const fileBlock of fileMatches) {
-                const file = {};
-                // 解析 filename
-                const filenameMatch = fileBlock.match(/<filename>([^<]*)<\/filename>/i);
-                if (filenameMatch) file.filename = filenameMatch[1];
-                // 解析 fullpath
-                const fullpathMatch = fileBlock.match(/<fullpath>([^<]*)<\/fullpath>/i);
-                if (fullpathMatch) file.fullpath = fullpathMatch[1];
-                // 解析 type
-                const typeMatch = fileBlock.match(/<type>([^<]*)<\/type>/i);
-                if (typeMatch) file.type = typeMatch[1];
-                // 解析 videocodec
-                const videocodecMatch = fileBlock.match(/<videocodec>([^<]*)<\/videocodec>/i);
-                if (videocodecMatch) file.videoCodec = videocodecMatch[1].toUpperCase();
-                // 解析 videowidth
-                const videowidthMatch = fileBlock.match(/<videowidth>([^<]*)<\/videowidth>/i);
-                if (videowidthMatch) file.videoWidth = videowidthMatch[1];
-                // 解析 videoheight
-                const videoheightMatch = fileBlock.match(/<videoheight>([^<]*)<\/videoheight>/i);
-                if (videoheightMatch) file.videoHeight = videoheightMatch[1];
-                // 解析 videoduration
-                const videodurationMatch = fileBlock.match(/<videoduration>([^<]*)<\/videoduration>/i);
-                if (videodurationMatch) file.videoDuration = videodurationMatch[1];
-                // 解析 memo
-                const memoMatch = fileBlock.match(/<memo>([^<]*)<\/memo>/i);
-                if (memoMatch) file.memo = memoMatch[1];
-                movie.fileset.push(file);
-            }
-        }
 
         return movie;
     }
@@ -895,21 +760,6 @@ class FileService {
     }
 
     /**
-     * XML转义
-     * @param {string} str - 原始字符串
-     * @returns {string} 转义后的字符串
-     */
-    escapeXml(str) {
-        if (!str) return '';
-        return str
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&apos;');
-    }
-
-    /**
      * 检查文件是否存在
      * @param {string} filePath - 文件路径
      * @returns {Promise<boolean>} 是否存在
@@ -1183,31 +1033,6 @@ class FileService {
             return folders;
         } catch (error) {
             console.error('Error scanning directory for movies:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * 从文本文件读取电影名称（每行一个）
-     * @param {string} filePath - 文本文件路径
-     * @returns {Promise<string[]>} 电影名称数组
-     */
-    async readMovieNamesFromFile(filePath) {
-        try {
-            const exists = await this.fileExists(filePath);
-            if (!exists) {
-                return [];
-            }
-
-            const content = await fs.readFile(filePath, 'utf-8');
-            // 按行分割并过滤空行
-            const names = content.split(/\r?\n/)
-                .map(line => line.trim())
-                .filter(line => line.length > 0);
-
-            return names;
-        } catch (error) {
-            console.error('Error reading movie names from file:', error);
             throw error;
         }
     }

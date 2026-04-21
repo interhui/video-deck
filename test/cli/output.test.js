@@ -5,7 +5,11 @@
 const {
     formatRating,
     formatStatus,
-    formatPlayTime
+    formatPlayTime,
+    outputMovieList,
+    outputTagList,
+    outputCategoryList,
+    outputBoxList
 } = require('../../src/cli/utils/output');
 
 describe('CLI Output Utils', () => {
@@ -25,6 +29,10 @@ describe('CLI Output Utils', () => {
         test('CLI-OUTPUT-RATING-004: 空值应返回"-"', () => {
             expect(formatRating(null)).toBe('-');
             expect(formatRating(undefined)).toBe('-');
+        });
+
+        test('CLI-OUTPUT-RATING-005: 小数评分（如 3.5）', () => {
+            expect(formatRating(3.5)).toBe('★★★☆');
         });
     });
 
@@ -59,6 +67,82 @@ describe('CLI Output Utils', () => {
 
         test('CLI-OUTPUT-PLAYTIME-003: 小时级应正确格式化', () => {
             expect(formatPlayTime(125)).toBe('2小时 5分钟');
+        });
+
+        test('CLI-OUTPUT-PLAYTIME-004: 超大播放时间', () => {
+            expect(formatPlayTime(10080)).toBe('168小时 0分钟');
+        });
+    });
+
+    describe('outputMovieList', () => {
+        test('CLI-OUTPUT-MOVIELIST-001: 空电影列表输出', () => {
+            const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+            outputMovieList([]);
+            expect(consoleSpy).toHaveBeenCalled();
+            consoleSpy.mockRestore();
+        });
+
+        test('CLI-OUTPUT-MOVIELIST-002: 有电影列表输出', () => {
+            const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+            outputMovieList([
+                { id: 'movie-test1', name: 'Test Movie', category: 'movie', userRating: 5, status: 'unwatched' }
+            ]);
+            expect(consoleSpy).toHaveBeenCalled();
+            consoleSpy.mockRestore();
+        });
+    });
+
+    describe('outputTagList', () => {
+        test('CLI-OUTPUT-TAGLIST-001: 空标签列表输出', () => {
+            const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+            outputTagList([]);
+            expect(consoleSpy).toHaveBeenCalled();
+            consoleSpy.mockRestore();
+        });
+
+        test('CLI-OUTPUT-TAGLIST-002: 有标签列表输出', () => {
+            const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+            outputTagList([
+                { id: 'action', name: '动作', movieCount: 5 }
+            ]);
+            expect(consoleSpy).toHaveBeenCalled();
+            consoleSpy.mockRestore();
+        });
+    });
+
+    describe('outputCategoryList', () => {
+        test('CLI-OUTPUT-CATEGORYLIST-001: 空分类列表输出', () => {
+            const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+            outputCategoryList([]);
+            expect(consoleSpy).toHaveBeenCalled();
+            consoleSpy.mockRestore();
+        });
+
+        test('CLI-OUTPUT-CATEGORYLIST-002: 有分类列表输出', () => {
+            const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+            outputCategoryList([
+                { id: 'movie', name: '电影', movieCount: 10 }
+            ]);
+            expect(consoleSpy).toHaveBeenCalled();
+            consoleSpy.mockRestore();
+        });
+    });
+
+    describe('outputBoxList', () => {
+        test('CLI-OUTPUT-BOXLIST-001: 空盒子列表输出', () => {
+            const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+            outputBoxList([]);
+            expect(consoleSpy).toHaveBeenCalled();
+            consoleSpy.mockRestore();
+        });
+
+        test('CLI-OUTPUT-BOXLIST-002: 有盒子列表输出', () => {
+            const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+            outputBoxList([
+                { name: 'Test Box', description: 'Test', movieCount: 2 }
+            ]);
+            expect(consoleSpy).toHaveBeenCalled();
+            consoleSpy.mockRestore();
         });
     });
 });

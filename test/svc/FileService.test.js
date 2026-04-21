@@ -134,92 +134,6 @@ describe('FileService', () => {
         });
     });
 
-    describe('parseMovieNfo', () => {
-        test('SVC-FILE-013: 解析所有字段', () => {
-            const xml = `<?xml version="1.0"?>
-<movie>
-    <id>test-id</id>
-    <title>Test Movie</title>
-    <year>2024</year>
-    <outline>Test outline</outline>
-    <director>Director</director>
-</movie>`;
-            const result = service.parseMovieNfo(xml);
-            expect(result.id).toBe('test-id');
-            expect(result.title).toBe('Test Movie');
-            expect(result.year).toBe('2024');
-        });
-
-        test('SVC-FILE-014: 处理缺失字段', () => {
-            const xml = `<?xml version="1.0"?><movie><title>Only Title</title></movie>`;
-            const result = service.parseMovieNfo(xml);
-            expect(result.title).toBe('Only Title');
-            expect(result.director).toBeUndefined();
-        });
-
-        test('SVC-FILE-015: 解析多个标签', () => {
-            const xml = `<?xml version="1.0"?><movie><tag>action</tag><tag>drama</tag><tag>comedy</tag></movie>`;
-            const result = service.parseMovieNfo(xml);
-            expect(result.tag).toEqual(['action', 'drama', 'comedy']);
-        });
-
-        test('SVC-FILE-016: 解析多个演员', () => {
-            const xml = `<?xml version="1.0"?><movie>
-                <actor><name>Actor 1</name></actor>
-                <actor><name>Actor 2</name></actor>
-            </movie>`;
-            const result = service.parseMovieNfo(xml);
-            expect(result.actors).toEqual(['Actor 1', 'Actor 2']);
-        });
-
-        test('SVC-FILE-021: 解析完整fileinfo视频信息', () => {
-            const xml = `<?xml version="1.0"?>
-<movie>
-    <id>video-parse-test</id>
-    <title>Video Parse Test</title>
-    <fileinfo>
-        <streamdetails>
-            <video>
-                <codec>h264</codec>
-                <width>1920</width>
-                <height>1080</height>
-                <durationinseconds>7200</durationinseconds>
-            </video>
-        </streamdetails>
-    </fileinfo>
-</movie>`;
-            const result = service.parseMovieNfo(xml);
-            expect(result.id).toBe('video-parse-test');
-            expect(result.title).toBe('Video Parse Test');
-            expect(result.videoCodec).toBe('H264');
-            expect(result.videoWidth).toBe('1920');
-            expect(result.videoHeight).toBe('1080');
-            expect(result.videoDuration).toBe('7200');
-        });
-
-        test('SVC-FILE-022: 解析部分fileinfo视频信息', () => {
-            const xml = `<?xml version="1.0"?>
-<movie>
-    <id>partial-parse-test</id>
-    <title>Partial Parse Test</title>
-    <fileinfo>
-        <streamdetails>
-            <video>
-                <codec>H265</codec>
-                <width>3840</width>
-                <height>2160</height>
-            </video>
-        </streamdetails>
-    </fileinfo>
-</movie>`;
-            const result = service.parseMovieNfo(xml);
-            expect(result.videoCodec).toBe('H265');
-            expect(result.videoWidth).toBe('3840');
-            expect(result.videoHeight).toBe('2160');
-            expect(result.videoDuration).toBeUndefined();
-        });
-    });
-
     describe('generateMovieNfo', () => {
         test('SVC-FILE-017: 生成完整XML', () => {
             const data = {
@@ -446,27 +360,6 @@ describe('FileService', () => {
             const result = await service.scanDirectoryForMovies(testDataDir);
             expect(result).toContain('movie1');
             expect(result).toContain('movie2');
-        });
-    });
-
-    describe('readMovieNamesFromFile', () => {
-        test('SVC-FILE-044: 返回电影名数组', async () => {
-            const filePath = path.join(testDataDir, 'movies.txt');
-            fs.writeFileSync(filePath, 'Movie 1\nMovie 2\nMovie 3');
-            const result = await service.readMovieNamesFromFile(filePath);
-            expect(result).toEqual(['Movie 1', 'Movie 2', 'Movie 3']);
-        });
-
-        test('SVC-FILE-045: 过滤空行', async () => {
-            const filePath = path.join(testDataDir, 'movies.txt');
-            fs.writeFileSync(filePath, 'Movie 1\n\nMovie 2\n');
-            const result = await service.readMovieNamesFromFile(filePath);
-            expect(result).toEqual(['Movie 1', 'Movie 2']);
-        });
-
-        test('SVC-FILE-046: 文件不存在返回空', async () => {
-            const result = await service.readMovieNamesFromFile(path.join(testDataDir, 'notexists.txt'));
-            expect(result).toEqual([]);
         });
     });
 

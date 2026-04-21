@@ -71,6 +71,34 @@ describe('CLI Config Commands', () => {
 
             expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('"library"'));
         });
+
+        test('CLI-CONFIG-SHOW-003: 配置为空对象（边界条件）', async () => {
+            mockSettingsService.getSettings.mockReturnValue({});
+
+            const services = {
+                settingsService: mockSettingsService
+            };
+
+            await configCommands.showConfig(services, {});
+
+            expect(consoleLogSpy).toHaveBeenCalled();
+        });
+
+        test('CLI-CONFIG-SHOW-004: 获取配置服务异常处理', async () => {
+            mockSettingsService.getSettings.mockImplementation(() => {
+                throw new Error('获取配置服务异常');
+            });
+
+            const services = {
+                settingsService: mockSettingsService
+            };
+
+            try {
+                await configCommands.showConfig(services, {});
+            } catch (e) {
+                expect(e.message).toContain('获取配置服务异常');
+            }
+        });
     });
 
     describe('config get', () => {
@@ -114,6 +142,36 @@ describe('CLI Config Commands', () => {
             await configCommands.getConfig(services, 'nonExist');
 
             expect(consoleLogSpy).toHaveBeenCalledWith('');
+        });
+
+        test('CLI-CONFIG-GET-004: 获取嵌套键值', async () => {
+            mockSettingsService.getSettings.mockReturnValue({
+                library: { moviesDir: '/path/to/movies', scanOnStartup: true }
+            });
+
+            const services = {
+                settingsService: mockSettingsService
+            };
+
+            await configCommands.getConfig(services, 'library.moviesDir');
+
+            expect(consoleLogSpy).toHaveBeenCalled();
+        });
+
+        test('CLI-CONFIG-GET-005: 获取配置服务异常处理', async () => {
+            mockSettingsService.getSettings.mockImplementation(() => {
+                throw new Error('获取配置服务异常');
+            });
+
+            const services = {
+                settingsService: mockSettingsService
+            };
+
+            try {
+                await configCommands.getConfig(services, 'theme');
+            } catch (e) {
+                expect(e.message).toContain('获取配置服务异常');
+            }
         });
     });
 
@@ -163,6 +221,53 @@ describe('CLI Config Commands', () => {
 
             expect(mockSettingsService.saveSettings).toHaveBeenCalled();
         });
+
+        test('CLI-CONFIG-SET-004: 设置无效键名', async () => {
+            mockSettingsService.getSettings.mockReturnValue({});
+            mockSettingsService.saveSettings.mockReturnValue();
+
+            const services = {
+                settingsService: mockSettingsService
+            };
+
+            await configCommands.setConfig(services, 'invalidKey', 'value');
+
+            expect(mockSettingsService.saveSettings).toHaveBeenCalled();
+        });
+
+        test('CLI-CONFIG-SET-005: 设置空值', async () => {
+            mockSettingsService.getSettings.mockReturnValue({
+                appearance: { theme: 'dark' }
+            });
+            mockSettingsService.saveSettings.mockReturnValue();
+
+            const services = {
+                settingsService: mockSettingsService
+            };
+
+            await configCommands.setConfig(services, 'theme', '');
+
+            expect(mockSettingsService.saveSettings).toHaveBeenCalled();
+        });
+
+        test('CLI-CONFIG-SET-006: 设置配置服务异常处理', async () => {
+            mockSettingsService.getSettings.mockReturnValue({
+                appearance: { theme: 'dark' }
+            });
+            mockSettingsService.saveSettings.mockImplementation(() => {
+                throw new Error('设置配置服务异常');
+            });
+
+            const services = {
+                settingsService: mockSettingsService
+            };
+
+            try {
+                await configCommands.setConfig(services, 'theme', 'light');
+            } catch (e) {
+                expect(e.message).toContain('设置配置服务异常');
+            }
+        });
     });
 
     describe('config reset', () => {
@@ -177,6 +282,22 @@ describe('CLI Config Commands', () => {
 
             expect(mockSettingsService.resetToDefaults).toHaveBeenCalled();
             expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('已重置'));
+        });
+
+        test('CLI-CONFIG-RESET-002: 重置配置服务异常处理', async () => {
+            mockSettingsService.resetToDefaults.mockImplementation(() => {
+                throw new Error('重置配置服务异常');
+            });
+
+            const services = {
+                settingsService: mockSettingsService
+            };
+
+            try {
+                await configCommands.resetConfig(services);
+            } catch (e) {
+                expect(e.message).toContain('重置配置服务异常');
+            }
         });
     });
 });

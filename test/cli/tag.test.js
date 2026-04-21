@@ -87,6 +87,39 @@ describe('CLI Tag Commands', () => {
 
             expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('"id"'));
         });
+
+        test('CLI-TAG-LIST-003: 空标签列表（边界条件）', async () => {
+            mockTagService.loadTags.mockResolvedValue([]);
+            mockMovieService.searchMovies.mockResolvedValue([]);
+
+            const services = {
+                tagService: mockTagService,
+                movieService: mockMovieService,
+                getMoviesDir: () => MOVIES_DIR
+            };
+
+            await tagCommands.listTags(services, {});
+
+            expect(consoleLogSpy).toHaveBeenCalled();
+        });
+
+        test('CLI-TAG-LIST-004: 标签列表服务异常处理', async () => {
+            mockTagService.loadTags.mockRejectedValue(new Error('标签列表服务异常'));
+
+            const services = {
+                tagService: mockTagService,
+                movieService: mockMovieService,
+                getMoviesDir: () => MOVIES_DIR
+            };
+
+            try {
+                await tagCommands.listTags(services, {});
+            } catch (e) {
+                expect(e.message).toContain('标签列表服务异常');
+            }
+
+            expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('失败'));
+        });
     });
 
     describe('tag create', () => {
@@ -103,6 +136,9 @@ describe('CLI Tag Commands', () => {
             await tagCommands.createTag(services, 'newtag', '新标签');
 
             expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('成功'));
+            expect(mockTagService.saveTags).toHaveBeenCalledWith(expect.arrayContaining([
+                expect.objectContaining({ id: 'newtag', name: '新标签' })
+            ]));
         });
 
         test('CLI-TAG-CREATE-002: 创建已存在的标签', async () => {
@@ -117,6 +153,77 @@ describe('CLI Tag Commands', () => {
             await tagCommands.createTag(services, 'action', '动作');
 
             expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('已存在'));
+        });
+
+        test('CLI-TAG-CREATE-003: 空标签ID（边界条件）', async () => {
+            mockTagService.loadTags.mockResolvedValue([]);
+
+            const services = {
+                tagService: mockTagService
+            };
+
+            await tagCommands.createTag(services, '', '空ID标签');
+
+            expect(mockTagService.loadTags).toHaveBeenCalled();
+        });
+
+        test('CLI-TAG-CREATE-004: 空标签名称（边界条件）', async () => {
+            mockTagService.loadTags.mockResolvedValue([]);
+            mockTagService.saveTags.mockResolvedValue();
+
+            const services = {
+                tagService: mockTagService
+            };
+
+            await tagCommands.createTag(services, 'emptyname', '');
+
+            expect(mockTagService.saveTags).toHaveBeenCalled();
+        });
+
+        test('CLI-TAG-CREATE-005: 标签ID含特殊字符', async () => {
+            mockTagService.loadTags.mockResolvedValue([]);
+            mockTagService.saveTags.mockResolvedValue();
+
+            const services = {
+                tagService: mockTagService
+            };
+
+            await tagCommands.createTag(services, 'tag-测试@#', '特殊字符标签');
+
+            expect(mockTagService.saveTags).toHaveBeenCalledWith(expect.arrayContaining([
+                expect.objectContaining({ id: 'tag-测试@#', name: '特殊字符标签' })
+            ]));
+        });
+
+        test('CLI-TAG-CREATE-006: 超长标签名称', async () => {
+            const longName = '超长标签名称'.repeat(20);
+            mockTagService.loadTags.mockResolvedValue([]);
+            mockTagService.saveTags.mockResolvedValue();
+
+            const services = {
+                tagService: mockTagService
+            };
+
+            await tagCommands.createTag(services, 'longtag', longName);
+
+            expect(mockTagService.saveTags).toHaveBeenCalled();
+        });
+
+        test('CLI-TAG-CREATE-007: 创建服务异常处理', async () => {
+            mockTagService.loadTags.mockResolvedValue([]);
+            mockTagService.saveTags.mockRejectedValue(new Error('创建标签服务异常'));
+
+            const services = {
+                tagService: mockTagService
+            };
+
+            try {
+                await tagCommands.createTag(services, 'newtag', '新标签');
+            } catch (e) {
+                expect(e.message).toContain('创建标签服务异常');
+            }
+
+            expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('失败'));
         });
     });
 
@@ -135,6 +242,9 @@ describe('CLI Tag Commands', () => {
             await tagCommands.deleteTag(services, 'action');
 
             expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('已删除'));
+            expect(mockTagService.saveTags).toHaveBeenCalledWith([
+                { id: 'comedy', name: '喜剧' }
+            ]);
         });
 
         test('CLI-TAG-DELETE-002: 删除不存在的标签', async () => {
@@ -149,6 +259,25 @@ describe('CLI Tag Commands', () => {
             await tagCommands.deleteTag(services, 'non-exist');
 
             expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('不存在'));
+        });
+
+        test('CLI-TAG-DELETE-003: 删除服务异常处理', async () => {
+            mockTagService.loadTags.mockResolvedValue([
+                { id: 'action', name: '动作' }
+            ]);
+            mockTagService.saveTags.mockRejectedValue(new Error('删除标签服务异常'));
+
+            const services = {
+                tagService: mockTagService
+            };
+
+            try {
+                await tagCommands.deleteTag(services, 'action');
+            } catch (e) {
+                expect(e.message).toContain('删除标签服务异常');
+            }
+
+            expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('失败'));
         });
     });
 });

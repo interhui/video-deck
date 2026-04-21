@@ -33,6 +33,16 @@ describe('CLI Validation Utils', () => {
         test('CLI-VALIDATE-MOVIEID-005: null值应返回false', () => {
             expect(validateMovieId(null)).toBe(false);
         });
+
+        test('CLI-VALIDATE-MOVIEID-006: ID含特殊字符（如中文）', () => {
+            expect(validateMovieId('movie-test-中文')).toBe(true);
+            expect(validateMovieId('movie-test_name')).toBe(true);
+        });
+
+        test('CLI-VALIDATE-MOVIEID-007: 超长ID', () => {
+            const longId = 'movie-' + 'a'.repeat(300);
+            expect(validateMovieId(longId)).toBe(true);
+        });
     });
 
     describe('validateCategory', () => {
@@ -72,6 +82,16 @@ describe('CLI Validation Utils', () => {
 
         test('CLI-VALIDATE-RATING-006: 字符串数字应返回true', () => {
             expect(validateRating('3')).toBe(true);
+        });
+
+        test('CLI-VALIDATE-RATING-007: 小数评分（如 3.5）', () => {
+            expect(validateRating(3.5)).toBe(true);
+            expect(validateRating('3.5')).toBe(true);
+        });
+
+        test('CLI-VALIDATE-RATING-008: 非数字评分（如 "abc"）', () => {
+            expect(validateRating('abc')).toBe(false);
+            expect(validateRating(undefined)).toBe(false);
         });
     });
 
@@ -169,6 +189,10 @@ describe('CLI Validation Utils', () => {
 
         test('CLI-VALIDATE-PARSETAGS-005: null值应返回空数组', () => {
             expect(parseTags(null)).toEqual([]);
+        });
+
+        test('CLI-VALIDATE-PARSETAGS-006: 标签含特殊字符', () => {
+            expect(parseTags('tag-测试, tag@special')).toEqual(['tag-测试', 'tag@special']);
         });
     });
 });

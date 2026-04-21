@@ -129,6 +129,64 @@ describe('CLI Import Commands', () => {
 
             expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('失败'));
         });
+
+        test('CLI-IMPORT-JSON-006: 导入空文件', async () => {
+            const emptyFile = path.join(TEST_DATA_DIR, 'empty-import.json');
+            fs.writeFileSync(emptyFile, '', 'utf8');
+
+            mockCategoryService.loadCategories.mockResolvedValue([
+                { id: 'movie', name: '电影' }
+            ]);
+
+            const services = {
+                movieService: mockMovieService,
+                categoryService: mockCategoryService,
+                getMoviesDir: () => MOVIES_DIR
+            };
+
+            await importCommands.importJson(services, emptyFile, {});
+
+            expect(consoleErrorSpy).toHaveBeenCalled();
+
+            fs.unlinkSync(emptyFile);
+        });
+
+        test('CLI-IMPORT-JSON-008: 导入部分成功/部分失败的情况', async () => {
+            const importFile = path.join(TEST_DATA_DIR, 'import-movies.json');
+            mockCategoryService.loadCategories.mockResolvedValue([
+                { id: 'movie', name: '电影' }
+            ]);
+            mockMovieService.batchImportMovies.mockResolvedValue({ success: 1, failed: 1, errors: ['电影2失败'] });
+
+            const services = {
+                movieService: mockMovieService,
+                categoryService: mockCategoryService,
+                getMoviesDir: () => MOVIES_DIR
+            };
+
+            await importCommands.importJson(services, importFile, {});
+
+            expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('成功'));
+            expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('失败'));
+        });
+
+        test('CLI-IMPORT-JSON-009: 导入无效分类ID', async () => {
+            const importFile = path.join(TEST_DATA_DIR, 'import-movies.json');
+            mockCategoryService.loadCategories.mockResolvedValue([
+                { id: 'movie', name: '电影' }
+            ]);
+            mockMovieService.batchImportMovies.mockResolvedValue({ success: 0, failed: 1, errors: ['分类不存在'] });
+
+            const services = {
+                movieService: mockMovieService,
+                categoryService: mockCategoryService,
+                getMoviesDir: () => MOVIES_DIR
+            };
+
+            await importCommands.importJson(services, importFile, {});
+
+            expect(mockMovieService.batchImportMovies).toHaveBeenCalled();
+        });
     });
 
     describe('import template', () => {
