@@ -1003,7 +1003,6 @@ function sortMovies(movies, sortBy = 'name', sortOrder = 'asc') {
  */
 function getStatusText(status) {
     const statusMap = {
-        'unwanted': '未看',
         'unwatched': '未看',
         'watching': '观看中',
         'completed': '已完成'

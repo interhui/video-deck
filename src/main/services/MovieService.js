@@ -42,14 +42,6 @@ class MovieService {
     }
 
     /**
-     * 检查缓存是否已初始化
-     * @returns {boolean}
-     */
-    isCacheInitialized() {
-        return this.cacheService.isCacheInitialized();
-    }
-
-    /**
      * 刷新电影库缓存
      * @param {string} moviesDir - 电影目录
      * @param {Function} onProgress - 进度回调 (current, total, movieName) => void

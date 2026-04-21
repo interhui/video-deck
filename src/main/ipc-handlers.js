@@ -351,7 +351,7 @@ function setupIpcHandlers(services) {
     // 获取缓存状态
     ipcMain.handle('get-cache-status', async () => {
         try {
-            const isInitialized = movieService.isCacheInitialized();
+            const isInitialized = movieCacheService.isCacheInitialized();
             const cacheInfo = movieCacheService.getCacheInfo();
             return { isInitialized, cacheInfo };
         } catch (error) {
@@ -709,7 +709,7 @@ function setupIpcHandlers(services) {
             await indexService.updateMovieIndex(updatedMovie, category, moviesDir);
 
             // 更新缓存
-            if (movieService.isCacheInitialized()) {
+            if (movieCacheService.isCacheInitialized()) {
                 movieCacheService.updateMovieInCache(updatedMovie);
             }
 
@@ -784,7 +784,7 @@ function setupIpcHandlers(services) {
             await fileService.deleteDir(movieFolderPath);
 
             // 从缓存中移除
-            if (movieService.isCacheInitialized()) {
+            if (movieCacheService.isCacheInitialized()) {
                 movieCacheService.removeMovieFromCache(movieId);
             }
 
