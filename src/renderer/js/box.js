@@ -123,7 +123,9 @@ async function init() {
     elements.boxTitle.textContent = state.boxName;
 
     // 加载主题设置
-    await loadTheme();
+    await loadTheme({
+        onLayoutLoaded: applyLayoutSettings
+    });
 
     // 加载分类缓存
     await loadCategories();
@@ -200,23 +202,6 @@ function initSplitter() {
             document.body.style.userSelect = '';
         }
     });
-}
-
-/**
- * 加载主题设置
- */
-async function loadTheme() {
-    try {
-        const settings = await window.electronAPI.getSettings();
-        if (settings && settings.appearance) {
-            applyTheme(settings.appearance.theme);
-        }
-        if (settings && settings.layout) {
-            applyLayoutSettings(settings.layout);
-        }
-    } catch (error) {
-        console.error('Error loading theme:', error);
-    }
 }
 
 /**
@@ -996,29 +981,6 @@ function sortMovies(movies, sortBy = 'name', sortOrder = 'asc') {
     });
 
     return sorted;
-}
-
-/**
- * 获取状态文本
- */
-function getStatusText(status) {
-    const statusMap = {
-        'unwatched': '未看',
-        'watching': '观看中',
-        'completed': '已完成'
-    };
-    return statusMap[status] || status;
-}
-
-/**
- * 格式化观看时长
- */
-function formatPlaytime(minutes) {
-    if (!minutes || minutes === 0) return '-';
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    if (hours === 0) return `${mins}分钟`;
-    return `${hours}小时${mins > 0 ? mins + '分钟' : ''}`;
 }
 
 /**

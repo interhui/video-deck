@@ -138,9 +138,7 @@ class DatabaseService {
                 totalMovies: movies.length,
                 playedMovies: movies.filter(m => m.status === 'completed').length,
                 playingMovies: movies.filter(m => m.status === 'watching').length,
-                unwatchedMovies: movies.filter(m => m.status === 'unwatched').length,
-                totalHours: (movies.reduce((sum, m) => sum + (m.totalPlayTime || 0), 0) / 60).toFixed(1),
-                avgRating: this.calculateAverageRating(movies)
+                unwatchedMovies: movies.filter(m => m.status === 'unwatched').length
             };
     
             return stats;
@@ -150,15 +148,7 @@ class DatabaseService {
         }
     }
 
-    /**
-     * 计算平均评分
-     */
-    calculateAverageRating(movies) {
-        const ratedMovies = movies.filter(m => m.userRating && m.userRating > 0);
-        if (ratedMovies.length === 0) return 0;
-        const sum = ratedMovies.reduce((acc, m) => acc + m.userRating, 0);
-        return (sum / ratedMovies.length).toFixed(1);
-    }
+
 
     /**
      * 更新电影时长

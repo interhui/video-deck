@@ -57,18 +57,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentFavorite = false;
     let currentRatingModalActor = null;
 
-    // 加载主题
-    async function loadTheme() {
-        try {
-            const settings = await window.electronAPI.getSettings();
-            if (settings && settings.appearance) {
-                applyTheme(settings.appearance.theme);
-            }
-        } catch (error) {
-            console.error('Error loading theme:', error);
-        }
-    }
-
     // 关闭窗口
     closeBtn.addEventListener('click', () => {
         window.close();
@@ -142,17 +130,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 绑定点击事件
         actorCards.querySelectorAll('.actor-card').forEach(card => {
             card.addEventListener('click', () => editActor(card.dataset.name));
-        });
-    }
-
-    // 格式化生日显示
-    function formatBirthday(birthday) {
-        if (!birthday) return '';
-        const date = new Date(birthday);
-        return date.toLocaleDateString('zh-CN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
         });
     }
 

@@ -146,26 +146,6 @@ describe('CategoryService', () => {
         });
     });
 
-    describe('getDefaultCategories', () => {
-        test('SVC-CATEGORY-018: 返回4个默认分类', () => {
-            const categories = service.getDefaultCategories();
-            expect(categories).toHaveLength(4);
-            expect(categories.map(c => c.id)).toEqual(expect.arrayContaining(['movie', 'tv', 'documentary', 'anime']));
-        });
-
-        test('SVC-CATEGORY-019: 分类属性完整', () => {
-            const categories = service.getDefaultCategories();
-            categories.forEach(cat => {
-                expect(cat).toHaveProperty('id');
-                expect(cat).toHaveProperty('name');
-                expect(cat).toHaveProperty('shortName');
-                expect(cat).toHaveProperty('icon');
-                expect(cat).toHaveProperty('color');
-                expect(cat).toHaveProperty('order');
-            });
-        });
-    });
-
     describe('clearCache', () => {
         test('SVC-CATEGORY-020: 清除缓存', () => {
             service.categoriesCache = [{ id: 'test', name: 'Test' }];

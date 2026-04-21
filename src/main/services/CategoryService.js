@@ -128,9 +128,7 @@ class CategoryService {
     async saveCategories(categories) {
         try {
             const config = {
-                categories: categories,
-                predefinedTags: [],
-                customTags: []
+                categories: categories
             };
             await this.fileService.writeJson(this.categoryConfigPath, config);
             this.categoriesCache = categories;

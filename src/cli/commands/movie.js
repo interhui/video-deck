@@ -264,8 +264,8 @@ async function deleteMovie(services, movieId, options = {}) {
         await fileService.deleteDir(movie.path);
 
         // Remove from cache and index
-        if (movieCacheService.isCacheInitialized()) {
-            const { movieCacheService, indexService } = services;
+        const { movieCacheService, indexService } = services;
+        if (movieCacheService && movieCacheService.isCacheInitialized()) {
             movieCacheService.removeMovieFromCache(movieId);
             await indexService.deleteMovieFromIndex(movieId, movie.category, moviesDir);
         }

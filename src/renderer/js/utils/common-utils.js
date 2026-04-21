@@ -78,6 +78,9 @@ async function loadTheme(options = {}) {
         if (options.onThemeLoaded) {
             options.onThemeLoaded(settings);
         }
+        if (options.onLayoutLoaded && settings && settings.layout) {
+            options.onLayoutLoaded(settings.layout);
+        }
     } catch (error) {
         console.error('Error loading theme:', error);
     }
@@ -120,4 +123,59 @@ function getCategoryName(categoryId, categoriesCache = []) {
         'anime': '动漫'
     };
     return categoryNames[categoryId] || categoryId;
+}
+
+/**
+ * 格式化文件大小
+ * @param {number} bytes - 字节数
+ * @returns {string} 格式化后的大小字符串
+ */
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+/**
+ * 格式化生日显示
+ * @param {string} birthday - 生日日期字符串
+ * @returns {string} 格式化后的日期字符串
+ */
+function formatBirthday(birthday) {
+    if (!birthday) return '';
+    const date = new Date(birthday);
+    return date.toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    });
+}
+
+/**
+ * 获取状态文本
+ * @param {string} status - 状态标识
+ * @returns {string} 状态文本
+ */
+function getStatusText(status) {
+    const statusMap = {
+        'unwatched': '未看',
+        'watching': '观看中',
+        'completed': '已完成'
+    };
+    return statusMap[status] || status;
+}
+
+/**
+ * 格式化观看时长
+ * @param {number} minutes - 分钟数
+ * @returns {string} 格式化后的时长字符串
+ */
+function formatPlaytime(minutes) {
+    if (!minutes || minutes === 0) return '-';
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours === 0) return `${mins}分钟`;
+    return `${hours}小时${mins > 0 ? mins + '分钟' : ''}`;
 }

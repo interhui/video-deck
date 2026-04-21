@@ -42,7 +42,8 @@ const mockFileService = {
 };
 
 const mockMovieCacheService = {
-    removeMovieFromCache: jest.fn()
+    removeMovieFromCache: jest.fn(),
+    isCacheInitialized: jest.fn()
 };
 
 const mockIndexService = {

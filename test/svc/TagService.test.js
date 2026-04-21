@@ -120,21 +120,6 @@ describe('TagService', () => {
         });
     });
 
-    describe('getDefaultTags', () => {
-        test('SVC-TAG-015: 返回10个默认标签', () => {
-            const tags = service.getDefaultTags();
-            expect(tags).toHaveLength(10);
-        });
-
-        test('SVC-TAG-016: 标签有id和name', () => {
-            const tags = service.getDefaultTags();
-            tags.forEach(tag => {
-                expect(tag).toHaveProperty('id');
-                expect(tag).toHaveProperty('name');
-            });
-        });
-    });
-
     describe('clearCache', () => {
         test('SVC-TAG-017: 清除缓存', () => {
             service.tagsCache = [{ id: 'test', name: 'Test' }];

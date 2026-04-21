@@ -465,12 +465,6 @@ class MovieService {
     }
 
     /**
-     * 批量切换收藏状态
-     * @param {string[]} movieIds - 电影 ID 数组
-     * @param {string} moviesDir - 电影目录
-     * @returns {Promise<object>} 更新结果
-     */
-    /**
      * 批量删除电影
      * @param {string[]} movieIds - 电影 ID 数组
      * @param {string} moviesDir - 电影目录
@@ -514,8 +508,7 @@ class MovieService {
                 : allMovies;
 
             const stats = {
-                totalMovies: movies.length,
-                avgRating: this.calculateAverageRating(movies)
+                totalMovies: movies.length
             };
 
             return stats;
@@ -685,17 +678,7 @@ class MovieService {
         return sorted;
     }
 
-    /**
-     * 计算平均评分
-     * @param {Array} movies - 电影列表
-     * @returns {number} 平均评分
-     */
-    calculateAverageRating(movies) {
-        const ratedMovies = movies.filter(m => m.userRating && m.userRating > 0);
-        if (ratedMovies.length === 0) return 0;
-        const sum = ratedMovies.reduce((acc, m) => acc + m.userRating, 0);
-        return (sum / ratedMovies.length).toFixed(1);
-    }
+
 
     /**
      * 生成电影ID

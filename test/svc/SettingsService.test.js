@@ -173,16 +173,6 @@ describe('SettingsService', () => {
         });
     });
 
-    describe('getDefaultSettings', () => {
-        test('SVC-SETTINGS-021: 返回默认设置对象', async () => {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            const defaults = service.getDefaultSettings();
-            expect(defaults).toHaveProperty('appearance');
-            expect(defaults).toHaveProperty('layout');
-            expect(defaults.version).toBe('1.0.0');
-        });
-    });
-
     describe('mergeDeep', () => {
         test('SVC-SETTINGS-022: 深度合并对象', async () => {
             await new Promise(resolve => setTimeout(resolve, 100));

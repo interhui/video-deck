@@ -107,27 +107,6 @@ describe('DatabaseService', () => {
         });
     });
 
-    describe('calculateAverageRating', () => {
-        test('SVC-DB-010: 正确计算平均分', () => {
-            const movies = [
-                { userRating: 5 },
-                { userRating: 3 },
-                { userRating: 4 }
-            ];
-            const avg = service.calculateAverageRating(movies);
-            expect(avg).toBe('4.0');
-        });
-
-        test('SVC-DB-011: 无评分返回0', () => {
-            const movies = [
-                { userRating: 0 },
-                { userRating: 0 }
-            ];
-            const avg = service.calculateAverageRating(movies);
-            expect(avg).toBe(0);
-        });
-    });
-
     describe('updatePlayTime', () => {
         test('SVC-DB-012: 更新播放时间', () => {
             // Reset the data first to avoid state pollution from previous tests

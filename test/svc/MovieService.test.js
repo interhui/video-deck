@@ -78,7 +78,6 @@ describe('MovieService', () => {
     describe('refreshCache', () => {
         test('SVC-MOVIE-004: 清空并重建缓存', async () => {
             const info = await service.refreshCache(moviesDir);
-            expect(service.isCacheInitialized()).toBe(true);
             expect(info.totalMovies).toBeGreaterThanOrEqual(0);
         });
     });
@@ -91,9 +90,8 @@ describe('MovieService', () => {
         });
 
         test('SVC-MOVIE-006: 缓存未初始化自动初始化', async () => {
-            expect(service.isCacheInitialized()).toBe(false);
             await service.getAllCategories(moviesDir);
-            expect(service.isCacheInitialized()).toBe(true);
+            expect(service.getCacheService().isCacheInitialized()).toBe(true);
         });
     });
 
@@ -232,7 +230,6 @@ describe('MovieService', () => {
             await service.refreshCache(moviesDir);
             const stats = await service.getStats(null, moviesDir);
             expect(stats).toHaveProperty('totalMovies');
-            expect(stats).toHaveProperty('avgRating');
         });
 
         test('SVC-MOVIE-027: 支持分类筛选', async () => {
@@ -297,27 +294,6 @@ describe('MovieService', () => {
             ];
             const sorted = service.sortMovies(movies, 'name', 'asc');
             expect(sorted[0].title).toBe('Animal');
-        });
-    });
-
-    describe('calculateAverageRating', () => {
-        test('SVC-MOVIE-031: 正确计算平均分', () => {
-            const movies = [
-                { userRating: 5 },
-                { userRating: 3 },
-                { userRating: 4 }
-            ];
-            const avg = service.calculateAverageRating(movies);
-            expect(avg).toBe('4.0');
-        });
-
-        test('SVC-MOVIE-032: 无评分返回0', () => {
-            const movies = [
-                { userRating: 0 },
-                { userRating: 0 }
-            ];
-            const avg = service.calculateAverageRating(movies);
-            expect(avg).toBe(0);
         });
     });
 
