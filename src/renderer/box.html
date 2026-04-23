@@ -18,6 +18,7 @@
                 <h2 id="box-title" class="box-title">电影盒子</h2>
             </div>
             <div class="toolbar-right">
+                <button id="export-btn" class="export-btn">导出</button>
                 <button id="batch-remove-btn" class="batch-action" style="display: none;">批量移除</button>
                 <div class="search-box">
                     <input type="text" id="search-input" placeholder="搜索电影...">
@@ -141,6 +142,44 @@
             <div class="modal-footer">
                 <button id="cancel-status-btn" class="btn btn-secondary">取消</button>
                 <button id="confirm-status-btn" class="btn btn-primary">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导出电影弹窗 -->
+    <div id="export-modal" class="modal" style="display: none;">
+        <div class="modal-content export-modal-content">
+            <div class="modal-header">
+                <h2>导出电影盒子</h2>
+                <button id="close-export-modal" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="export-box-name" class="export-box-name"></p>
+                <div class="modal-section">
+                    <label class="modal-section-label">导出格式</label>
+                    <div class="export-radio-group">
+                        <label class="export-radio">
+                            <input type="radio" name="export-type" value="zip">
+                            <span class="export-radio-label">ZIP格式</span>
+                        </label>
+                        <label class="export-radio">
+                            <input type="radio" name="export-type" value="csv">
+                            <span class="export-radio-label">CSV格式</span>
+                        </label>
+                        <label class="export-radio">
+                            <input type="radio" name="export-type" value="json">
+                            <span class="export-radio-label">JSON格式</span>
+                        </label>
+                        <label class="export-radio">
+                            <input type="radio" name="export-type" value="dpl">
+                            <span class="export-radio-label">PotPlayer播放列表</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-export-btn" class="btn btn-secondary">取消</button>
+                <button id="confirm-export-btn" class="btn btn-primary">导出</button>
             </div>
         </div>
     </div>

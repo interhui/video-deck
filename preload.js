@@ -150,6 +150,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     updateCategory: (data) => ipcRenderer.invoke('update-category', data),
     deleteCategory: (categoryId) => ipcRenderer.invoke('delete-category', categoryId),
 
+    // 盒子导出
+    showExportSaveDialog: (data) => ipcRenderer.invoke('show-export-save-dialog', data),
+    exportBox: (data) => ipcRenderer.invoke('export-box', data),
+
 // 事件监听
     onOpenAddMovie: (callback) => {
         ipcRenderer.on('open-add-movie', callback);
