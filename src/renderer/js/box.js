@@ -807,7 +807,6 @@ function renderMovies(movies, isAppend = false) {
                         <input type="checkbox" id="select-all" ${state.selectedMovies.size === filteredMovies.length && filteredMovies.length > 0 ? 'checked' : ''}>
                     </div>
                     <div class="movie-action-col">操作</div>
-                    <div class="movie-icon"></div>
                     <div class="movie-id-col">电影ID</div>
                     <div class="movie-name">名称</div>
                     <div class="movie-actors-col">主演</div>
@@ -833,17 +832,11 @@ function renderMovies(movies, isAppend = false) {
                     <div class="movie-action-col">
                         <button class="remove-btn" data-movie-id="${movie.movieId}" title="从盒子中移除">✕</button>
                     </div>
-                    <div class="movie-icon">
-                        ${movie.poster ?
-                            `<img src="${movie.poster}" alt="${movie.name}">` :
-                            `<div class="movie-icon-placeholder">🎬</div>`
-                        }
-                    </div>
                     <div class="movie-id-col">${movie.movieId || ''}</div>
                     <div class="movie-name">${movie.name}</div>
                     <div class="movie-actors-col">${movie.actors || '-'}</div>
                     <div class="movie-publish-date">${movie.publishDate || '-'}</div>
-                    <div class="movie-publisher-col">${movie.publisher || '-'}</div>
+                    <div class="movie-publisher-col">${movie.studio || '-'}</div>
                     <div class="movie-status"><span class="box-list-status ${movie.boxStatus || 'unwatched'}" data-movie-id="${movie.movieId}" data-category="${movie.category}">${getStatusText(movie.boxStatus)}</span></div>
                     <div class="movie-rating">${movie.boxRating ? '⭐'.repeat(movie.boxRating) : '-'}</div>
                 </div>

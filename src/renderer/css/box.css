@@ -395,25 +395,7 @@
 }
 
 .box-movies-grid.list-view .movie-icon {
-    width: 40px;
-    padding: 0;
-}
-
-.box-movies-grid.list-view .movie-icon img,
-.box-movies-grid.list-view .movie-icon .movie-icon-placeholder {
-    width: 25px;
-    height: 25px;
-    object-fit: cover;
-    border-radius: 3px;
-}
-
-.box-movies-grid.list-view .movie-icon .movie-icon-placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--card-bg);
-    color: var(--text-secondary);
-    font-size: 14px;
+    display: none;
 }
 
 .box-movies-grid.list-view .movie-id-col {
@@ -480,10 +462,11 @@
 }
 
 .box-movies-grid.list-view .movie-rating {
-    width: 60px;
+    width: 100px;
     font-size: 12px;
     color: #f5c518;
     text-align: center;
+    position: static;
 }
 
 /* 列表视图表头 */
@@ -653,7 +636,7 @@
 
 /* 列表视图新列 */
 .box-movies-grid.list-view .movie-actors-col {
-    width: 100px;
+    width: 60px;
     font-size: 12px;
     color: var(--text-secondary);
     text-align: left;
