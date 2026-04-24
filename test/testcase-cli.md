@@ -339,7 +339,7 @@
 
 | 用例ID | 用例名称 | 测试方法 | 前置条件 | 预期结果 |
 |--------|----------|----------|----------|----------|
-| CLI-OUTPUT-STATUS-001 | unwatched | 直接调用 | 无 | 返回"未看" |
+| CLI-OUTPUT-STATUS-001 | unwatched | 直接调用 | 无 | 返回"未观看" |
 | CLI-OUTPUT-STATUS-002 | watching | 直接调用 | 无 | 返回"观看中" |
 | CLI-OUTPUT-STATUS-003 | completed | 直接调用 | 无 | 返回"已完成" |
 | CLI-OUTPUT-STATUS-004 | 未知状态 | 直接调用 | 无 | 返回原状态值 |

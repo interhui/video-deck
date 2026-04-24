@@ -84,7 +84,7 @@
                         <div id="box-info-section" class="box-info-section" style="display: none;">
                             <div class="info-row">
                                 <span class="label">状态：</span>
-                                <span id="box-status" class="value box-status-tag-display unwatched clickable">未看</span>
+                                <span id="box-status" class="value box-status-tag-display unwatched clickable">未观看</span>
                             </div>
                             <div class="info-row">
                                 <span class="label">评分：</span>
@@ -189,9 +189,14 @@
                 <h3>修改观看状态</h3>
                 <div class="status-radio-group">
                     <label class="status-radio">
+                        <input type="radio" name="edit-status" value="new">
+                        <span class="status-dot new"></span>
+                        <span>新电影</span>
+                    </label>
+                    <label class="status-radio">
                         <input type="radio" name="edit-status" value="unwatched">
                         <span class="status-dot unwatched"></span>
-                        <span>未看</span>
+                        <span>未观看</span>
                     </label>
                     <label class="status-radio">
                         <input type="radio" name="edit-status" value="watching">

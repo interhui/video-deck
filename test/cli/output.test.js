@@ -37,8 +37,8 @@ describe('CLI Output Utils', () => {
     });
 
     describe('formatStatus', () => {
-        test('CLI-OUTPUT-STATUS-001: unwatched应返回"未看"', () => {
-            expect(formatStatus('unwatched')).toBe('未看');
+        test('CLI-OUTPUT-STATUS-001: unwatched应返回"未观看"', () => {
+            expect(formatStatus('unwatched')).toBe('未观看');
         });
 
         test('CLI-OUTPUT-STATUS-002: watching应返回"观看中"', () => {

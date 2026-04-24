@@ -1216,7 +1216,7 @@ function updateStats(movies) {
     elements.statsBar.newMovies.textContent = `新电影：${movies.filter(m => m.boxStatus === 'new').length}`;
     elements.statsBar.played.textContent = `已完成：${movies.filter(m => m.boxStatus === 'completed').length}`;
     elements.statsBar.playing.textContent = `观看中：${movies.filter(m => m.boxStatus === 'watching').length}`;
-    elements.statsBar.unplayed.textContent = `未看：${movies.filter(m => m.boxStatus === 'unwatched').length}`;
+    elements.statsBar.unplayed.textContent = `未观看：${movies.filter(m => m.boxStatus === 'unwatched').length}`;
 }
 
 /**
