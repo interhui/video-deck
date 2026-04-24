@@ -21,7 +21,8 @@ function formatRating(rating) {
  */
 function formatStatus(status) {
     const statusMap = {
-        'unwatched': '未看',
+        'new': '新电影',
+        'unwatched': '未观看',
         'watching': '观看中',
         'completed': '已完成'
     };

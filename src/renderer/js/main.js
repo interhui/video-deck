@@ -15,29 +15,26 @@ const state = {
     settings: {},
     selectedMovies: new Set(),
     detailEditModeLocked: false,
-    tags: [],  // 标签缓存
-    selectedTags: new Set(),  // 当前选中的标签（用于添加电影）
-    sidebarSearchActive: false,  // 侧边栏是否处于搜索激活状态
-    currentTag: '',  // 当前选中的标签筛选
-    // 文件关联相关
-    movieFiles: [],  // 当前电影的关联文件列表
-    selectedFileIndex: -1,  // 当前选中的文件索引
-    pendingFilePath: '',  // 待添加文件的路径
-    // 目录扫描相关
-    scanTempDir: '',  // 当前扫描的临时目录
-    scanMovies: [],  // 当前扫描的电影列表
-    currentEditMovie: null,  // 当前编辑的扫描电影
-    // 演员相关
-    actors: [],  // 演员列表缓存
-    selectedActors: [],  // 当前选中的演员（用于添加电影）
-    currentActorFilter: [],  // 当前用于电影筛选的演员名称列表
-    actorFilterModalVisible: false,  // 演员过滤模态窗是否显示
-    // 演员选择弹窗状态
-    actorSelectorSearchKeyword: '',  // 搜索关键字
-    actorSelectorCurrentPage: 1,  // 当前页码
-    actorSelectorPageSize: 10,  // 每页记录数
-    // 懒加载相关
-    lazyLoader: null  // 懒加载管理器
+    tags: [],
+    selectedTags: new Set(),
+    sidebarSearchActive: false,
+    currentTag: '',
+    movieFiles: [],
+    selectedFileIndex: -1,
+    pendingFilePath: '',
+    scanTempDir: '',
+    scanMovies: [],
+    currentEditMovie: null,
+    actors: [],
+    selectedActors: [],
+    currentActorFilter: [],
+    actorFilterModalVisible: false,
+    actorSelectorSearchKeyword: '',
+    actorSelectorCurrentPage: 1,
+    actorSelectorPageSize: 10,
+    lazyLoader: null,
+    onlyNewMovies: false,
+    newMovieHours: 72
 };
 
 // DOM 元素
@@ -73,6 +70,8 @@ const elements = {
     selectMovieboxDirBtn: document.getElementById('select-moviebox-dir-btn'),
     actorPhotoDirInput: document.getElementById('actor-photo-dir-input'),
     selectActorPhotoDirBtn: document.getElementById('select-actor-photo-dir-btn'),
+    newMovieHoursInput: document.getElementById('new-movie-hours-input'),
+    onlyNewMoviesCheckbox: document.getElementById('only-new-movies'),
     addBoxBtn: document.getElementById('add-box-btn'),
     boxList: document.getElementById('box-list'),
     createBoxModal: document.getElementById('create-box-modal'),
@@ -81,7 +80,6 @@ const elements = {
     confirmCreateBox: document.getElementById('confirm-create-box'),
     cancelCreateBox: document.getElementById('cancel-create-box'),
     closeCreateBox: document.getElementById('close-create-box'),
-    // 编辑盒子相关
     editBoxModal: document.getElementById('edit-box-modal'),
     editBoxNameInput: document.getElementById('edit-box-name-input'),
     editBoxDescriptionInput: document.getElementById('edit-box-description-input'),
@@ -89,12 +87,10 @@ const elements = {
     confirmEditBox: document.getElementById('confirm-edit-box'),
     cancelEditBox: document.getElementById('cancel-edit-box'),
     closeEditBox: document.getElementById('close-edit-box'),
-    // 删除盒子相关
     deleteBoxModal: document.getElementById('delete-box-modal'),
     confirmDeleteBox: document.getElementById('confirm-delete-box'),
     cancelDeleteBox: document.getElementById('cancel-delete-box'),
     closeDeleteBox: document.getElementById('close-delete-box'),
-    // 批量添加相关
     batchAddBtn: document.getElementById('batch-add-btn'),
     batchAddModal: document.getElementById('batch-add-modal'),
     batchAddInfo: document.getElementById('batch-add-info'),
@@ -102,13 +98,8 @@ const elements = {
     confirmBatchAdd: document.getElementById('confirm-batch-add'),
     cancelBatchAdd: document.getElementById('cancel-batch-add'),
     closeBatchAdd: document.getElementById('close-batch-add'),
-    // 批量删除相关
     batchDeleteBtn: document.getElementById('batch-delete-btn'),
-
-    // 目录扫描相关
     scanDirBtn: document.getElementById('scan-dir-btn'),
-
-    // 添加电影相关
     addMovieModal: document.getElementById('add-movie-modal'),
     closeAddMovie: document.getElementById('close-add-movie'),
     movieNameInput: document.getElementById('movie-name'),
@@ -127,8 +118,6 @@ const elements = {
     confirmAddMovie: document.getElementById('confirm-add-movie'),
     cancelAddMovie: document.getElementById('cancel-add-movie'),
     addMovieFooter: document.getElementById('add-movie-footer'),
-
-    // 演员选择相关
     actorSelectorModal: document.getElementById('actor-selector-modal'),
     closeActorSelector: document.getElementById('close-actor-selector'),
     actorSelectorList: document.getElementById('actor-selector-list'),
@@ -140,8 +129,6 @@ const elements = {
     actorSelectorPageInfo: document.getElementById('actor-selector-page-info'),
     confirmActorSelection: document.getElementById('confirm-actor-selection'),
     cancelActorSelection: document.getElementById('cancel-actor-selection'),
-
-    // 演员过滤相关
     actorFilter: document.getElementById('actor-filter'),
     actorFilterModal: document.getElementById('actor-filter-modal'),
     closeActorFilter: document.getElementById('close-actor-filter'),
@@ -153,8 +140,6 @@ const elements = {
     actorFilterClearBtn: document.getElementById('actor-filter-clear-btn'),
     confirmActorFilter: document.getElementById('confirm-actor-filter'),
     cancelActorFilter: document.getElementById('cancel-actor-filter'),
-
-    // 电影文件管理相关
     addFileBtn: document.getElementById('add-file-btn'),
     fileList: document.getElementById('file-list'),
     fileDetails: document.getElementById('file-details'),
@@ -177,8 +162,6 @@ const elements = {
     newFileMemo: document.getElementById('new-file-memo'),
     confirmAddFile: document.getElementById('confirm-add-file'),
     cancelAddFile: document.getElementById('cancel-add-file'),
-
-    // 目录扫描相关
     scanDirModal: document.getElementById('scan-dir-modal'),
     closeScanDir: document.getElementById('close-scan-dir'),
     scanPathInput: document.getElementById('scan-path-input'),
@@ -186,16 +169,12 @@ const elements = {
     scanCategorySelect: document.getElementById('scan-category-select'),
     confirmScanDir: document.getElementById('confirm-scan-dir'),
     cancelScanDir: document.getElementById('cancel-scan-dir'),
-
-    // 扫描结果相关
     scanResultModal: document.getElementById('scan-result-modal'),
     closeScanResult: document.getElementById('close-scan-result'),
     scanResultInfo: document.getElementById('scan-result-info'),
     scanResultImport: document.getElementById('scan-result-import'),
     scanResultCancel: document.getElementById('scan-result-cancel'),
     scanMoviesList: document.getElementById('scan-movies-list'),
-
-    // 单个电影编辑相关
     scanMovieEditModal: document.getElementById('scan-movie-edit-modal'),
     closeScanMovieEdit: document.getElementById('close-scan-movie-edit'),
     scanMovieTempPath: document.getElementById('scan-movie-temp-path'),
@@ -210,23 +189,17 @@ const elements = {
     scanSelectCoverBtn: document.getElementById('scan-select-cover-btn'),
     scanMovieCoverInput: document.getElementById('scan-movie-cover-input'),
     scanCoverPreview: document.getElementById('scan-cover-preview'),
-
-    // 扫描电影标签相关
     scanMovieTags: document.getElementById('scan-movie-tags'),
     scanTagSelectorModal: document.getElementById('scan-tag-selector-modal'),
     closeScanTagSelector: document.getElementById('close-scan-tag-selector'),
     scanTagSelectorList: document.getElementById('scan-tag-selector-list'),
     confirmScanTagSelection: document.getElementById('confirm-scan-tag-selection'),
     cancelScanTagSelection: document.getElementById('cancel-scan-tag-selection'),
-
-    // 刷新进度相关
     refreshProgressModal: document.getElementById('refresh-progress-modal'),
     refreshProgressText: document.getElementById('refresh-progress-text'),
-    refreshProgressBar: document.getElementById('refresh-progress-bar'),    
-
+    refreshProgressBar: document.getElementById('refresh-progress-bar'),
     confirmScanMovieEdit: document.getElementById('confirm-scan-movie-edit'),
     cancelScanMovieEdit: document.getElementById('cancel-scan-movie-edit')
-    
 };
 
 /**
@@ -571,21 +544,20 @@ async function loadSettings() {
     try {
         state.settings = await window.electronAPI.getSettings();
 
-        // 应用主题
         applyTheme(state.settings.appearance.theme);
 
-        // 应用布局设置
         applyLayoutSettings(state.settings.layout);
 
-        // 更新设置表单
         if (elements.themeSelect) elements.themeSelect.value = state.settings.appearance?.theme || 'dark';
         if (elements.sidebarWidth) elements.sidebarWidth.value = state.settings.layout?.sidebarWidth || 200;
         if (elements.posterSize) elements.posterSize.value = state.settings.layout?.posterSize || 'medium';
         if (elements.moviesDirInput) elements.moviesDirInput.value = state.settings.library?.moviesDir || '';
         if (elements.movieboxDirInput) elements.movieboxDirInput.value = state.settings.moviebox?.movieboxDir || '';
         if (elements.actorPhotoDirInput) elements.actorPhotoDirInput.value = state.settings.library?.actorPhotoDir || '';
+        if (elements.newMovieHoursInput) elements.newMovieHoursInput.value = state.settings.library?.newMovieHours || 72;
 
         state.viewMode = state.settings.layout.viewMode;
+        state.newMovieHours = state.settings.library?.newMovieHours || 72;
     } catch (error) {
         console.error('Error loading settings:', error);
     }
@@ -898,11 +870,9 @@ async function openBoxView(boxName) {
  */
 async function loadMovies() {
     try {
-        console.log('loadMovies: searchKeyword:', state.searchKeyword, 'currentTag:', state.currentTag, 'currentActorFilter.length:', state.currentActorFilter.length, 'currentCategory:', state.currentCategory);
+        console.log('loadMovies: searchKeyword:', state.searchKeyword, 'currentTag:', state.currentTag, 'currentActorFilter.length:', state.currentActorFilter.length, 'currentCategory:', state.currentCategory, 'onlyNewMovies:', state.onlyNewMovies);
 
-        // 搜索模式下使用原有的一次性加载逻辑
-        if (state.searchKeyword || state.currentTag || state.currentActorFilter.length > 0) {
-            // 销毁旧的懒加载器，避免滚动时继续加载未筛选的数据
+        if (state.searchKeyword || state.currentTag || state.currentActorFilter.length > 0 || state.onlyNewMovies) {
             if (state.lazyLoader) {
                 state.lazyLoader.destroy();
                 state.lazyLoader = null;
@@ -912,8 +882,6 @@ async function loadMovies() {
             return;
         }
 
-        // 非搜索模式使用懒加载
-        // 如果之前有筛选激活过，先恢复侧边栏
         if (state.sidebarSearchActive) {
             renderSidebar(state.categories);
             state.sidebarSearchActive = false;
@@ -926,14 +894,10 @@ async function loadMovies() {
     }
 }
 
-/**
- * 一次性加载所有电影（用于搜索模式）
- */
 async function loadMoviesAll() {
     try {
         let movies;
 
-        // 构建筛选条件
         const filterOptions = {
             sortBy: state.currentSort.split('-')[0],
             sortOrder: state.currentSort.split('-')[1],
@@ -942,7 +906,6 @@ async function loadMoviesAll() {
         };
 
         if (state.searchKeyword) {
-            // 搜索电影
             console.log('loadMoviesAll: search path, actors:', filterOptions.actors);
             movies = await window.electronAPI.searchMovies({
                 keyword: state.searchKeyword,
@@ -955,7 +918,6 @@ async function loadMoviesAll() {
                 }
             });
         } else if (state.currentCategory) {
-            // 按分类加载
             console.log('loadMoviesAll: category path, actors:', filterOptions.actors);
             movies = await window.electronAPI.getMoviesByCategory({
                 category: state.currentCategory,
@@ -966,7 +928,6 @@ async function loadMoviesAll() {
                 actors: filterOptions.actors
             });
         } else {
-            // 加载所有电影
             console.log('loadMoviesAll: all movies path, actors:', filterOptions.actors);
             movies = await window.electronAPI.getAllMovies({
                 sortBy: filterOptions.sortBy,
@@ -982,18 +943,19 @@ async function loadMoviesAll() {
             return;
         }
 
+        if (state.onlyNewMovies) {
+            movies = movies.filter(movie => isNewMovie(movie.update_time));
+        }
+
         state.movies = movies;
         renderMovies(movies, false);
 
-        // 检查是否有任何筛选条件激活
-        const filtersActive = state.searchKeyword || state.currentTag || state.currentActorFilter.length > 0;
+        const filtersActive = state.searchKeyword || state.currentTag || state.currentActorFilter.length > 0 || state.onlyNewMovies;
 
-        // 更新侧边栏分类计数
         if (filtersActive) {
             updateSidebarWithSearchResults(movies);
             state.sidebarSearchActive = true;
         } else if (state.sidebarSearchActive) {
-            // 清除筛选后恢复原始侧边栏
             renderSidebar(state.categories);
             state.sidebarSearchActive = false;
         }
@@ -1148,9 +1110,9 @@ function renderMovies(movies, isAppend = false) {
 
     html += movies.map(movie => {
         const isSelected = state.selectedMovies.has(movie.id);
+        const showNewTag = isNewMovie(movie.update_time);
 
         if (state.viewMode === 'list') {
-            // 列表视图 - 表格行
             const fileCount = movie.fileCount || 0;
             return `
                 <div class="movie-card ${isSelected ? 'selected' : ''}" data-movie-id="${movie.id}">
@@ -1167,7 +1129,7 @@ function renderMovies(movies, isAppend = false) {
                         ${movie.id || ''}
                     </div>
                     <div class="movie-name">
-                        ${movie.name}
+                        ${movie.name}${showNewTag ? '<span class="new-movie-tag" style="margin-left:4px;padding:1px 4px;font-size:10px;background:#4caf50;color:white;border-radius:2px;">新</span>' : ''}
                     </div>
                     <div class="movie-actors-col">${movie.actors || '-'}</div>
                     <div class="movie-description">${movie.description ? (movie.description.length > 30 ? movie.description.substring(0, 30) + '...' : movie.description) : '-'}</div>
@@ -1179,12 +1141,12 @@ function renderMovies(movies, isAppend = false) {
                 </div>
             `;
         } else {
-            // 网格视图
             return `
                 <div class="movie-card ${isSelected ? 'selected' : ''}" data-movie-id="${movie.id}">
                     <div class="movie-card-checkbox">
                         <input type="checkbox" class="movie-select-checkbox" data-movie-id="${movie.id}" ${isSelected ? 'checked' : ''}>
                     </div>
+                    ${showNewTag ? '<span class="new-movie-tag">新电影</span>' : ''}
                     ${movie.poster ?
                         `<img class="movie-poster" src="${movie.poster}" alt="${movie.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                          <div class="movie-poster-placeholder" style="display:none;">🎬</div>` :
@@ -1434,11 +1396,25 @@ async function loadStats() {
     }
 }
 
-/**
- * 绑定事件
- */
+function isNewMovie(updateTime) {
+    if (!updateTime) return false;
+    const now = Date.now();
+    const hoursInMs = state.newMovieHours * 60 * 60 * 1000;
+    return (now - updateTime) < hoursInMs;
+}
+
 function bindEvents() {
-    // 分类筛选
+    if (elements.onlyNewMoviesCheckbox) {
+        elements.onlyNewMoviesCheckbox.addEventListener('change', (e) => {
+            state.onlyNewMovies = e.target.checked;
+            if (state.lazyLoader) {
+                state.lazyLoader.destroy();
+                state.lazyLoader = null;
+            }
+            loadMovies();
+        });
+    }
+
     elements.categoryFilter.addEventListener('change', (e) => {
         setCurrentCategory(e.target.value);
     });
@@ -1926,12 +1902,13 @@ function bindEvents() {
             for (const movieId of selectedMovieIds) {
                 const movie = state.movies.find(m => m.id === movieId);
                 if (movie) {
+                    const isNew = isNewMovie(movie.update_time);
                     const result = await window.electronAPI.addMovieToBox({
                         boxName: boxName,
                         category: movie.category,
                         movieInfo: {
                             id: movie.id,
-                            status: 'unwatched',
+                            status: isNew ? 'new' : 'unwatched',
                             firstWatched: '',
                             lastWatched: '',
                             totalWatchTime: 0,
@@ -1947,10 +1924,8 @@ function bindEvents() {
 
             alert(`已经添加${addedCount}个到${boxName}`);
 
-            // 关闭模态框
             elements.batchAddModal.style.display = 'none';
 
-            // 清空选择
             state.selectedMovies.clear();
             updateBatchAddButtonVisibility();
             updateBatchDeleteButtonVisibility();
@@ -2946,7 +2921,8 @@ async function saveSettingsHandler() {
             library: {
                 ...state.settings.library,
                 moviesDir: elements.moviesDirInput.value,
-                actorPhotoDir: elements.actorPhotoDirInput.value
+                actorPhotoDir: elements.actorPhotoDirInput.value,
+                newMovieHours: parseInt(elements.newMovieHoursInput.value) || 72
             },
             moviebox: {
                 ...state.settings.moviebox,
@@ -2957,18 +2933,15 @@ async function saveSettingsHandler() {
         await window.electronAPI.saveSettings(newSettings);
 
         state.settings = newSettings;
-        // 调用 setTheme 广播主题变化到所有窗口
+        state.newMovieHours = newSettings.library.newMovieHours;
         await window.electronAPI.setTheme(newSettings.appearance.theme);
         applyLayoutSettings(newSettings.layout);
 
-        // 关闭模态框
         elements.settingsModal.style.display = 'none';
 
-        // 重新加载所有电影
         await loadCategories();
         await loadMovies();
         await loadStats();
-        // 重新加载盒子列表
         await loadBoxes();
     } catch (error) {
         console.error('Error saving settings:', error);

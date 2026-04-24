@@ -4,6 +4,7 @@
  */
 const FileService = require('./FileService');
 const path = require('path');
+const fs = require('fs');
 
 class IndexService {
     constructor() {
@@ -25,7 +26,7 @@ class IndexService {
      * @param {object} movie - 完整电影数据
      * @returns {object} 用于 index.json 的电影数据
      */
-    extractIndexMovieData(movie, posterPath = null, basePath = null) {
+    extractIndexMovieData(movie, posterPath = null, basePath = null, updateTime = null) {
         const fileCount = (movie.fileset && Array.isArray(movie.fileset)) ? movie.fileset.length + (movie.original_filename ? 1 : 0) : movie.original_filename ? 1 : 0;
         return {
             id: movie.id,
@@ -41,7 +42,8 @@ class IndexService {
             tags: movie.tag || [],
             fileCount: fileCount,
             poster: posterPath || movie.poster || null,
-            basePath: basePath || movie.path || null
+            basePath: basePath || movie.path || null,
+            update_time: updateTime
         };
     }
 
@@ -59,7 +61,6 @@ class IndexService {
             const categoryPath = path.join(moviesDir, category);
             const indexPath = this.getIndexPath(category, moviesDir);
 
-            // 获取分类下所有电影文件夹
             const movieFolders = await this.fileService.getMovieFolders(categoryPath);
             const movies = [];
 
@@ -68,11 +69,20 @@ class IndexService {
                 if (movieData) {
                     const posterInfo = await this.fileService.findMoviePoster(folderPath);
                     const posterPath = posterInfo.posterPath || null;
-                    movies.push(this.extractIndexMovieData(movieData, posterPath, folderPath));
+                    
+                    const nfoPath = path.join(folderPath, 'movie.nfo');
+                    let updateTime = null;
+                    try {
+                        const stats = await fs.promises.stat(nfoPath);
+                        updateTime = stats.mtime.getTime();
+                    } catch (e) {
+                        console.warn(`Could not get mtime for ${nfoPath}:`, e.message);
+                    }
+                    
+                    movies.push(this.extractIndexMovieData(movieData, posterPath, folderPath, updateTime));
                 }
             }
 
-            // 写入 index.json
             const indexData = { movies };
             await this.fileService.writeJson(indexPath, indexData);
 
@@ -223,12 +233,22 @@ class IndexService {
             let indexData = await this.fileService.readJson(indexPath);
 
             if (!indexData || !Array.isArray(indexData.movies)) {
-                // 如果 index.json 不存在或格式不正确，构建新的
                 await this.buildCategoryIndex(category, moviesDir);
                 indexData = await this.fileService.readJson(indexPath);
             }
 
-            const indexMovieData = this.extractIndexMovieData(movie, movie.poster || null, movie.path || null);
+            let updateTime = null;
+            if (movie.path) {
+                const nfoPath = path.join(movie.path, 'movie.nfo');
+                try {
+                    const stats = await fs.promises.stat(nfoPath);
+                    updateTime = stats.mtime.getTime();
+                } catch (e) {
+                    console.warn(`Could not get mtime for ${nfoPath}:`, e.message);
+                }
+            }
+
+            const indexMovieData = this.extractIndexMovieData(movie, movie.poster || null, movie.path || null, updateTime);
             const existingIndex = indexData.movies.findIndex(m => m.id === movie.id);
 
             if (existingIndex >= 0) {

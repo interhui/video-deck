@@ -253,4 +253,61 @@ describe('IndexService', () => {
             }
         });
     });
+
+    describe('update_time', () => {
+        test('SVC-INDEX-021: extractIndexMovieData支持update_time参数', () => {
+            const movie = {
+                id: 'test-id',
+                title: 'Test Title'
+            };
+            const updateTime = Date.now();
+            const result = service.extractIndexMovieData(movie, null, null, updateTime);
+            expect(result.update_time).toBe(updateTime);
+        });
+
+        test('SVC-INDEX-022: extractIndexMovieData缺失update_time为null', () => {
+            const movie = {
+                id: 'test-id',
+                title: 'Test Title'
+            };
+            const result = service.extractIndexMovieData(movie);
+            expect(result.update_time).toBeNull();
+        });
+
+        test('SVC-INDEX-023: buildCategoryIndex包含update_time', async () => {
+            await service.buildCategoryIndex('movie', moviesDir);
+            const movies = await service.getMoviesFromIndex('movie', moviesDir);
+            expect(movies[0].update_time).toBeDefined();
+            expect(typeof movies[0].update_time).toBe('number');
+        });
+
+        test('SVC-INDEX-024: update_time为NFO文件修改时间', async () => {
+            const nfoPath = path.join(moviesDir, 'movie', 'test-movie', 'movie.nfo');
+            const stats = fs.statSync(nfoPath);
+            const expectedTime = stats.mtime.getTime();
+
+            await service.buildCategoryIndex('movie', moviesDir);
+            const movies = await service.getMoviesFromIndex('movie', moviesDir);
+            
+            expect(movies[0].update_time).toBe(expectedTime);
+        });
+
+        test('SVC-INDEX-025: updateMovieIndex更新update_time', async () => {
+            await service.buildCategoryIndex('movie', moviesDir);
+            
+            const moviePath = path.join(moviesDir, 'movie', 'test-movie');
+            const movie = {
+                id: 'movie-1',
+                title: 'Updated Title',
+                path: moviePath
+            };
+            
+            await service.updateMovieIndex(movie, 'movie', moviesDir);
+            const movies = await service.getMoviesFromIndex('movie', moviesDir);
+            const updatedMovie = movies.find(m => m.id === 'movie-1');
+            
+            expect(updatedMovie.update_time).toBeDefined();
+            expect(typeof updatedMovie.update_time).toBe('number');
+        });
+    });
 });

@@ -280,6 +280,10 @@
     background-color: rgba(158, 158, 158, 0.85);
 }
 
+.box-status-tag.new {
+    background-color: rgb(189, 36, 36, 0.85);
+}
+
 .box-status-tag.playing,
 .box-status-tag.watching {
     background-color: rgba(33, 150, 243, 0.85);
@@ -302,6 +306,10 @@
 .box-list-status.unplayed,
 .box-list-status.unwatched {
     background-color: #9e9e9e;
+}
+
+.box-list-status.new {
+    background-color: #ff0037;
 }
 
 .box-list-status.playing,
@@ -566,6 +574,11 @@
 .status-dot.unwatched {
     background-color: #9e9e9e;
     color: #9e9e9e;
+}
+
+.status-dot.new {
+    background-color: #ff0037;
+    color: #ff0037;
 }
 
 .status-dot.watching {

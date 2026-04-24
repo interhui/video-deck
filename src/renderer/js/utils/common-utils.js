@@ -160,9 +160,10 @@ function formatBirthday(birthday) {
  */
 function getStatusText(status) {
     const statusMap = {
-        'unwatched': '未看',
+        'unwatched': '未观看',
         'watching': '观看中',
-        'completed': '已完成'
+        'completed': '已完成',
+        'new': '新电影'
     };
     return statusMap[status] || status;
 }

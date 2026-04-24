@@ -225,4 +225,23 @@ describe('SettingsService', () => {
             expect(() => service.importSettings('invalid json')).toThrow();
         });
     });
+
+    describe('newMovieHours', () => {
+        test('SVC-SETTINGS-028: 默认新电影时间段为72小时', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            expect(service.getNewMovieHours()).toBe(72);
+        });
+
+        test('SVC-SETTINGS-029: 设置新电影时间段', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            service.setNewMovieHours(48);
+            expect(service.getNewMovieHours()).toBe(48);
+        });
+
+        test('SVC-SETTINGS-030: 新电影时间段在library配置中', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            const settings = service.getSettings();
+            expect(settings.library.newMovieHours).toBeDefined();
+        });
+    });
 });

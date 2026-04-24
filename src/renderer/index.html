@@ -39,6 +39,12 @@
                         <option value="select">选择演员</option>
                     </select>
                 </div>
+                <div class="filter-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="only-new-movies">
+                        <span>仅显示新电影</span>
+                    </label>
+                </div>
             </div>
             <div class="toolbar-right">
                 <button id="batch-add-btn" class="btn btn-secondary" style="display: none;">添加到盒子</button>
@@ -241,6 +247,10 @@
                         <label>演员照片目录：</label>
                         <input type="text" id="actor-photo-dir-input" readonly>
                         <button id="select-actor-photo-dir-btn">选择</button>
+                    </div>
+                    <div class="settings-row">
+                        <label>新电影时间段（小时）：</label>
+                        <input type="number" id="new-movie-hours-input" min="1" max="720" value="72">
                     </div>
                 </div>
                             </div>

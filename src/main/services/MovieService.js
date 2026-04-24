@@ -73,7 +73,6 @@ class MovieService {
         const categories = await this.fileService.getCategoryFolders(moviesDir);
         const allMovies = [];
 
-        // 先统计总电影数
         let totalMovies = 0;
         for (const category of categories) {
             const categoryPath = path.join(moviesDir, category);
@@ -92,6 +91,16 @@ class MovieService {
                 if (movieData) {
                     const movie = this.generateMovieData(movieData, folderName, category, folderPath);
                     movie.poster = await this.getMoviePoster(folderPath);
+                    
+                    const nfoPath = path.join(folderPath, 'movie.nfo');
+                    try {
+                        const fs = require('fs');
+                        const stats = fs.statSync(nfoPath);
+                        movie.update_time = stats.mtime.getTime();
+                    } catch (e) {
+                        movie.update_time = null;
+                    }
+                    
                     allMovies.push(movie);
                     if (onProgress) {
                         onProgress(currentMovie, totalMovies, movie.title || folderName);
