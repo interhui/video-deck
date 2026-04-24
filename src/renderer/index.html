@@ -43,7 +43,7 @@
             <div class="toolbar-right">
                 <button id="batch-add-btn" class="btn btn-secondary" style="display: none;">添加到盒子</button>
                 <button id="batch-delete-btn" class="btn btn-danger" style="display: none;">批量删除</button>
-                <button id="scan-dir-btn" class="btn btn-secondary">扫描目录</button>
+                <button id="scan-dir-btn" class="btn btn-secondary">导入</button>
                 <div class="search-box">
                     <input type="text" id="search-input" placeholder="搜索电影...">
                     <button id="search-btn" class="icon-btn">🔍</button>
@@ -490,20 +490,20 @@
     <div id="scan-dir-modal" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>扫描电影目录</h2>
+                <h2>导入电影</h2>
                 <button class="close-btn" id="close-scan-dir">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label>扫描方式：</label>
+                    <label>导入方式：</label>
                     <div class="scan-type-group">
                         <label class="radio-label">
                             <input type="radio" name="scan-type" value="directory" checked>
-                            扫描目录（子文件夹作为电影）
+                            目录导入（子文件夹作为电影）
                         </label>
                         <label class="radio-label">
                             <input type="radio" name="scan-type" value="file">
-                            扫描文件（每行作为一部电影）
+                            文件导入（每行作为一部电影）
                         </label>
                     </div>
                 </div>
@@ -552,7 +552,7 @@
                 <div class="scan-result-toolbar">
                     <span id="scan-result-info"></span>
                     <div class="scan-result-actions">
-                        <button id="scan-result-import" class="btn btn-primary" disabled>导入全部</button>
+                        <button id="scan-result-import" class="btn btn-primary" disabled>导入</button>
                         <button id="scan-result-cancel" class="btn btn-secondary">取消</button>
                     </div>
                 </div>

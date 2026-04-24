@@ -7,6 +7,7 @@ const path = require('path');
 const fs = require('fs');
 const https = require('https');
 const http = require('http');
+const ExportService = require('./services/ExportService');
 
 // 程序根目录
 const APP_ROOT = path.join(__dirname, '..', '..');
@@ -1432,6 +1433,35 @@ function setupIpcHandlers(services) {
             return { success: true };
         } catch (error) {
             console.error('Error deleting category:', error);
+            return { error: error.message };
+        }
+    });
+
+    // ==================== 盒子导出 ====================
+
+    ipcMain.handle('show-export-save-dialog', async (event, { defaultPath, filters }) => {
+        try {
+            const result = await dialog.showSaveDialog({
+                defaultPath: defaultPath,
+                filters: filters
+            });
+            return result;
+        } catch (error) {
+            console.error('Error showing save dialog:', error);
+            return { canceled: true, error: error.message };
+        }
+    });
+
+    ipcMain.handle('export-box', async (event, { boxName, exportType, exportPath, movies }) => {
+        try {
+            const settings = settingsService.getSettings();
+            const moviesDir = getMoviesDirPath(settings.library?.moviesDir);
+            
+            const exportService = new ExportService();
+            const result = await exportService.exportBox(exportType, movies, moviesDir, exportPath, boxName);
+            return result;
+        } catch (error) {
+            console.error('Error exporting box:', error);
             return { error: error.message };
         }
     });

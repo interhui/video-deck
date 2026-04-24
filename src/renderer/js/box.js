@@ -31,6 +31,7 @@ const elements = {
     clearSearchBtn: document.getElementById('clear-search-btn'),
     viewToggle: document.getElementById('view-toggle'),
     batchRemoveBtn: document.getElementById('batch-remove-btn'),
+    exportBtn: document.getElementById('export-btn'),
     moviesGrid: document.getElementById('movies-grid'),
     emptyState: document.getElementById('empty-state'),
     statsBar: {
@@ -48,7 +49,11 @@ const elements = {
     statusModal: document.getElementById('status-modal'),
     statusMovieName: document.getElementById('status-movie-name'),
     confirmStatusBtn: document.getElementById('confirm-status-btn'),
-    cancelStatusBtn: document.getElementById('cancel-status-btn')
+    cancelStatusBtn: document.getElementById('cancel-status-btn'),
+    exportModal: document.getElementById('export-modal'),
+    exportBoxName: document.getElementById('export-box-name'),
+    confirmExportBtn: document.getElementById('confirm-export-btn'),
+    cancelExportBtn: document.getElementById('cancel-export-btn')
 };
 
 // 当前正在修改状态的电影
@@ -364,6 +369,32 @@ function bindEvents() {
             currentEditingRating = currentEditingRating === rating ? 0 : rating;
             updateRatingDisplay();
         });
+    });
+
+    // 导出按钮
+    elements.exportBtn.addEventListener('click', () => {
+        openExportModal();
+    });
+
+    // 导出弹窗按钮
+    elements.confirmExportBtn.addEventListener('click', async () => {
+        await confirmExport();
+    });
+
+    elements.cancelExportBtn.addEventListener('click', () => {
+        closeExportModal();
+    });
+
+    // 关闭导出弹窗
+    document.getElementById('close-export-modal').addEventListener('click', () => {
+        closeExportModal();
+    });
+
+    // 点击导出弹窗外部关闭
+    elements.exportModal.addEventListener('click', (e) => {
+        if (e.target === elements.exportModal) {
+            closeExportModal();
+        }
     });
 }
 
@@ -1184,6 +1215,128 @@ function updateStats(movies) {
     elements.statsBar.played.textContent = `已完成：${movies.filter(m => m.boxStatus === 'completed').length}`;
     elements.statsBar.playing.textContent = `观看中：${movies.filter(m => m.boxStatus === 'watching').length}`;
     elements.statsBar.unplayed.textContent = `未看：${movies.filter(m => m.boxStatus === 'unwatched').length}`;
+}
+
+/**
+ * 打开导出弹窗
+ */
+function openExportModal() {
+    elements.exportBoxName.textContent = state.boxName;
+    const firstRadio = document.querySelector('input[name="export-type"]');
+    if (firstRadio) {
+        firstRadio.checked = true;
+    }
+    elements.exportModal.style.display = 'flex';
+}
+
+/**
+ * 关闭导出弹窗
+ */
+function closeExportModal() {
+    elements.exportModal.style.display = 'none';
+}
+
+/**
+ * 确认导出
+ */
+async function confirmExport() {
+    const selectedRadio = document.querySelector('input[name="export-type"]:checked');
+    if (!selectedRadio) {
+        alert('请选择导出格式');
+        return;
+    }
+
+    const exportType = selectedRadio.value;
+    const withVideoOnly = document.getElementById('export-with-video').checked;
+    const timestamp = getExportTimestamp();
+    
+    const extensions = {
+        'zip': '.zip',
+        'csv': '.csv',
+        'dpl': '.dpl',
+        'json': '.json'
+    };
+    
+    const defaultFileName = `${state.boxName}-${timestamp}-export${extensions[exportType]}`;
+
+    closeExportModal();
+
+    try {
+        const result = await window.electronAPI.showExportSaveDialog({
+            defaultPath: defaultFileName,
+            filters: getExportFilters(exportType)
+        });
+
+        if (result.canceled) {
+            return;
+        }
+
+        const exportPath = result.filePath;
+        const allMovies = getFilteredMovies(state.movies);
+        
+        let moviesToExport = allMovies;
+        let videoCount = 0;
+        
+        if (withVideoOnly) {
+            moviesToExport = allMovies.filter(m => m.original_filename && m.original_filename.trim() !== '');
+            videoCount = moviesToExport.length;
+        } else {
+            videoCount = allMovies.filter(m => m.original_filename && m.original_filename.trim() !== '').length;
+        }
+        
+        const exportResult = await window.electronAPI.exportBox({
+            boxName: state.boxName,
+            exportType: exportType,
+            exportPath: exportPath,
+            movies: moviesToExport
+        });
+
+        if (exportResult.success) {
+            const totalCount = exportResult.count || moviesToExport.length;
+            let message = `导出成功！共导出 ${totalCount} 部电影（含 ${videoCount} 个视频）`;
+            if (exportResult.skipped && exportResult.skipped.length > 0) {
+                message += `\n跳过 ${exportResult.skipped.length} 部（目录不存在）`;
+            }
+            alert(message);
+        } else {
+            alert('导出失败: ' + exportResult.error);
+        }
+    } catch (error) {
+        console.error('Error exporting box:', error);
+        alert('导出失败: ' + error.message);
+    }
+}
+
+/**
+ * 获取导出时间戳
+ */
+function getExportTimestamp() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    return `${year}${month}${day}${hours}${minutes}${seconds}`;
+}
+
+/**
+ * 获取导出文件过滤器
+ */
+function getExportFilters(exportType) {
+    switch (exportType) {
+        case 'zip':
+            return [{ name: 'ZIP文件', extensions: ['zip'] }];
+        case 'csv':
+            return [{ name: 'CSV文件', extensions: ['csv'] }];
+        case 'dpl':
+            return [{ name: 'PotPlayer播放列表', extensions: ['dpl'] }];
+        case 'json':
+            return [{ name: 'JSON文件', extensions: ['json'] }];
+        default:
+            return [{ name: '所有文件', extensions: ['*'] }];
+    }
 }
 
 // 初始化

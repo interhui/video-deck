@@ -25,7 +25,7 @@ class IndexService {
      * @param {object} movie - 完整电影数据
      * @returns {object} 用于 index.json 的电影数据
      */
-    extractIndexMovieData(movie, posterPath = null) {
+    extractIndexMovieData(movie, posterPath = null, basePath = null) {
         const fileCount = (movie.fileset && Array.isArray(movie.fileset)) ? movie.fileset.length + (movie.original_filename ? 1 : 0) : movie.original_filename ? 1 : 0;
         return {
             id: movie.id,
@@ -40,7 +40,8 @@ class IndexService {
             studio: movie.studio || '',
             tags: movie.tag || [],
             fileCount: fileCount,
-            poster: posterPath || movie.poster || null
+            poster: posterPath || movie.poster || null,
+            basePath: basePath || movie.path || null
         };
     }
 
@@ -67,7 +68,7 @@ class IndexService {
                 if (movieData) {
                     const posterInfo = await this.fileService.findMoviePoster(folderPath);
                     const posterPath = posterInfo.posterPath || null;
-                    movies.push(this.extractIndexMovieData(movieData, posterPath));
+                    movies.push(this.extractIndexMovieData(movieData, posterPath, folderPath));
                 }
             }
 
@@ -227,7 +228,7 @@ class IndexService {
                 indexData = await this.fileService.readJson(indexPath);
             }
 
-            const indexMovieData = this.extractIndexMovieData(movie, movie.poster || null);
+            const indexMovieData = this.extractIndexMovieData(movie, movie.poster || null, movie.path || null);
             const existingIndex = indexData.movies.findIndex(m => m.id === movie.id);
 
             if (existingIndex >= 0) {

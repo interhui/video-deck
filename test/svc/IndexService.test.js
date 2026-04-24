@@ -91,12 +91,35 @@ describe('IndexService', () => {
             expect(result.fileCount).toBe(2);
         });
 
+        test('SVC-INDEX-003a: 包含basePath字段', () => {
+            const basePath = 'D:\\movies\\movie\\test-movie';
+            const movie = {
+                id: 'test-id',
+                title: 'Test Title',
+                path: basePath
+            };
+            const result = service.extractIndexMovieData(movie, null, basePath);
+            expect(result.basePath).toBe(basePath);
+        });
+
+        test('SVC-INDEX-003b: basePath从movie.path获取', () => {
+            const basePath = 'D:\\movies\\movie\\test-movie';
+            const movie = {
+                id: 'test-id',
+                title: 'Test Title',
+                path: basePath
+            };
+            const result = service.extractIndexMovieData(movie);
+            expect(result.basePath).toBe(basePath);
+        });
+
         test('SVC-INDEX-004: 处理缺失字段', () => {
             const movie = { id: 'test-id' };
             const result = service.extractIndexMovieData(movie);
             expect(result.name).toBe('');
             expect(result.description).toBe('');
             expect(result.actors).toEqual([]);
+            expect(result.basePath).toBeNull();
         });
     });
 
@@ -111,6 +134,13 @@ describe('IndexService', () => {
         test('SVC-INDEX-006: 返回正确统计', async () => {
             const result = await service.buildCategoryIndex('movie', moviesDir);
             expect(result.movieCount).toBe(1);
+        });
+
+        test('SVC-INDEX-006a: index.json包含basePath', async () => {
+            await service.buildCategoryIndex('movie', moviesDir);
+            const movies = await service.getMoviesFromIndex('movie', moviesDir);
+            expect(movies[0].basePath).toBeDefined();
+            expect(movies[0].basePath).toContain('test-movie');
         });
     });
 
