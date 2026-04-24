@@ -744,3 +744,28 @@
     box-shadow: inset 0 0 0 3px var(--bg-color);
 }
 
+.export-filter-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.export-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.export-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+}
+
+.export-checkbox-label {
+    font-size: 14px;
+    color: var(--text-color);
+}
+

@@ -146,6 +146,10 @@ class ExportService {
      * @returns {Promise<object>} 导出结果
      */
     async exportBoxToDpl(movies, exportPath) {
+        console.log(`[ExportService] exportBoxToDpl 开始`);
+        console.log(`[ExportService] exportPath: ${exportPath}`);
+        console.log(`[ExportService] 电影数量: ${movies.length}`);
+
         let content = '[playlist]\n';
         content += `NumberOfEntries=${movies.length}\n`;
         content += 'CurrentEntry=1\n\n';
@@ -165,6 +169,7 @@ class ExportService {
 
         await fs.promises.writeFile(exportPath, content, 'utf8');
 
+        console.log(`[ExportService] DPL导出完成`);
         return { success: true, count: movies.length };
     }
 

@@ -161,20 +161,30 @@
                         <label class="export-radio">
                             <input type="radio" name="export-type" value="zip">
                             <span class="export-radio-label">ZIP格式</span>
+                            <span class="export-radio-desc">压缩电影目录（包含movie.nfo和poster文件）</span>
                         </label>
                         <label class="export-radio">
                             <input type="radio" name="export-type" value="csv">
                             <span class="export-radio-label">CSV格式</span>
+                            <span class="export-radio-desc">导出电影信息表格</span>
                         </label>
                         <label class="export-radio">
                             <input type="radio" name="export-type" value="json">
                             <span class="export-radio-label">JSON格式</span>
+                            <span class="export-radio-desc">导出盒子原始JSON文件</span>
                         </label>
                         <label class="export-radio">
                             <input type="radio" name="export-type" value="dpl">
                             <span class="export-radio-label">PotPlayer播放列表</span>
+                            <span class="export-radio-desc">导出为DPL格式播放列表</span>
                         </label>
                     </div>
+                </div>
+                <div class="modal-section export-filter-section">
+                    <label class="export-checkbox">
+                        <input type="checkbox" id="export-with-video">
+                        <span class="export-checkbox-label">仅导出包含视频文件</span>
+                    </label>
                 </div>
             </div>
             <div class="modal-footer">

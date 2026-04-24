@@ -1247,6 +1247,7 @@ async function confirmExport() {
     }
 
     const exportType = selectedRadio.value;
+    const withVideoOnly = document.getElementById('export-with-video').checked;
     const timestamp = getExportTimestamp();
     
     const extensions = {
@@ -1271,7 +1272,17 @@ async function confirmExport() {
         }
 
         const exportPath = result.filePath;
-        const moviesToExport = getFilteredMovies(state.movies);
+        const allMovies = getFilteredMovies(state.movies);
+        
+        let moviesToExport = allMovies;
+        let videoCount = 0;
+        
+        if (withVideoOnly) {
+            moviesToExport = allMovies.filter(m => m.original_filename && m.original_filename.trim() !== '');
+            videoCount = moviesToExport.length;
+        } else {
+            videoCount = allMovies.filter(m => m.original_filename && m.original_filename.trim() !== '').length;
+        }
         
         const exportResult = await window.electronAPI.exportBox({
             boxName: state.boxName,
@@ -1281,7 +1292,8 @@ async function confirmExport() {
         });
 
         if (exportResult.success) {
-            let message = `导出成功！共导出 ${exportResult.count || moviesToExport.length} 部电影`;
+            const totalCount = exportResult.count || moviesToExport.length;
+            let message = `导出成功！共导出 ${totalCount} 部电影（含 ${videoCount} 个视频）`;
             if (exportResult.skipped && exportResult.skipped.length > 0) {
                 message += `\n跳过 ${exportResult.skipped.length} 部（目录不存在）`;
             }
