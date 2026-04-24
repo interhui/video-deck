@@ -38,7 +38,8 @@ class HardCodeService {
                 scanOnStartup: true,
                 autoRefresh: false,
                 showHiddenFiles: false,
-                includeSubfolders: true
+                includeSubfolders: true,
+                newMovieHours: 72
             },
             shortcuts: {
                 openSearch: 'Ctrl+F',

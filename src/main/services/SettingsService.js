@@ -137,8 +137,28 @@ class SettingsService {
      * 获取演员照片目录配置
      * @returns {string} 演员照片目录路径
      */
-    getActorPhotoDir() {
+getActorPhotoDir() {
         return this.settings.library.actorPhotoDir || '';
+    }
+
+    setActorPhotoDir(dirPath) {
+        if (!this.settings.library) {
+            this.settings.library = {};
+        }
+        this.settings.library.actorPhotoDir = dirPath;
+        this.saveSettings(this.settings);
+    }
+
+    getNewMovieHours() {
+        return this.settings.library.newMovieHours || 72;
+    }
+
+    setNewMovieHours(hours) {
+        if (!this.settings.library) {
+            this.settings.library = {};
+        }
+        this.settings.library.newMovieHours = hours;
+        this.saveSettings(this.settings);
     }
 
     /**

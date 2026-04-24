@@ -32,6 +32,7 @@
         <!-- 统计栏 -->
         <div class="stats-bar">
             <span id="total-movies">电影总数：0</span>
+            <span id="new-movies">新电影：0</span>
             <span id="played-movies">已看：0</span>
             <span id="playing-movies">观看中：0</span>
             <span id="unplayed-movies">未看：0</span>
@@ -69,6 +70,7 @@
                     </select>
                     <select id="status-filter" class="filter-select">
                         <option value="">全部状态</option>
+                        <option value="new">新电影</option>
                         <option value="unwatched">未看</option>
                         <option value="watching">观看中</option>
                         <option value="completed">已完成</option>
@@ -111,6 +113,11 @@
                 <div class="modal-section">
                     <label class="modal-section-label">状态</label>
                     <div class="status-radio-group">
+                        <label class="status-radio">
+                            <input type="radio" name="status" value="new">
+                            <span class="status-dot new"></span>
+                            <span>新电影</span>
+                        </label>
                         <label class="status-radio">
                             <input type="radio" name="status" value="unwatched">
                             <span class="status-dot unwatched"></span>

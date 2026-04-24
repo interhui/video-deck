@@ -36,6 +36,7 @@ const elements = {
     emptyState: document.getElementById('empty-state'),
     statsBar: {
         total: document.getElementById('total-movies'),
+        newMovies: document.getElementById('new-movies'),
         played: document.getElementById('played-movies'),
         playing: document.getElementById('playing-movies'),
         unplayed: document.getElementById('unplayed-movies')
@@ -1212,6 +1213,7 @@ async function openMovieDetail(movieId) {
  */
 function updateStats(movies) {
     elements.statsBar.total.textContent = `电影总数：${movies.length}`;
+    elements.statsBar.newMovies.textContent = `新电影：${movies.filter(m => m.boxStatus === 'new').length}`;
     elements.statsBar.played.textContent = `已完成：${movies.filter(m => m.boxStatus === 'completed').length}`;
     elements.statsBar.playing.textContent = `观看中：${movies.filter(m => m.boxStatus === 'watching').length}`;
     elements.statsBar.unplayed.textContent = `未看：${movies.filter(m => m.boxStatus === 'unwatched').length}`;
