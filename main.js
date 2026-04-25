@@ -173,7 +173,7 @@ function createApplicationMenu() {
                 { type: 'separator' },
                 {
                     label: '设置',
-                    accelerator: 'CmdOrCtrl+Comma',
+                    accelerator: 'CmdOrCtrl+S',
                     click: () => {
                         if (mainWindow) {
                             mainWindow.webContents.send('open-settings');
@@ -181,7 +181,11 @@ function createApplicationMenu() {
                     }
                 },
                 { type: 'separator' },
-                { label: '退出', role: 'quit' }
+                { 
+                    label: '退出', 
+                    accelerator: 'CmdOrCtrl+Q',
+                    role: 'quit' 
+                }
             ]
         },
         {

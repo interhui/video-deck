@@ -200,60 +200,104 @@
 
     <!-- 设置模态框 -->
     <div id="settings-modal" class="modal" style="display: none;">
-        <div class="modal-content">
+        <div class="modal-content modal-large" style="width: 700px;">
             <div class="modal-header">
                 <h2>设置</h2>
                 <button class="close-btn" id="close-settings">&times;</button>
             </div>
-            <div class="modal-body">
-                <div class="settings-group">
-                    <h3>外观</h3>
-                    <label>
-                        主题：
-                        <select id="theme-select">
-                            <option value="dark">深色</option>
-                            <option value="light">浅色</option>
-                        </select>
-                    </label>
+            <div class="modal-body settings-modal-body">
+                <!-- Tab 导航 -->
+                <div class="settings-tabs">
+                    <button class="tab-btn active" data-tab="basic-settings">基本设置</button>
+                    <button class="tab-btn" data-tab="movie-settings">电影设置</button>
                 </div>
-                <div class="settings-group">
-                    <h3>布局</h3>
-                    <label>
-                        侧边栏宽度：
-                        <input type="number" id="sidebar-width" min="150" max="300" value="200">
-                    </label>
-                    <label>
-                        海报尺寸：
-                        <select id="poster-size">
-                            <option value="small">小</option>
-                            <option value="medium" selected>中</option>
-                            <option value="large">大</option>
-                        </select>
-                    </label>
-                </div>
-                <div class="settings-group">
-                    <h3>目录设置</h3>
-                    <div class="movies-dir-config">
-                        <label>电影目录：</label>
-                        <input type="text" id="movies-dir-input" readonly>
-                        <button id="select-dir-btn">选择</button>
+                <!-- Tab 内容 -->
+                <div class="settings-tab-content active" id="tab-basic-settings">
+                    <!-- 外观设置 -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">外观</h3>
+                        <div class="settings-item">
+                            <label>主题：</label>
+                            <select id="theme-select">
+                                <option value="dark">深色</option>
+                                <option value="light">浅色</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="movies-dir-config">
-                        <label>电影盒子目录：</label>
-                        <input type="text" id="moviebox-dir-input" readonly>
-                        <button id="select-moviebox-dir-btn">选择</button>
+                    <!-- 布局设置 -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">布局</h3>
+                        <div class="settings-item">
+                            <label>侧边栏宽度：</label>
+                            <input type="number" id="sidebar-width" min="150" max="300" value="200">
+                        </div>
+                        <div class="settings-item">
+                            <label>海报尺寸：</label>
+                            <select id="poster-size">
+                                <option value="small">小</option>
+                                <option value="medium" selected>中</option>
+                                <option value="large">大</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="movies-dir-config">
-                        <label>演员照片目录：</label>
-                        <input type="text" id="actor-photo-dir-input" readonly>
-                        <button id="select-actor-photo-dir-btn">选择</button>
-                    </div>
-                    <div class="settings-row">
-                        <label>新电影时间段（小时）：</label>
-                        <input type="number" id="new-movie-hours-input" min="1" max="720" value="72">
-                    </div>
-                </div>
+                    <!-- 目录设置 -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">目录</h3>
+                        <div class="settings-item">
+                            <label>电影目录：</label>
+                            <div class="dir-input-group">
+                                <input type="text" id="movies-dir-input" readonly>
+                                <button id="select-dir-btn" class="btn btn-small">选择</button>
                             </div>
+                        </div>
+                        <div class="settings-item">
+                            <label>电影盒子目录：</label>
+                            <div class="dir-input-group">
+                                <input type="text" id="moviebox-dir-input" readonly>
+                                <button id="select-moviebox-dir-btn" class="btn btn-small">选择</button>
+                            </div>
+                        </div>
+                        <div class="settings-item">
+                            <label>演员照片目录：</label>
+                            <div class="dir-input-group">
+                                <input type="text" id="actor-photo-dir-input" readonly>
+                                <button id="select-actor-photo-dir-btn" class="btn btn-small">选择</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 电影设置 Tab -->
+                <div class="settings-tab-content" id="tab-movie-settings">
+                    <!-- 时间设置 -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">时间设置</h3>
+                        <div class="settings-item">
+                            <label>新电影时间段（小时）：</label>
+                            <input type="number" id="new-movie-hours-input" min="1" max="720" value="72">
+                        </div>
+                    </div>
+                    <!-- TMDB 设置 -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">TMDB</h3>
+                        <div class="settings-item">
+                            <label>域名：</label>
+                            <input type="text" id="tmdb-url-input" value="api.themoviedb.org" placeholder="api.themoviedb.org">
+                        </div>
+                        <div class="settings-item">
+                            <label>语言：</label>
+                            <select id="tmdb-language-select">
+                                <option value="zh-CN">中文（简体）</option>
+                                <option value="zh-TW">中文（繁体）</option>
+                                <option value="en-US">English</option>
+                            </select>
+                        </div>
+                        <div class="settings-item">
+                            <label>凭据（Token）：</label>
+                            <input type="password" id="tmdb-token-input" placeholder="请输入TMDB API Token">
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="modal-footer">
                 <button id="save-settings" class="btn btn-primary">保存</button>
                 <button id="cancel-settings" class="btn btn-secondary">取消</button>

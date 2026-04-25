@@ -580,6 +580,7 @@ body {
     padding: 20px;
     max-height: 70vh;
     overflow-y: auto;
+    height: 640px;
 }
 
 .settings-group {
@@ -624,6 +625,100 @@ body {
 
 .movies-dir-config input {
     flex: 1;
+}
+
+/* 设置模态框 */
+.settings-modal-body {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    max-height: 70vh;
+}
+
+/* 设置 Tab 导航 */
+.settings-tabs {
+    display: flex;
+    gap: 0;
+    padding: 0 20px;
+    background-color: var(--sidebar-bg);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+
+
+/* 设置 Tab 内容区 */
+.settings-tab-content {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: none;
+}
+
+.settings-tab-content.active {
+    display: block;
+}
+
+/* 设置区块 */
+.settings-section {
+    margin-bottom: 24px;
+}
+
+.settings-section-title {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+/* 设置项 */
+.settings-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.settings-item label {
+    min-width: 120px;
+    font-size: 14px;
+    color: var(--text-color);
+}
+
+.settings-item input,
+.settings-item select {
+    flex: 1;
+    padding: 8px 12px;
+    background-color: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-color);
+    max-width: 300px;
+}
+
+.settings-item input[type="password"] {
+    max-width: 500px;
+}
+
+/* 目录输入组 */
+.dir-input-group {
+    display: flex;
+    flex: 1;
+    gap: 8px;
+    max-width: 500px;
+}
+
+.dir-input-group input {
+    flex: 1;
+    max-width: none;
+}
+
+.btn-small {
+    padding: 6px 12px;
+    font-size: 12px;
 }
 
 .modal-footer {
@@ -918,29 +1013,28 @@ body {
     display: flex;
     gap: 8px;
     border-bottom: 1px solid var(--border-color);
-    padding-bottom: 12px;
+    padding-bottom: 6px;
 }
 
 .tab-btn {
-    padding: 8px 20px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    background: var(--card-bg);
+    padding: 12px 24px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
     color: var(--text-secondary);
-    cursor: pointer;
     font-size: 14px;
+    cursor: pointer;
     transition: all 0.2s;
 }
 
 .tab-btn:hover {
-    background: var(--hover-bg);
     color: var(--text-color);
+    background-color: var(--hover-bg);
 }
 
 .tab-btn.active {
-    background: var(--primary-color);
-    color: white;
-    border-color: var(--primary-color);
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
 }
 
 /* Tab 内容 */
@@ -977,7 +1071,7 @@ body {
 .movie-files-container {
     display: flex;
     gap: 10px;
-    height: 565px;
+    height: 530px;
 }
 
 .movie-files-left {

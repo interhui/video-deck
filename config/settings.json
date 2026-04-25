@@ -17,12 +17,13 @@
     "sortOrder": "asc"
   },
   "library": {
-    "moviesDir": "D:\\git\\movie-mgt\\movies",
-    "actorPhotoDir": "D:\\git\\movie-mgt\\actor",
+    "moviesDir": "D:\\Develop\\Workspace\\movie-mgt\\movies",
+    "actorPhotoDir": "D:\\Develop\\Workspace\\movie-mgt\\actors",
     "scanOnStartup": true,
     "autoRefresh": false,
     "showHiddenFiles": false,
-    "includeSubfolders": true
+    "includeSubfolders": true,
+    "newMovieHours": 72
   },
   "notifications": {
     "enableStartup": true,
@@ -34,6 +35,11 @@
     "importPaths": []
   },
   "moviebox": {
-    "movieboxDir": "D:\\git\\movie-mgt\\boxes"
+    "movieboxDir": "D:\\Develop\\Workspace\\movie-mgt\\boxes"
+  },
+  "tmdb": {
+    "url": "api.themoviedb.org",
+    "language": "zh-CN",
+    "token": ""
   }
 }
