@@ -25,7 +25,7 @@ describe('HardCodeService', () => {
 
         test('SVC-HARDCODED-003: 包含顶层属性', () => {
             const settings = service.getDefaultSettings();
-            const topLevelProps = ['appearance', 'layout', 'library', 'shortcuts',
+            const topLevelProps = ['appearance', 'layout', 'library',
                 'notifications', 'import', 'moviebox', 'version', 'lastUpdate'];
             topLevelProps.forEach(prop => {
                 expect(settings).toHaveProperty(prop);
@@ -45,13 +45,7 @@ describe('HardCodeService', () => {
             expect(settings.layout.viewMode).toBe('grid');
         });
 
-        test('SVC-HARDCODED-006: shortcuts属性正确', () => {
-            const settings = service.getDefaultSettings();
-            expect(settings.shortcuts.openSearch).toBe('Ctrl+F');
-            expect(settings.shortcuts.focusSearch).toBe('Ctrl+K');
-        });
-
-        test('SVC-HARDCODED-007: library属性正确', () => {
+        test('SVC-HARDCODED-006: library属性正确', () => {
             const settings = service.getDefaultSettings();
             expect(settings.library).toBeDefined();
             expect(settings.library.moviesDir).toBeDefined();

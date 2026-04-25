@@ -72,20 +72,6 @@ describe('SettingsService', () => {
         });
     });
 
-    describe('getShortcuts / setShortcuts', () => {
-        test('SVC-SETTINGS-007: 返回快捷键配置', async () => {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            const shortcuts = service.getShortcuts();
-            expect(shortcuts.openSearch).toBe('Ctrl+F');
-        });
-
-        test('SVC-SETTINGS-008: 设置快捷键成功', async () => {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            service.setShortcuts({ openSearch: 'Ctrl+Shift+F' });
-            expect(service.getShortcuts().openSearch).toBe('Ctrl+Shift+F');
-        });
-    });
-
     describe('getMoviesDir / setMoviesDir', () => {
         test('SVC-SETTINGS-009: 返回电影目录', async () => {
             await new Promise(resolve => setTimeout(resolve, 100));

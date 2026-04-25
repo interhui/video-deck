@@ -24,16 +24,6 @@
     "showHiddenFiles": false,
     "includeSubfolders": true
   },
-  "shortcuts": {
-    "openSearch": "Ctrl+F",
-    "launchMovie": "Enter",
-    "movieDetails": "Ctrl+D",
-    "editMovie": "Ctrl+E",
-    "deleteMovie": "Delete",
-    "refreshLibrary": "Ctrl+R",
-    "openSettings": "Ctrl+S",
-    "toggleFavorite": "Ctrl+F"
-  },
   "notifications": {
     "enableStartup": true,
     "enableLibraryUpdate": true,

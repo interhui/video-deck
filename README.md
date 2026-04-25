@@ -19,7 +19,6 @@
 - 现代化深色/浅色主题
 - 海报墙视图（网格/列表模式）
 - 电影详情窗口
-- 快捷键支持
 - 自动扫描和刷新影库
 
 ### CLI 特性
@@ -57,15 +56,6 @@
     "autoRefresh": false,          // 自动刷新
     "showHiddenFiles": false,      // 显示隐藏文件
     "includeSubfolders": true      // 包含子文件夹
-  },
-  "shortcuts": {
-    "openSearch": "Ctrl+F",        // 打开搜索
-    "movieDetails": "Ctrl+D",      // 查看详情
-    "editMovie": "Ctrl+E",         // 编辑电影
-    "deleteMovie": "Delete",       // 删除电影
-    "refreshLibrary": "Ctrl+R",    // 刷新影库
-    "openSettings": "Ctrl+S",      // 打开设置
-    "toggleFavorite": "Ctrl+F"     // 切换收藏
   },
   "notifications": {
     "enableStartup": true,         // 启动通知

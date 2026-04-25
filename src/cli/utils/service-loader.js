@@ -81,7 +81,6 @@ async function initializeServices(options = {}) {
             appearance: { theme: 'dark', language: 'zh-CN' },
             layout: { sidebarWidth: 200, posterSize: 'large', columns: 6, viewMode: 'grid' },
             library: { moviesDir: path.join(baseDir, 'movies'), scanOnStartup: true },
-            shortcuts: {},
             notifications: { enableStartup: true },
             import: { autoImport: false, importPaths: [] },
             moviebox: { movieboxDir: path.join(baseDir, 'boxes') }
