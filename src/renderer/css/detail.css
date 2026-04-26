@@ -168,6 +168,32 @@ body {
     flex: 1;
 }
 
+/* 演员显示 - 每行最多6个 */
+.actors-display {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px 12px;
+    line-height: 1.8;
+}
+
+/* 演员编辑模式容器 */
+.actors-input {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    line-height: 1.8;
+    align-items: center;
+}
+
+.actor-tag {
+    padding: 2px 8px;
+    background-color: var(--card-bg);
+    border-radius: 4px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
 .movie-id {
     font-size: 14px;
     font-weight: 500;
@@ -1197,10 +1223,10 @@ body {
     flex-shrink: 0;
 }
 
-/* ==================== TMDB电影搜索弹窗样式 ==================== */
+/* ==================== 电影搜索弹窗样式 ==================== */
 
-/* TMDB搜索按钮 */
-.tmdb-search-btn {
+/* 电影搜索按钮 */
+.movie-search-btn {
     margin-left: 12px;
     padding: 4px 12px;
     background-color: var(--primary-color);
@@ -1212,33 +1238,33 @@ body {
     transition: all 0.2s;
 }
 
-.tmdb-search-btn:hover {
+.movie-search-btn:hover {
     background-color: var(--primary-hover);
 }
 
-/* TMDB搜索配置区域 */
-.tmdb-search-config {
+/* 电影搜索配置区域 */
+.movie-search-config {
     padding-bottom: 16px;
     border-bottom: 1px solid var(--border-color);
     margin-bottom: 16px;
 }
 
-.tmdb-search-config .form-group {
+.movie-search-config .form-group {
     margin-bottom: 12px;
 }
 
-.tmdb-search-config .form-group:last-child {
+.movie-search-config .form-group:last-child {
     margin-bottom: 0;
 }
 
-/* TMDB搜索适配器单选按钮组 */
-.tmdb-adapter-options {
+/* 电影搜索适配器单选按钮组 */
+.movie-adapter-options {
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
-.tmdb-adapter-radio {
+.movie-adapter-radio {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -1249,31 +1275,31 @@ body {
     transition: all 0.2s;
 }
 
-.tmdb-adapter-radio:hover {
+.movie-adapter-radio:hover {
     background-color: var(--hover-bg);
     border-color: var(--primary-color);
 }
 
-.tmdb-adapter-radio input[type="radio"] {
+.movie-adapter-radio input[type="radio"] {
     margin: 0;
 }
 
-.tmdb-adapter-radio input[type="radio"]:checked + span {
+.movie-adapter-radio input[type="radio"]:checked + span {
     color: var(--primary-color);
     font-weight: 500;
 }
 
-.tmdb-adapter-radio input[type="radio"]:checked ~ span:last-child {
+.movie-adapter-radio input[type="radio"]:checked ~ span:last-child {
     font-weight: 500;
 }
 
-.tmdb-adapter-radio:has(input[type="radio"]:checked) {
+.movie-adapter-radio:has(input[type="radio"]:checked) {
     background-color: var(--active-bg);
     border-color: var(--primary-color);
 }
 
-/* TMDB搜索区域 */
-.tmdb-search-section {
+/* 电影搜索区域 */
+.movie-search-section {
     margin-top: 16px;
 }
 
@@ -1286,15 +1312,15 @@ body {
     flex: 1;
 }
 
-/* TMDB加载状态 */
-.tmdb-loading {
+/* 电影加载状态 */
+.movie-loading {
     text-align: center;
     padding: 20px;
     color: var(--text-secondary);
 }
 
-/* TMDB错误信息 */
-.tmdb-error {
+/* 电影错误信息 */
+.movie-error {
     padding: 12px;
     background-color: rgba(244, 67, 54, 0.1);
     border: 1px solid var(--danger-color);
@@ -1304,14 +1330,13 @@ body {
     margin-top: 12px;
 }
 
-/* TMDB搜索结果列表 */
-.tmdb-results {
-    max-height: 400px;
-    overflow-y: auto;
+/* 电影搜索结果列表 */
+.movie-results {
+    max-height: 1000px;
     margin-top: 16px;
 }
 
-.tmdb-result-item {
+.movie-result-item {
     display: flex;
     align-items: center;
     padding: 12px;
@@ -1322,23 +1347,23 @@ body {
     margin-bottom: 8px;
 }
 
-.tmdb-result-item:last-child {
+.movie-result-item:last-child {
     margin-bottom: 0;
 }
 
-.tmdb-result-item:hover {
+.movie-result-item:hover {
     border-color: var(--primary-color);
     background-color: var(--hover-bg);
 }
 
-.tmdb-result-item.selected {
+.movie-result-item.selected {
     border-color: var(--primary-color) !important;
     background-color: var(--hover-bg);
     outline: 3px solid var(--primary-color);
     outline-offset: -3px;
 }
 
-.tmdb-result-poster {
+.movie-result-poster {
     width: 60px;
     height: 90px;
     border-radius: 4px;
@@ -1350,24 +1375,24 @@ body {
     justify-content: center;
 }
 
-.tmdb-result-poster img {
+.movie-result-poster img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
-.tmdb-result-poster .no-poster {
+.movie-result-poster .no-poster {
     font-size: 24px;
     color: var(--text-secondary);
 }
 
-.tmdb-result-info {
+.movie-result-info {
     margin-left: 16px;
     flex: 1;
     min-width: 0;
 }
 
-.tmdb-result-title {
+.movie-result-title {
     font-size: 14px;
     font-weight: 500;
     margin-bottom: 4px;
@@ -1376,13 +1401,13 @@ body {
     text-overflow: ellipsis;
 }
 
-.tmdb-result-year {
+.movie-result-year {
     font-size: 12px;
     color: var(--text-secondary);
     margin-bottom: 4px;
 }
 
-.tmdb-result-overview {
+.movie-result-overview {
     font-size: 12px;
     color: var(--text-secondary);
     display: -webkit-box;
@@ -1393,7 +1418,7 @@ body {
 }
 
 /* 空结果提示 */
-.tmdb-no-results {
+.movie-no-results {
     text-align: center;
     padding: 40px 20px;
     color: var(--text-secondary);
