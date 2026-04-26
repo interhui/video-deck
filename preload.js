@@ -154,6 +154,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     showExportSaveDialog: (data) => ipcRenderer.invoke('show-export-save-dialog', data),
     exportBox: (data) => ipcRenderer.invoke('export-box', data),
 
+    // TMDB电影搜索
+    tmdbSearchMovie: (keyword) => ipcRenderer.invoke('tmdb-search-movie', keyword),
+    tmdbGetMovie: (searchId) => ipcRenderer.invoke('tmdb-get-movie', searchId),
+
 // 事件监听
     onOpenAddMovie: (callback) => {
         ipcRenderer.on('open-add-movie', callback);

@@ -21,6 +21,11 @@ let actorSelectorSearchKeyword = '';
 let actorSelectorCurrentPage = 1;
 const ACTOR_SELECTOR_PAGE_SIZE = 10;
 
+// TMDB电影搜索弹窗状态
+let tmdbSearchResults = [];
+let selectedTmdbMovie = null;
+const TMDB_SEARCH_MAX_RESULTS = 10;
+
 // DOM 元素
 const elements = {
     closeBtn: document.getElementById('close-btn'),
@@ -108,7 +113,19 @@ const elements = {
     newFileMemo: document.getElementById('new-file-memo'),
     confirmAddFile: document.getElementById('confirm-add-file'),
     cancelAddFile: document.getElementById('cancel-add-file'),
-    closeAddFile: document.getElementById('close-add-file')
+    closeAddFile: document.getElementById('close-add-file'),
+    // TMDB search modal
+    tmdbSearchBtn: document.getElementById('tmdb-search-btn'),
+    tmdbSearchModal: document.getElementById('tmdb-search-modal'),
+    tmdbSearchCategory: document.getElementById('tmdb-search-category'),
+    tmdbSearchInput: document.getElementById('tmdb-search-input'),
+    tmdbSearchModalBtn: document.getElementById('tmdb-search-modal-btn'),
+    tmdbSearchLoading: document.getElementById('tmdb-search-loading'),
+    tmdbSearchError: document.getElementById('tmdb-search-error'),
+    tmdbSearchResults: document.getElementById('tmdb-search-results'),
+    confirmTmdbSearch: document.getElementById('confirm-tmdb-search'),
+    cancelTmdbSearch: document.getElementById('cancel-tmdb-search'),
+    closeTmdbSearch: document.getElementById('close-tmdb-search')
 };
 
 /**
@@ -962,6 +979,7 @@ function enterEditMode() {
     elements.uploadPosterBtn.style.display = 'block';
     elements.moviePoster.style.cursor = 'pointer';
     elements.moviePoster.title = '点击上传新海报';
+    elements.tmdbSearchBtn.style.display = 'inline-block';
 
     if (currentTab === 'movie-files') {
         elements.addFileBtn.style.display = 'block';
@@ -1016,6 +1034,7 @@ function exitEditMode() {
     elements.detailFooter.style.display = 'none';
     elements.addFileBtn.style.display = 'none';
     elements.uploadPosterBtn.style.display = 'none';
+    elements.tmdbSearchBtn.style.display = 'none';
     elements.moviePoster.style.cursor = 'default';
     elements.moviePoster.title = '';
     elements.moviePoster.onclick = null;
@@ -1623,17 +1642,358 @@ function bindEvents() {
             if (actorSelectorSearchKeyword) {
                 const keyword = actorSelectorSearchKeyword.toLowerCase();
                 filteredActors = actorsCache.filter(actor => {
-                    const nameMatch = actor.name && actor.name.toLowerCase().includes(keyword);
-                    const nicknameMatch = actor.nickname && actor.nickname.toLowerCase().includes(keyword);
-                    return nameMatch || nicknameMatch;
+                    return actor.name.toLowerCase().includes(keyword) ||
+                        (actor.nickname && actor.nickname.toLowerCase().includes(keyword));
                 });
             }
-            const totalPages = Math.ceil(filteredActors.length / ACTOR_SELECTOR_PAGE_SIZE) || 1;
+            const totalPages = Math.ceil(filteredActors.length / ACTOR_SELECTOR_PAGE_SIZE);
             if (actorSelectorCurrentPage < totalPages) {
                 actorSelectorCurrentPage++;
                 renderActorSelectorList();
             }
         });
+    }
+
+    // TMDB电影搜索弹窗事件
+    if (elements.tmdbSearchBtn) {
+        elements.tmdbSearchBtn.addEventListener('click', () => {
+            openTmdbSearchModal();
+        });
+    }
+
+    if (elements.closeTmdbSearch) {
+        elements.closeTmdbSearch.addEventListener('click', () => {
+            closeTmdbSearchModal();
+        });
+    }
+
+    if (elements.cancelTmdbSearch) {
+        elements.cancelTmdbSearch.addEventListener('click', () => {
+            closeTmdbSearchModal();
+        });
+    }
+
+    if (elements.confirmTmdbSearch) {
+        elements.confirmTmdbSearch.addEventListener('click', () => {
+            confirmTmdbSearch();
+        });
+    }
+
+    if (elements.tmdbSearchModal) {
+        elements.tmdbSearchModal.addEventListener('click', (e) => {
+            if (e.target === elements.tmdbSearchModal) {
+                closeTmdbSearchModal();
+            }
+        });
+    }
+
+    if (elements.tmdbSearchModalBtn) {
+        elements.tmdbSearchModalBtn.addEventListener('click', () => {
+            searchTmdbMovies();
+        });
+    }
+
+    if (elements.tmdbSearchInput) {
+        elements.tmdbSearchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchTmdbMovies();
+            }
+        });
+    }
+}
+
+/**
+ * TMDB电影搜索弹窗：打开弹窗
+ */
+async function openTmdbSearchModal() {
+    if (!elements.tmdbSearchModal) {
+        console.error('TMDB search modal not found');
+        return;
+    }
+
+    // 显示弹窗
+    elements.tmdbSearchModal.style.display = 'flex';
+
+    // 加载分类列表
+    await loadCategoriesForTmdbSearch();
+
+    // 重置搜索表单
+    resetTmdbSearchForm();
+
+    // 聚焦到搜索输入框
+    elements.tmdbSearchInput.focus();
+}
+
+/**
+ * TMDB电影搜索弹窗：加载分类列表
+ */
+async function loadCategoriesForTmdbSearch() {
+    try {
+        const categories = await window.electronAPI.getCategories();
+        if (categories && categories.length > 0) {
+            // 按sortOrder排序
+            categories.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+
+            let optionsHtml = '<option value="">所有分类</option>';
+            categories.forEach(cat => {
+                optionsHtml += `<option value="${cat.id}">${cat.name}</option>`;
+            });
+            elements.tmdbSearchCategory.innerHTML = optionsHtml;
+
+            // 如果当前有分类选中，自动选中
+            if (currentMovie && currentMovie.category) {
+                elements.tmdbSearchCategory.value = currentMovie.category;
+            }
+        } else {
+            elements.tmdbSearchCategory.innerHTML = '<option value="">无可用分类</option>';
+        }
+    } catch (error) {
+        console.error('Error loading categories for TMDB search:', error);
+        elements.tmdbSearchCategory.innerHTML = '<option value="">加载失败</option>';
+    }
+}
+
+/**
+ * TMDB电影搜索弹窗：重置表单
+ */
+function resetTmdbSearchForm() {
+    elements.tmdbSearchInput.value = '';
+    elements.tmdbSearchLoading.style.display = 'none';
+    elements.tmdbSearchError.style.display = 'none';
+    elements.tmdbSearchError.textContent = '';
+    elements.tmdbSearchResults.innerHTML = '';
+    elements.confirmTmdbSearch.disabled = true;
+    tmdbSearchResults = [];
+    selectedTmdbMovie = null;
+}
+
+/**
+ * TMDB电影搜索弹窗：关闭弹窗
+ */
+function closeTmdbSearchModal() {
+    if (!elements.tmdbSearchModal) return;
+    elements.tmdbSearchModal.style.display = 'none';
+    resetTmdbSearchForm();
+}
+
+/**
+ * TMDB电影搜索弹窗：执行搜索
+ */
+async function searchTmdbMovies() {
+    const keyword = elements.tmdbSearchInput.value.trim();
+
+    if (!keyword) {
+        elements.tmdbSearchError.textContent = '请输入电影名称';
+        elements.tmdbSearchError.style.display = 'block';
+        return;
+    }
+
+    // 显示加载状态
+    elements.tmdbSearchLoading.style.display = 'block';
+    elements.tmdbSearchError.style.display = 'none';
+    elements.tmdbSearchResults.innerHTML = '';
+    elements.confirmTmdbSearch.disabled = true;
+    selectedTmdbMovie = null;
+
+    try {
+        const results = await window.electronAPI.tmdbSearchMovie(keyword);
+
+        elements.tmdbSearchLoading.style.display = 'none';
+
+        if (results && results.error) {
+            elements.tmdbSearchError.textContent = results.error;
+            elements.tmdbSearchError.style.display = 'block';
+            return;
+        }
+
+        if (!results || results.length === 0) {
+            elements.tmdbSearchResults.innerHTML = '<div class="tmdb-no-results">未找到相关电影</div>';
+            return;
+        }
+
+        // 限制显示数量
+        tmdbSearchResults = results.slice(0, TMDB_SEARCH_MAX_RESULTS);
+        renderTmdbSearchResults(tmdbSearchResults);
+
+    } catch (error) {
+        console.error('Error searching TMDB movies:', error);
+        elements.tmdbSearchLoading.style.display = 'none';
+        elements.tmdbSearchError.textContent = '搜索失败: ' + error.message;
+        elements.tmdbSearchError.style.display = 'block';
+    }
+}
+
+/**
+ * TMDB电影搜索弹窗：渲染搜索结果
+ * @param {Array} results - 搜索结果数组
+ */
+function renderTmdbSearchResults(results) {
+    const html = results.map((movie, index) => `
+        <div class="tmdb-result-item" data-index="${index}">
+            <div class="tmdb-result-poster">
+                ${movie.poster_url
+            ? `<img src="${movie.poster_url}" alt="${movie.title}" onerror="this.parentElement.innerHTML='<span class=\\'no-poster\\'>🎬</span>'">`
+            : '<span class="no-poster">🎬</span>'}
+            </div>
+            <div class="tmdb-result-info">
+                <div class="tmdb-result-title" title="${movie.title}">${movie.title}</div>
+                <div class="tmdb-result-year">${movie.year || '未知年份'}</div>
+                <div class="tmdb-result-overview">${movie.overview || '暂无简介'}</div>
+            </div>
+        </div>
+    `).join('');
+
+    elements.tmdbSearchResults.innerHTML = html;
+
+    // 绑定点击事件
+    elements.tmdbSearchResults.querySelectorAll('.tmdb-result-item').forEach(item => {
+        item.addEventListener('click', () => {
+            selectTmdbSearchResult(parseInt(item.dataset.index));
+        });
+    });
+}
+
+/**
+ * TMDB电影搜索弹窗：选中搜索结果
+ * @param {number} index - 选中结果的索引
+ */
+function selectTmdbSearchResult(index) {
+    if (index < 0 || index >= tmdbSearchResults.length) return;
+
+    // 更新选中状态
+    selectedTmdbMovie = tmdbSearchResults[index];
+
+    // 更新UI
+    elements.tmdbSearchResults.querySelectorAll('.tmdb-result-item').forEach((item, i) => {
+        item.classList.toggle('selected', i === index);
+    });
+
+    // 启用确认按钮
+    elements.confirmTmdbSearch.disabled = false;
+}
+
+/**
+ * TMDB电影搜索弹窗：确认选择并填充表单
+ */
+async function confirmTmdbSearch() {
+    if (!selectedTmdbMovie) {
+        alert('请选择一个电影');
+        return;
+    }
+
+    // 显示加载状态
+    elements.confirmTmdbSearch.disabled = true;
+    elements.confirmTmdbSearch.textContent = '加载中...';
+
+    try {
+        // 调用getMovie获取详细信息
+        const movieDetail = await window.electronAPI.tmdbGetMovie(selectedTmdbMovie.search_id);
+
+        if (movieDetail && movieDetail.error) {
+            throw new Error(movieDetail.error);
+        }
+
+        // 填充编辑表单
+        fillEditFormWithTmdbData(movieDetail);
+
+        // 关闭弹窗
+        closeTmdbSearchModal();
+
+    } catch (error) {
+        console.error('Error getting TMDB movie detail:', error);
+        alert('获取电影详情失败: ' + error.message);
+    } finally {
+        elements.confirmTmdbSearch.disabled = false;
+        elements.confirmTmdbSearch.textContent = '确认';
+    }
+}
+
+/**
+ * 使用TMDB数据填充编辑表单
+ * @param {Object} movieData - TMDB电影数据
+ */
+function fillEditFormWithTmdbData(movieData) {
+    // 填充电影名称
+    const nameInput = document.getElementById('edit-name');
+    if (nameInput && movieData.title) {
+        nameInput.value = movieData.title;
+        editData.name = movieData.title;
+    }
+
+    // 填充发行日期（年份）
+    const publishDateInput = document.getElementById('edit-publish-date');
+    if (publishDateInput && movieData.year) {
+        publishDateInput.value = movieData.year;
+        editData.publishDate = movieData.year;
+    }
+
+    // 填充电影时长
+    const durationInput = document.getElementById('edit-duration');
+    if (durationInput && movieData.runtime) {
+        durationInput.value = movieData.runtime;
+        editData.duration = movieData.runtime;
+    }
+
+    // 填充导演
+    const directorInput = document.getElementById('edit-director');
+    if (directorInput && movieData.directors && movieData.directors.length > 0) {
+        const directorNames = movieData.directors.map(d => d.name).join(', ');
+        directorInput.value = directorNames;
+        editData.director = directorNames;
+    }
+
+    // 填充演员
+    if (movieData.actors && movieData.actors.length > 0) {
+        selectedActors = movieData.actors.map(a => a.name).filter(name => name);
+        renderSelectedActors();
+        editData.actors = selectedActors.join(', ');
+    }
+
+    // 填充制作商/制片公司
+    const studioInput = document.getElementById('edit-studio');
+    if (studioInput && movieData.production_companies && movieData.production_companies.length > 0) {
+        studioInput.value = movieData.production_companies.join(', ');
+        editData.studio = movieData.production_companies.join(', ');
+    }
+
+    // 填充电影简介
+    const descriptionInput = document.getElementById('edit-description');
+    if (descriptionInput && movieData.overview) {
+        descriptionInput.value = movieData.overview;
+        editData.description = movieData.overview;
+    }
+
+    // 如果有海报URL，下载并保存
+    if (movieData.poster_url) {
+        downloadAndSetPoster(movieData.poster_url);
+    }
+}
+
+/**
+ * 下载海报并设置为封面
+ * @param {string} posterUrl - 海报URL
+ */
+async function downloadAndSetPoster(posterUrl) {
+    try {
+        // 通过下载方式获取海报base64
+        const result = await window.electronAPI.downloadMovieCover({
+            category: currentMovie.category,
+            folderName: currentMovie.folderName,
+            coverUrl: posterUrl
+        });
+
+        if (result && result.success && result.posterPath) {
+            // 更新显示
+            const posterUrlWithTimestamp = result.posterPath + '?t=' + Date.now();
+            elements.moviePoster.src = posterUrlWithTimestamp;
+            elements.moviePoster.style.display = 'block';
+            elements.posterPlaceholder.style.display = 'none';
+
+            // 保存base64到editData供保存时使用
+            editData.coverImage = result.base64 || null;
+        }
+    } catch (error) {
+        console.error('Error downloading poster:', error);
     }
 }
 

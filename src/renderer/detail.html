@@ -36,6 +36,7 @@
                         <div class="info-row">
                             <span class="label">电影ID：</span>
                             <span id="movie-id" class="value movie-id"></span>
+                            <button id="tmdb-search-btn" class="btn btn-secondary btn-sm tmdb-search-btn" style="display: none;">搜索</button>
                         </div>
 
                         <div class="info-row">
@@ -315,6 +316,55 @@
                 <div class="modal-footer">
                     <button id="confirm-add-file" class="btn btn-primary">确定</button>
                     <button id="cancel-add-file" class="btn btn-secondary">取消</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TMDB 电影搜索弹窗 -->
+        <div id="tmdb-search-modal" class="modal" style="display: none;">
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <h2>电影库搜索</h2>
+                    <button class="close-btn" id="close-tmdb-search">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <!-- 搜索配置区域 -->
+                    <div class="tmdb-search-config">
+                        <div class="form-group">
+                            <label>电影类型：</label>
+                            <select id="tmdb-search-category" class="form-input">
+                                <option value="">加载中...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>电影搜索适配器：</label>
+                            <div class="tmdb-adapter-options">
+                                <label class="tmdb-adapter-radio">
+                                    <input type="radio" name="tmdb-adapter" value="tmdb" checked>
+                                    <span>TMDB电影搜索</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 搜索区域 -->
+                    <div class="form-group tmdb-search-section">
+                        <label>电影名称：</label>
+                        <div class="search-input-group">
+                            <input type="text" id="tmdb-search-input" class="form-input" placeholder="输入电影名称">
+                            <button id="tmdb-search-modal-btn" class="btn btn-secondary">搜索</button>
+                        </div>
+                    </div>
+                    <!-- 搜索状态 -->
+                    <div id="tmdb-search-loading" class="tmdb-loading" style="display: none;">
+                        <span>搜索中...</span>
+                    </div>
+                    <div id="tmdb-search-error" class="tmdb-error" style="display: none;"></div>
+                    <!-- 搜索结果列表 -->
+                    <div id="tmdb-search-results" class="tmdb-results"></div>
+                </div>
+                <div class="modal-footer">
+                    <button id="confirm-tmdb-search" class="btn btn-primary" disabled>确认</button>
+                    <button id="cancel-tmdb-search" class="btn btn-secondary">取消</button>
                 </div>
             </div>
         </div>

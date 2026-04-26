@@ -1196,3 +1196,206 @@ body {
 .actor-selector-modal-content .modal-footer {
     flex-shrink: 0;
 }
+
+/* ==================== TMDB电影搜索弹窗样式 ==================== */
+
+/* TMDB搜索按钮 */
+.tmdb-search-btn {
+    margin-left: 12px;
+    padding: 4px 12px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.tmdb-search-btn:hover {
+    background-color: var(--primary-hover);
+}
+
+/* TMDB搜索配置区域 */
+.tmdb-search-config {
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 16px;
+}
+
+.tmdb-search-config .form-group {
+    margin-bottom: 12px;
+}
+
+.tmdb-search-config .form-group:last-child {
+    margin-bottom: 0;
+}
+
+/* TMDB搜索适配器单选按钮组 */
+.tmdb-adapter-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tmdb-adapter-radio {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    transition: all 0.2s;
+}
+
+.tmdb-adapter-radio:hover {
+    background-color: var(--hover-bg);
+    border-color: var(--primary-color);
+}
+
+.tmdb-adapter-radio input[type="radio"] {
+    margin: 0;
+}
+
+.tmdb-adapter-radio input[type="radio"]:checked + span {
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.tmdb-adapter-radio input[type="radio"]:checked ~ span:last-child {
+    font-weight: 500;
+}
+
+.tmdb-adapter-radio:has(input[type="radio"]:checked) {
+    background-color: var(--active-bg);
+    border-color: var(--primary-color);
+}
+
+/* TMDB搜索区域 */
+.tmdb-search-section {
+    margin-top: 16px;
+}
+
+.search-input-group {
+    display: flex;
+    gap: 8px;
+}
+
+.search-input-group .form-input {
+    flex: 1;
+}
+
+/* TMDB加载状态 */
+.tmdb-loading {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-secondary);
+}
+
+/* TMDB错误信息 */
+.tmdb-error {
+    padding: 12px;
+    background-color: rgba(244, 67, 54, 0.1);
+    border: 1px solid var(--danger-color);
+    border-radius: 4px;
+    color: var(--danger-color);
+    font-size: 13px;
+    margin-top: 12px;
+}
+
+/* TMDB搜索结果列表 */
+.tmdb-results {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-top: 16px;
+}
+
+.tmdb-result-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 8px;
+}
+
+.tmdb-result-item:last-child {
+    margin-bottom: 0;
+}
+
+.tmdb-result-item:hover {
+    border-color: var(--primary-color);
+    background-color: var(--hover-bg);
+}
+
+.tmdb-result-item.selected {
+    border-color: var(--primary-color) !important;
+    background-color: var(--hover-bg);
+    outline: 3px solid var(--primary-color);
+    outline-offset: -3px;
+}
+
+.tmdb-result-poster {
+    width: 60px;
+    height: 90px;
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: var(--card-bg);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tmdb-result-poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.tmdb-result-poster .no-poster {
+    font-size: 24px;
+    color: var(--text-secondary);
+}
+
+.tmdb-result-info {
+    margin-left: 16px;
+    flex: 1;
+    min-width: 0;
+}
+
+.tmdb-result-title {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tmdb-result-year {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.tmdb-result-overview {
+    font-size: 12px;
+    color: var(--text-secondary);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 空结果提示 */
+.tmdb-no-results {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
