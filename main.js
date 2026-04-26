@@ -21,6 +21,7 @@ const TagService = require('./src/main/services/TagService');
 const CategoryService = require('./src/main/services/CategoryService');
 const IndexService = require('./src/main/services/IndexService');
 const ActorService = require('./src/main/services/ActorService');
+const TMDBMovieAdapterService = require('./src/main/services/TMDBAdapterService');
 const { setupIpcHandlers } = require('./src/main/ipc-handlers');
 
 // 全局变量
@@ -39,6 +40,7 @@ let tagService = null;
 let categoryService = null;
 let indexService = null;
 let actorService = null;
+let tmdbMovieAdapterService = null;
 
 /**
  * 初始化服务
@@ -56,6 +58,7 @@ function initializeServices() {
     tagService = new TagService(path.join(__dirname, 'config', 'tags.json'));
     categoryService = new CategoryService(path.join(__dirname, 'config', 'categories.json'));
     actorService = new ActorService(path.join(__dirname, 'config', 'actor.json'));
+    tmdbMovieAdapterService = new TMDBMovieAdapterService(settingsService);
 
     // 将 categoryService 传递给 movieService（如果支持）
     if (typeof movieService.setCategoryService === 'function') {
@@ -173,7 +176,7 @@ function createApplicationMenu() {
                 { type: 'separator' },
                 {
                     label: '设置',
-                    accelerator: 'CmdOrCtrl+Comma',
+                    accelerator: 'CmdOrCtrl+S',
                     click: () => {
                         if (mainWindow) {
                             mainWindow.webContents.send('open-settings');
@@ -181,7 +184,11 @@ function createApplicationMenu() {
                     }
                 },
                 { type: 'separator' },
-                { label: '退出', role: 'quit' }
+                { 
+                    label: '退出', 
+                    accelerator: 'CmdOrCtrl+Q',
+                    role: 'quit' 
+                }
             ]
         },
         {
@@ -293,6 +300,8 @@ function createBoxWindow(boxName) {
         minWidth: 800,
         minHeight: 600,
         title: `电影盒子 - ${boxName}`,
+        frame: false,
+        thickFrame: false,
         autoHideMenuBar: true,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
@@ -309,6 +318,7 @@ function createBoxWindow(boxName) {
 
     boxWindow.once('ready-to-show', () => {
         boxWindow.show();
+        boxWindow.maximize();
     });
 
     boxWindow.on('closed', () => {
@@ -447,6 +457,7 @@ app.whenReady().then(async () => {
         tagService,
         categoryService,
         actorService,
+        tmdbMovieAdapterService,
         getMainWindow: () => mainWindow,
         createMovieDetailWindow,
         createBoxWindow,

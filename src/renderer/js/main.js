@@ -71,6 +71,12 @@ const elements = {
     actorPhotoDirInput: document.getElementById('actor-photo-dir-input'),
     selectActorPhotoDirBtn: document.getElementById('select-actor-photo-dir-btn'),
     newMovieHoursInput: document.getElementById('new-movie-hours-input'),
+    // TMDB 设置
+    tmdbUrlInput: document.getElementById('tmdb-url-input'),
+    tmdbLanguageSelect: document.getElementById('tmdb-language-select'),
+    tmdbTokenInput: document.getElementById('tmdb-token-input'),
+    // 设置 Tab
+    settingsTabs: document.querySelector('.settings-tabs'),
     onlyNewMoviesCheckbox: document.getElementById('only-new-movies'),
     addBoxBtn: document.getElementById('add-box-btn'),
     boxList: document.getElementById('box-list'),
@@ -555,6 +561,11 @@ async function loadSettings() {
         if (elements.movieboxDirInput) elements.movieboxDirInput.value = state.settings.moviebox?.movieboxDir || '';
         if (elements.actorPhotoDirInput) elements.actorPhotoDirInput.value = state.settings.library?.actorPhotoDir || '';
         if (elements.newMovieHoursInput) elements.newMovieHoursInput.value = state.settings.library?.newMovieHours || 72;
+
+        // 加载 TMDB 设置
+        if (elements.tmdbUrlInput) elements.tmdbUrlInput.value = state.settings.tmdb?.url || 'api.themoviedb.org';
+        if (elements.tmdbLanguageSelect) elements.tmdbLanguageSelect.value = state.settings.tmdb?.language || 'zh-CN';
+        if (elements.tmdbTokenInput) elements.tmdbTokenInput.value = state.settings.tmdb?.token || '';
 
         state.viewMode = state.settings.layout.viewMode;
         state.newMovieHours = state.settings.library?.newMovieHours || 72;
@@ -1625,6 +1636,26 @@ function bindEvents() {
 
     // 保存设置
     elements.saveSettings.addEventListener('click', saveSettingsHandler);
+
+    // 设置 Tab 切换
+    if (elements.settingsTabs) {
+        elements.settingsTabs.addEventListener('click', (e) => {
+            const tabBtn = e.target.closest('.tab-btn');
+            if (!tabBtn) return;
+
+            // 移除所有 active 类
+            elements.settingsTabs.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.settings-tab-content').forEach(content => content.classList.remove('active'));
+
+            // 添加 active 类到当前 tab
+            tabBtn.classList.add('active');
+            const tabId = tabBtn.dataset.tab;
+            const targetContent = document.getElementById(`tab-${tabId}`);
+            if (targetContent) {
+                targetContent.classList.add('active');
+            }
+        });
+    }
 
     // 选择目录
     elements.selectDirBtn.addEventListener('click', async () => {
@@ -2927,6 +2958,11 @@ async function saveSettingsHandler() {
             moviebox: {
                 ...state.settings.moviebox,
                 movieboxDir: elements.movieboxDirInput.value
+            },
+            tmdb: {
+                url: elements.tmdbUrlInput?.value || 'api.themoviedb.org',
+                language: elements.tmdbLanguageSelect?.value || 'zh-CN',
+                token: elements.tmdbTokenInput?.value || ''
             }
         };
 

@@ -100,23 +100,6 @@ class SettingsService {
     }
 
     /**
-     * 获取快捷键配置
-     * @returns {object} 快捷键配置
-     */
-    getShortcuts() {
-        return this.settings.shortcuts || {};
-    }
-
-    /**
-     * 设置快捷键配置
-     * @param {object} shortcuts - 快捷键配置
-     */
-    setShortcuts(shortcuts) {
-        this.settings.shortcuts = { ...this.settings.shortcuts, ...shortcuts };
-        this.saveSettings(this.settings);
-    }
-
-    /**
      * 获取电影目录配置
      * @returns {string} 电影目录路径
      */
@@ -244,21 +227,20 @@ getActorPhotoDir() {
         return this.settings.igdb || { clientId: '', clientSecret: '' };
     }
 
-    /**
-     * 设置 IGDB 配置
-     * @param {object} config - IGDB 配置
-     */
     setIgdbConfig(config) {
         this.settings.igdb = { ...this.settings.igdb, ...config };
         this.saveSettings(this.settings);
     }
 
-    /**
-     * 深度合并对象
-     * @param {object} target - 目标对象
-     * @param {object} source - 源对象
-     * @returns {object} 合并后的对象
-     */
+    getTmdbConfig() {
+        return this.settings.tmdb || { url: 'api.themoviedb.org', token: '', language: 'zh-CN' };
+    }
+
+    setTmdbConfig(config) {
+        this.settings.tmdb = { ...this.settings.tmdb, ...config };
+        this.saveSettings(this.settings);
+    }
+
     mergeDeep(target, source) {
         const output = { ...target };
 

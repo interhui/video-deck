@@ -72,20 +72,6 @@ describe('SettingsService', () => {
         });
     });
 
-    describe('getShortcuts / setShortcuts', () => {
-        test('SVC-SETTINGS-007: 返回快捷键配置', async () => {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            const shortcuts = service.getShortcuts();
-            expect(shortcuts.openSearch).toBe('Ctrl+F');
-        });
-
-        test('SVC-SETTINGS-008: 设置快捷键成功', async () => {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            service.setShortcuts({ openSearch: 'Ctrl+Shift+F' });
-            expect(service.getShortcuts().openSearch).toBe('Ctrl+Shift+F');
-        });
-    });
-
     describe('getMoviesDir / setMoviesDir', () => {
         test('SVC-SETTINGS-009: 返回电影目录', async () => {
             await new Promise(resolve => setTimeout(resolve, 100));
@@ -242,6 +228,64 @@ describe('SettingsService', () => {
             await new Promise(resolve => setTimeout(resolve, 100));
             const settings = service.getSettings();
             expect(settings.library.newMovieHours).toBeDefined();
+        });
+    });
+
+    describe('TMDB配置 (getTmdbConfig / setTmdbConfig)', () => {
+        test('SVC-SETTINGS-031: 返回默认TMDB配置', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            const config = service.getTmdbConfig();
+            expect(config.url).toBe('api.themoviedb.org');
+            expect(config.token).toBe('');
+            expect(config.language).toBe('zh-CN');
+        });
+
+        test('SVC-SETTINGS-032: 设置TMDB域名', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            service.setTmdbConfig({ url: 'api.example.com' });
+            expect(service.getTmdbConfig().url).toBe('api.example.com');
+        });
+
+        test('SVC-SETTINGS-033: 设置TMDB语言', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            service.setTmdbConfig({ language: 'en-US' });
+            expect(service.getTmdbConfig().language).toBe('en-US');
+        });
+
+        test('SVC-SETTINGS-034: 设置TMDB凭据(Token)', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            service.setTmdbConfig({ token: 'my-secret-token' });
+            expect(service.getTmdbConfig().token).toBe('my-secret-token');
+        });
+
+        test('SVC-SETTINGS-035: 完整设置TMDB配置', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            service.setTmdbConfig({
+                url: 'api.newdomain.com',
+                language: 'zh-TW',
+                token: 'new-token-123'
+            });
+            const config = service.getTmdbConfig();
+            expect(config.url).toBe('api.newdomain.com');
+            expect(config.language).toBe('zh-TW');
+            expect(config.token).toBe('new-token-123');
+        });
+
+        test('SVC-SETTINGS-036: 部分更新TMDB配置保留其他字段', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            service.setTmdbConfig({ url: 'api.changed.com' });
+            const config = service.getTmdbConfig();
+            expect(config.url).toBe('api.changed.com');
+            expect(config.language).toBe('zh-CN'); // 保留默认值
+            expect(config.token).toBe(''); // 保留默认值
+        });
+
+        test('SVC-SETTINGS-037: TMDB配置在settings中正确保存', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            service.setTmdbConfig({ token: 'saved-token' });
+            const settings = service.getSettings();
+            expect(settings.tmdb).toBeDefined();
+            expect(settings.tmdb.token).toBe('saved-token');
         });
     });
 });

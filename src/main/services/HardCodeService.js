@@ -41,17 +41,6 @@ class HardCodeService {
                 includeSubfolders: true,
                 newMovieHours: 72
             },
-            shortcuts: {
-                openSearch: 'Ctrl+F',
-                focusSearch: 'Ctrl+K',
-                launchMovie: 'Enter',
-                movieDetails: 'Ctrl+D',
-                editMovie: 'Ctrl+E',
-                deleteMovie: 'Delete',
-                refreshLibrary: 'R',
-                openSettings: 'Ctrl+OemComma'
-            },
-
             notifications: {
                 enableStartup: true,
                 enableLibraryUpdate: true,
@@ -65,6 +54,12 @@ class HardCodeService {
 
             moviebox: {
                 movieboxDir: path.join(__dirname, 'boxes')
+            },
+
+            tmdb: {
+                url: 'api.themoviedb.org',
+                token: '',
+                language: 'zh-CN'
             }
         };
     }

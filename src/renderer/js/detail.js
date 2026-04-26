@@ -21,6 +21,11 @@ let actorSelectorSearchKeyword = '';
 let actorSelectorCurrentPage = 1;
 const ACTOR_SELECTOR_PAGE_SIZE = 10;
 
+// 电影搜索弹窗状态
+let movieSearchResults = [];
+let selectedMovie = null;
+const MOVIE_SEARCH_MAX_RESULTS = 10;
+
 // DOM 元素
 const elements = {
     closeBtn: document.getElementById('close-btn'),
@@ -108,7 +113,19 @@ const elements = {
     newFileMemo: document.getElementById('new-file-memo'),
     confirmAddFile: document.getElementById('confirm-add-file'),
     cancelAddFile: document.getElementById('cancel-add-file'),
-    closeAddFile: document.getElementById('close-add-file')
+    closeAddFile: document.getElementById('close-add-file'),
+    // Movie search modal
+    movieSearchBtn: document.getElementById('movie-search-btn'),
+    movieSearchModal: document.getElementById('movie-search-modal'),
+    movieSearchCategory: document.getElementById('movie-search-category'),
+    movieSearchInput: document.getElementById('movie-search-input'),
+    movieSearchModalBtn: document.getElementById('movie-search-modal-btn'),
+    movieSearchLoading: document.getElementById('movie-search-loading'),
+    movieSearchError: document.getElementById('movie-search-error'),
+    movieSearchResults: document.getElementById('movie-search-results'),
+    confirmMovieSearch: document.getElementById('confirm-movie-search'),
+    cancelMovieSearch: document.getElementById('cancel-movie-search'),
+    closeMovieSearch: document.getElementById('close-movie-search')
 };
 
 /**
@@ -132,11 +149,17 @@ async function init() {
         if (currentMovie && currentMovie.id === updatedMovie.id) {
             currentMovie = updatedMovie;
             if (updatedMovie.poster) {
-                // 添加时间戳强制刷新缓存
-                const posterUrl = updatedMovie.poster + (updatedMovie.poster.includes('?') ? '&' : '?') + 't=' + Date.now();
-                elements.moviePoster.src = posterUrl;
-                elements.moviePoster.style.display = 'block';
-                elements.posterPlaceholder.style.display = 'none';
+                // 检查是否为外部URL（以http开头），如果是则跳过显示（避免CSP限制）
+                if (updatedMovie.poster.startsWith('http://') || updatedMovie.poster.startsWith('https://')) {
+                    elements.moviePoster.style.display = 'none';
+                    elements.posterPlaceholder.style.display = 'flex';
+                } else {
+                    // 添加时间戳强制刷新缓存
+                    const posterUrl = updatedMovie.poster + (updatedMovie.poster.includes('?') ? '&' : '?') + 't=' + Date.now();
+                    elements.moviePoster.src = posterUrl;
+                    elements.moviePoster.style.display = 'block';
+                    elements.posterPlaceholder.style.display = 'none';
+                }
             } else {
                 elements.moviePoster.style.display = 'none';
                 elements.posterPlaceholder.style.display = 'flex';
@@ -217,15 +240,21 @@ async function loadActors() {
  */
 function renderSelectedActors() {
     let html = '';
+    const MAX_ACTORS_PER_LINE = 6;
 
     // 渲染已选中的演员
-    selectedActors.forEach(actorName => {
+    selectedActors.forEach((actorName, index) => {
         html += `
             <span class="tag tag-with-remove" data-actor-name="${actorName}">
                 ${actorName}
                 <span class="tag-remove" onclick="removeActorFromSelection('${actorName}'); return false;">&times;</span>
             </span>
         `;
+
+        // 每6个演员添加换行（除了最后一个和+按钮前）
+        if ((index + 1) % MAX_ACTORS_PER_LINE === 0 && index < selectedActors.length - 1) {
+            html += '<br>';
+        }
     });
 
     // 添加+按钮
@@ -496,11 +525,18 @@ function loadMovieDetail(movie) {
     }
 
     if (movie.poster) {
-        // 添加时间戳强制刷新缓存
-        const posterUrl = movie.poster + (movie.poster.includes('?') ? '&' : '?') + 't=' + Date.now();
-        elements.moviePoster.src = posterUrl;
-        elements.moviePoster.style.display = 'block';
-        elements.posterPlaceholder.style.display = 'none';
+        // 检查是否为外部URL（以http开头），如果是则跳过显示（避免CSP限制）
+        if (movie.poster.startsWith('http://') || movie.poster.startsWith('https://')) {
+            // 外部URL暂不直接显示，等待用户通过电影搜索功能下载
+            elements.moviePoster.style.display = 'none';
+            elements.posterPlaceholder.style.display = 'flex';
+        } else {
+            // 添加时间戳强制刷新缓存
+            const posterUrl = movie.poster + (movie.poster.includes('?') ? '&' : '?') + 't=' + Date.now();
+            elements.moviePoster.src = posterUrl;
+            elements.moviePoster.style.display = 'block';
+            elements.posterPlaceholder.style.display = 'none';
+        }
     } else {
         elements.moviePoster.style.display = 'none';
         elements.posterPlaceholder.style.display = 'flex';
@@ -509,16 +545,8 @@ function loadMovieDetail(movie) {
     elements.movieCategory.textContent = getCategoryName(movie.category);
     elements.moviePublishDate.textContent = movie.publishDate || '未知';
     elements.movieDirector.textContent = movie.director || '未知';
-    // 演员可能为数组或字符串
-    let actorsText = '未知';
-    if (movie.actors) {
-        if (Array.isArray(movie.actors)) {
-            actorsText = movie.actors.join(', ');
-        } else {
-            actorsText = movie.actors;
-        }
-    }
-    elements.movieActorsDisplay.textContent = actorsText;
+    // 渲染演员（每行最多6个）
+    renderActorsForDisplay(movie.actors);
     elements.movieStudio.textContent = movie.studio || '未知';
     renderTags(movie.tags || []);
     elements.movieDescription.textContent = movie.description || '暂无描述';
@@ -584,6 +612,46 @@ function renderTags(tags) {
     ).join('');
 
     elements.movieTags.innerHTML = html;
+}
+
+/**
+ * 渲染演员显示（每行最多6个）
+ * @param {Array|string} actors - 演员数组或逗号分隔的字符串
+ */
+function renderActorsForDisplay(actors) {
+    if (!actors || (Array.isArray(actors) && actors.length === 0) || (typeof actors === 'string' && actors.trim() === '')) {
+        elements.movieActorsDisplay.innerHTML = '<span class="actor-tag">无</span>';
+        return;
+    }
+
+    // 统一转换为数组
+    let actorsArray;
+    if (Array.isArray(actors)) {
+        actorsArray = actors;
+    } else {
+        actorsArray = actors.split(',').map(a => a.trim()).filter(a => a);
+    }
+
+    if (actorsArray.length === 0) {
+        elements.movieActorsDisplay.innerHTML = '<span class="actor-tag">无</span>';
+        return;
+    }
+
+    const MAX_ACTORS_PER_LINE = 6;
+    let html = '';
+    let lineBreakAdded = false;
+
+    actorsArray.forEach((actor, index) => {
+        html += `<span class="actor-tag">${actor}</span>`;
+
+        // 每6个演员添加换行（除了最后一个）
+        if ((index + 1) % MAX_ACTORS_PER_LINE === 0 && index < actorsArray.length - 1) {
+            html += '<br>';
+            lineBreakAdded = true;
+        }
+    });
+
+    elements.movieActorsDisplay.innerHTML = html;
 }
 
 /**
@@ -962,6 +1030,7 @@ function enterEditMode() {
     elements.uploadPosterBtn.style.display = 'block';
     elements.moviePoster.style.cursor = 'pointer';
     elements.moviePoster.title = '点击上传新海报';
+    elements.movieSearchBtn.style.display = 'inline-block';
 
     if (currentTab === 'movie-files') {
         elements.addFileBtn.style.display = 'block';
@@ -997,11 +1066,7 @@ function exitEditMode() {
     elements.movieDirector = document.getElementById('movie-director');
 
     // 恢复演员显示
-    let actorsText = currentMovie.actors || '';
-    if (Array.isArray(actorsText)) {
-        actorsText = actorsText.join(', ');
-    }
-    elements.movieActorsDisplay.textContent = actorsText;
+    renderActorsForDisplay(currentMovie.actors);
     elements.movieActorsDisplay.style.display = 'block';
     elements.movieActorsEdit.style.display = 'none';
 
@@ -1016,6 +1081,7 @@ function exitEditMode() {
     elements.detailFooter.style.display = 'none';
     elements.addFileBtn.style.display = 'none';
     elements.uploadPosterBtn.style.display = 'none';
+    elements.movieSearchBtn.style.display = 'none';
     elements.moviePoster.style.cursor = 'default';
     elements.moviePoster.title = '';
     elements.moviePoster.onclick = null;
@@ -1623,17 +1689,377 @@ function bindEvents() {
             if (actorSelectorSearchKeyword) {
                 const keyword = actorSelectorSearchKeyword.toLowerCase();
                 filteredActors = actorsCache.filter(actor => {
-                    const nameMatch = actor.name && actor.name.toLowerCase().includes(keyword);
-                    const nicknameMatch = actor.nickname && actor.nickname.toLowerCase().includes(keyword);
-                    return nameMatch || nicknameMatch;
+                    return actor.name.toLowerCase().includes(keyword) ||
+                        (actor.nickname && actor.nickname.toLowerCase().includes(keyword));
                 });
             }
-            const totalPages = Math.ceil(filteredActors.length / ACTOR_SELECTOR_PAGE_SIZE) || 1;
+            const totalPages = Math.ceil(filteredActors.length / ACTOR_SELECTOR_PAGE_SIZE);
             if (actorSelectorCurrentPage < totalPages) {
                 actorSelectorCurrentPage++;
                 renderActorSelectorList();
             }
         });
+    }
+
+    // 电影搜索弹窗事件
+    if (elements.movieSearchBtn) {
+        elements.movieSearchBtn.addEventListener('click', () => {
+            openMovieSearchModal();
+        });
+    }
+
+    if (elements.closeMovieSearch) {
+        elements.closeMovieSearch.addEventListener('click', () => {
+            closeMovieSearchModal();
+        });
+    }
+
+    if (elements.cancelMovieSearch) {
+        elements.cancelMovieSearch.addEventListener('click', () => {
+            closeMovieSearchModal();
+        });
+    }
+
+    if (elements.confirmMovieSearch) {
+        elements.confirmMovieSearch.addEventListener('click', () => {
+            confirmMovieSearch();
+        });
+    }
+
+    if (elements.movieSearchModal) {
+        elements.movieSearchModal.addEventListener('click', (e) => {
+            if (e.target === elements.movieSearchModal) {
+                closeMovieSearchModal();
+            }
+        });
+    }
+
+    if (elements.movieSearchModalBtn) {
+        elements.movieSearchModalBtn.addEventListener('click', () => {
+            searchMovieMovies();
+        });
+    }
+
+    if (elements.movieSearchInput) {
+        elements.movieSearchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchMovieMovies();
+            }
+        });
+    }
+}
+
+/**
+ * 电影搜索弹窗：打开弹窗
+ */
+async function openMovieSearchModal() {
+    if (!elements.movieSearchModal) {
+        console.error('Movie search modal not found');
+        return;
+    }
+
+    // 显示弹窗
+    elements.movieSearchModal.style.display = 'flex';
+
+    // 加载分类列表
+    await loadCategoriesForMovieSearch();
+
+    // 重置搜索表单
+    resetMovieSearchForm();
+
+    // 自动带入当前电影名称
+    if (currentMovie && currentMovie.name) {
+        elements.movieSearchInput.value = currentMovie.name;
+    }
+
+    // 聚焦到搜索输入框
+    elements.movieSearchInput.focus();
+}
+
+/**
+ * 电影搜索弹窗：加载分类列表
+ */
+async function loadCategoriesForMovieSearch() {
+    try {
+        const categories = await window.electronAPI.getCategories();
+        if (categories && categories.length > 0) {
+            // 按sortOrder排序
+            categories.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+
+            let optionsHtml = '<option value="">所有分类</option>';
+            categories.forEach(cat => {
+                optionsHtml += `<option value="${cat.id}">${cat.name}</option>`;
+            });
+            elements.movieSearchCategory.innerHTML = optionsHtml;
+
+            // 如果当前有分类选中，自动选中
+            if (currentMovie && currentMovie.category) {
+                elements.movieSearchCategory.value = currentMovie.category;
+            }
+        } else {
+            elements.movieSearchCategory.innerHTML = '<option value="">无可用分类</option>';
+        }
+    } catch (error) {
+        console.error('Error loading categories for Movie search:', error);
+        elements.movieSearchCategory.innerHTML = '<option value="">加载失败</option>';
+    }
+}
+
+/**
+ * 电影搜索弹窗：重置表单
+ */
+function resetMovieSearchForm() {
+    elements.movieSearchInput.value = '';
+    elements.movieSearchLoading.style.display = 'none';
+    elements.movieSearchError.style.display = 'none';
+    elements.movieSearchError.textContent = '';
+    elements.movieSearchResults.innerHTML = '';
+    elements.confirmMovieSearch.disabled = true;
+    movieSearchResults = [];
+    selectedMovie = null;
+}
+
+/**
+ * 电影搜索弹窗：关闭弹窗
+ */
+function closeMovieSearchModal() {
+    if (!elements.movieSearchModal) return;
+    elements.movieSearchModal.style.display = 'none';
+    resetMovieSearchForm();
+}
+
+/**
+ * 电影搜索弹窗：执行搜索
+ */
+async function searchMovieMovies() {
+    const keyword = elements.movieSearchInput.value.trim();
+
+    if (!keyword) {
+        elements.movieSearchError.textContent = '请输入电影名称';
+        elements.movieSearchError.style.display = 'block';
+        return;
+    }
+
+    // 显示加载状态
+    elements.movieSearchLoading.style.display = 'block';
+    elements.movieSearchError.style.display = 'none';
+    elements.movieSearchResults.innerHTML = '';
+    elements.confirmMovieSearch.disabled = true;
+    selectedMovie = null;
+
+    try {
+        const results = await window.electronAPI.tmdbSearchMovie(keyword);
+
+        elements.movieSearchLoading.style.display = 'none';
+
+        if (results && results.error) {
+            elements.movieSearchError.textContent = results.error;
+            elements.movieSearchError.style.display = 'block';
+            return;
+        }
+
+        if (!results || results.length === 0) {
+            elements.movieSearchResults.innerHTML = '<div class="movie-no-results">未找到相关电影</div>';
+            return;
+        }
+
+        // 限制显示数量
+        movieSearchResults = results.slice(0, MOVIE_SEARCH_MAX_RESULTS);
+        renderMovieSearchResults(movieSearchResults);
+
+    } catch (error) {
+        console.error('Error searching movies:', error);
+        elements.movieSearchLoading.style.display = 'none';
+        elements.movieSearchError.textContent = '搜索失败: ' + error.message;
+        elements.movieSearchError.style.display = 'block';
+    }
+}
+
+/**
+ * 电影搜索弹窗：渲染搜索结果
+ * @param {Array} results - 搜索结果数组
+ */
+function renderMovieSearchResults(results) {
+    const html = results.map((movie, index) => `
+        <div class="movie-result-item" data-index="${index}">
+            <div class="movie-result-poster">
+                ${movie.poster_url
+            ? `<img src="${movie.poster_url}" alt="${movie.title}" onerror="this.parentElement.innerHTML='<span class=\\'no-poster\\'>🎬</span>'">`
+            : '<span class="no-poster">🎬</span>'}
+            </div>
+            <div class="movie-result-info">
+                <div class="movie-result-title" title="${movie.title}">${movie.title}</div>
+                <div class="movie-result-year">${movie.year || '未知年份'}</div>
+                <div class="movie-result-overview">${movie.overview || '暂无简介'}</div>
+            </div>
+        </div>
+    `).join('');
+
+    elements.movieSearchResults.innerHTML = html;
+
+    // 绑定点击事件
+    elements.movieSearchResults.querySelectorAll('.movie-result-item').forEach(item => {
+        item.addEventListener('click', () => {
+            selectMovieSearchResult(parseInt(item.dataset.index));
+        });
+    });
+}
+
+/**
+ * 电影搜索弹窗：选中搜索结果
+ * @param {number} index - 选中结果的索引
+ */
+function selectMovieSearchResult(index) {
+    if (index < 0 || index >= movieSearchResults.length) return;
+
+    // 更新选中状态
+    selectedMovie = movieSearchResults[index];
+
+    // 更新UI
+    elements.movieSearchResults.querySelectorAll('.movie-result-item').forEach((item, i) => {
+        item.classList.toggle('selected', i === index);
+    });
+
+    // 启用确认按钮
+    elements.confirmMovieSearch.disabled = false;
+}
+
+/**
+ * 电影搜索弹窗：确认选择并填充表单
+ */
+async function confirmMovieSearch() {
+    if (!selectedMovie) {
+        alert('请选择一个电影');
+        return;
+    }
+
+    // 显示加载状态
+    elements.confirmMovieSearch.disabled = true;
+    elements.confirmMovieSearch.textContent = '加载中...';
+
+    try {
+        // 调用getMovie获取详细信息
+        const movieDetail = await window.electronAPI.tmdbGetMovie(selectedMovie.search_id);
+
+        if (movieDetail && movieDetail.error) {
+            throw new Error(movieDetail.error);
+        }
+
+        // 填充编辑表单
+        fillEditFormWithMovieData(movieDetail);
+
+        // 关闭弹窗
+        closeMovieSearchModal();
+
+    } catch (error) {
+        console.error('Error getting movie detail:', error);
+        alert('获取电影详情失败: ' + error.message);
+    } finally {
+        elements.confirmMovieSearch.disabled = false;
+        elements.confirmMovieSearch.textContent = '确认';
+    }
+}
+
+/**
+ * 使用电影搜索数据填充编辑表单
+ * @param {Object} movieData - 电影数据
+ */
+function fillEditFormWithMovieData(movieData) {
+    // 填充电影名称
+    const nameInput = document.getElementById('edit-name');
+    if (nameInput && movieData.title) {
+        nameInput.value = movieData.title;
+        editData.name = movieData.title;
+    }
+
+    // 填充发行日期（年份）
+    const publishDateInput = document.getElementById('edit-publish-date');
+    if (publishDateInput && movieData.year) {
+        publishDateInput.value = movieData.year;
+        editData.publishDate = movieData.year;
+    }
+
+    // 填充电影时长
+    const durationInput = document.getElementById('edit-duration');
+    if (durationInput && movieData.runtime) {
+        durationInput.value = movieData.runtime;
+        editData.duration = movieData.runtime;
+    }
+
+    // 填充导演
+    const directorInput = document.getElementById('edit-director');
+    if (directorInput && movieData.directors && movieData.directors.length > 0) {
+        const directorNames = movieData.directors.map(d => d.name).join(', ');
+        directorInput.value = directorNames;
+        editData.director = directorNames;
+    }
+
+    // 填充演员
+    if (movieData.actors && movieData.actors.length > 0) {
+        selectedActors = movieData.actors.map(a => a.name).filter(name => name);
+        renderSelectedActors();
+        editData.actors = selectedActors.join(', ');
+    }
+
+    // 填充制作商/制片公司
+    const studioInput = document.getElementById('edit-studio');
+    if (studioInput && movieData.production_companies && movieData.production_companies.length > 0) {
+        studioInput.value = movieData.production_companies.join(', ');
+        editData.studio = movieData.production_companies.join(', ');
+    }
+
+    // 填充电影简介
+    const descriptionInput = document.getElementById('edit-description');
+    if (descriptionInput && movieData.overview) {
+        descriptionInput.value = movieData.overview;
+        editData.description = movieData.overview;
+    }
+
+    // 如果有海报URL，下载并保存
+    if (movieData.poster_url) {
+        downloadAndSetPoster(movieData.poster_url);
+    }
+}
+
+/**
+ * 下载海报并设置为封面
+ * @param {string} posterUrl - 海报URL
+ */
+async function downloadAndSetPoster(posterUrl) {
+    try {
+        // 确保有folderName
+        let folderName = currentMovie.folderName;
+        if (!folderName && currentMovie.id) {
+            const parts = currentMovie.id.split('-');
+            folderName = parts.slice(1).join('-');
+        }
+
+        if (!folderName) {
+            console.error('Cannot download poster: folderName is missing');
+            return;
+        }
+
+        // 通过下载方式获取海报
+        const result = await window.electronAPI.downloadMovieCover({
+            category: currentMovie.category,
+            folderName: folderName,
+            coverUrl: posterUrl
+        });
+
+        if (result && result.success && result.path) {
+            // 更新显示 - 使用本地文件路径
+            const localPosterPath = result.path + '?t=' + Date.now();
+            elements.moviePoster.src = localPosterPath;
+            elements.moviePoster.style.display = 'block';
+            elements.posterPlaceholder.style.display = 'none';
+
+            // 保存路径到editData供保存时使用
+            editData.coverImage = result.path;
+        } else if (result && result.error) {
+            console.error('Error downloading poster:', result.error);
+        }
+    } catch (error) {
+        console.error('Error downloading poster:', error);
     }
 }
 

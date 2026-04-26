@@ -160,6 +160,7 @@ function setupIpcHandlers(services) {
         tagService,
         categoryService,
         actorService,
+        tmdbMovieAdapterService,
         getMainWindow,
         createMovieDetailWindow,
         createBoxWindow,
@@ -801,6 +802,30 @@ function setupIpcHandlers(services) {
             return { success: true };
         } catch (error) {
             console.error('Error deleting movie:', error);
+            return { error: error.message };
+        }
+    });
+
+    // ==================== TMDB电影搜索 ====================
+
+    // 搜索TMDB电影
+    ipcMain.handle('tmdb-search-movie', async (event, keyword) => {
+        try {
+            const results = await tmdbMovieAdapterService.searchMovie(keyword);
+            return results;
+        } catch (error) {
+            console.error('Error searching TMDB movie:', error);
+            return { error: error.message };
+        }
+    });
+
+    // 获取TMDB电影详情
+    ipcMain.handle('tmdb-get-movie', async (event, searchId) => {
+        try {
+            const movie = await tmdbMovieAdapterService.getMovie(searchId);
+            return movie;
+        } catch (error) {
+            console.error('Error getting TMDB movie:', error);
             return { error: error.message };
         }
     });

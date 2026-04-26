@@ -614,13 +614,6 @@
 | SVC-SETTINGS-005 | 返回默认布局 | 直接调用 | 无 | sidebarWidth=200等 |
 | SVC-SETTINGS-006 | 设置布局成功 | 直接调用 | 新设置 | 更新成功 |
 
-#### 6.5 getShortcuts / setShortcuts - 快捷键设置
-
-| 用例ID | 用例名称 | 测试方法 | 前置条件 | 预期结果 |
-|--------|----------|----------|----------|----------|
-| SVC-SETTINGS-007 | 返回快捷键配置 | 直接调用 | 无 | openSearch等 |
-| SVC-SETTINGS-008 | 设置快捷键成功 | 直接调用 | 新快捷键 | 更新成功 |
-
 #### 6.6 getMoviesDir / setMoviesDir - 电影目录
 
 | 用例ID | 用例名称 | 测试方法 | 前置条件 | 预期结果 |
