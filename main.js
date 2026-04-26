@@ -297,6 +297,8 @@ function createBoxWindow(boxName) {
         minWidth: 800,
         minHeight: 600,
         title: `电影盒子 - ${boxName}`,
+        frame: false,
+        thickFrame: false,
         autoHideMenuBar: true,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
@@ -313,6 +315,7 @@ function createBoxWindow(boxName) {
 
     boxWindow.once('ready-to-show', () => {
         boxWindow.show();
+        boxWindow.maximize();
     });
 
     boxWindow.on('closed', () => {

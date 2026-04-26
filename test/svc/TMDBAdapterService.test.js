@@ -1,7 +1,7 @@
 /**
  * TMDBMovieAdapterService 单元测试
  */
-const TMDBMovieAdapterService = require('../../src/main/services/TMDBMovieAdapterService');
+const TMDBMovieAdapterService = require('../../src/main/services/TMDBAdapterService');
 const SettingsService = require('../../src/main/services/SettingsService');
 const path = require('path');
 const fs = require('fs');
