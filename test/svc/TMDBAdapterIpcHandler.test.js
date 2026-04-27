@@ -324,4 +324,195 @@ describe('TMDBAdapter IPC Handler', () => {
             service.makeRequest = originalMakeRequest;
         });
     });
+
+    describe('IPC Handler Logic - searchPerson', () => {
+        test('IPC-TMDB-011: searchPerson正确处理有效演员名称', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            settingsService.setTmdbConfig({ token: 'test-token' });
+
+            const mockResults = [
+                {
+                    id: 118711,
+                    name: '徐峥',
+                    profile_path: '/yX7xq.jpg'
+                },
+                {
+                    id: 1327006,
+                    name: '徐峥2',
+                    profile_path: null
+                }
+            ];
+
+            const originalMakeRequest = service.makeRequest;
+            service.makeRequest = jest.fn().mockResolvedValue({
+                page: 1,
+                results: mockResults
+            });
+
+            const result = await service.searchPerson('徐峥');
+
+            expect(result).toBeInstanceOf(Array);
+            expect(result.length).toBe(2);
+            expect(result[0].actor_id).toBe(118711);
+            expect(result[0].actor_name).toBe('徐峥');
+            expect(result[0].actor_profile_url).toBe('https://image.tmdb.org/t/p/w200/yX7xq.jpg');
+            expect(result[1].actor_id).toBe(1327006);
+            expect(result[1].actor_name).toBe('徐峥2');
+            expect(result[1].actor_profile_url).toBeNull();
+            expect(service.makeRequest).toHaveBeenCalled();
+
+            service.makeRequest = originalMakeRequest;
+        });
+
+        test('IPC-TMDB-012: searchPerson返回最多10个结果', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            settingsService.setTmdbConfig({ token: 'test-token' });
+
+            // 创建15个结果
+            const mockResults = Array.from({ length: 15 }, (_, i) => ({
+                id: i + 1,
+                name: `演员${i + 1}`,
+                profile_path: null
+            }));
+
+            const originalMakeRequest = service.makeRequest;
+            service.makeRequest = jest.fn().mockResolvedValue({
+                page: 1,
+                results: mockResults
+            });
+
+            const result = await service.searchPerson('演员');
+
+            // TMDBAdapterService返回所有结果，前端负责限制数量
+            expect(result.length).toBe(15);
+
+            service.makeRequest = originalMakeRequest;
+        });
+
+        test('IPC-TMDB-013: searchPerson处理空结果', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            settingsService.setTmdbConfig({ token: 'test-token' });
+
+            const originalMakeRequest = service.makeRequest;
+            service.makeRequest = jest.fn().mockResolvedValue({
+                page: 1,
+                results: []
+            });
+
+            const result = await service.searchPerson('不存在的演员');
+
+            expect(result).toEqual([]);
+
+            service.makeRequest = originalMakeRequest;
+        });
+
+        test('IPC-TMDB-014: searchPerson处理网络错误', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            settingsService.setTmdbConfig({ token: 'test-token' });
+
+            const originalMakeRequest = service.makeRequest;
+            service.makeRequest = jest.fn().mockRejectedValue(new Error('Network error'));
+
+            await expect(service.searchPerson('徐峥')).rejects.toThrow('Network error');
+
+            service.makeRequest = originalMakeRequest;
+        });
+
+        test('IPC-TMDB-015: searchPerson空关键字抛出错误', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            settingsService.setTmdbConfig({ token: 'test-token' });
+
+            await expect(service.searchPerson('')).rejects.toThrow('Actor name is required');
+        });
+
+        test('IPC-TMDB-016: searchPerson结果正确映射到前端格式', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            settingsService.setTmdbConfig({ token: 'test-token' });
+
+            const mockResponse = {
+                page: 1,
+                results: [
+                    {
+                        id: 76913,
+                        name: '葛优',
+                        profile_path: '/guyou.jpg'
+                    }
+                ]
+            };
+
+            const originalMakeRequest = service.makeRequest;
+            service.makeRequest = jest.fn().mockResolvedValue(mockResponse);
+
+            const result = await service.searchPerson('葛优');
+
+            // 验证返回格式符合前端期望
+            expect(result[0]).toEqual({
+                actor_id: 76913,
+                actor_name: '葛优',
+                actor_profile_url: 'https://image.tmdb.org/t/p/w200/guyou.jpg'
+            });
+
+            service.makeRequest = originalMakeRequest;
+        });
+    });
+
+    describe('IPC Handler Logic - getPerson', () => {
+        test('IPC-TMDB-017: getPerson正确获取演员详情', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            settingsService.setTmdbConfig({ token: 'test-token' });
+
+            const mockPersonDetail = {
+                id: 118711,
+                name: '徐峥',
+                birthday: '1972-04-18',
+                biography: '演员介绍',
+                profile_path: '/ycl.jpg'
+            };
+
+            const originalMakeRequest = service.makeRequest;
+            service.makeRequest = jest.fn().mockResolvedValue(mockPersonDetail);
+
+            const result = await service.getPerson(118711);
+
+            expect(result.name).toBe('徐峥');
+            expect(result.birthday).toBe('1972-04-18');
+            expect(result.memo).toBe('演员介绍');
+            expect(result.profile_url).toBe('https://image.tmdb.org/t/p/original/ycl.jpg');
+
+            service.makeRequest = originalMakeRequest;
+        });
+
+        test('IPC-TMDB-018: getPerson处理缺失数据', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            settingsService.setTmdbConfig({ token: 'test-token' });
+
+            const mockPersonDetail = {
+                id: 123
+            };
+
+            const originalMakeRequest = service.makeRequest;
+            service.makeRequest = jest.fn().mockResolvedValue(mockPersonDetail);
+
+            const result = await service.getPerson(123);
+
+            expect(result.name).toBe('');
+            expect(result.birthday).toBe('');
+            expect(result.memo).toBe('');
+            expect(result.profile_url).toBeNull();
+
+            service.makeRequest = originalMakeRequest;
+        });
+
+        test('IPC-TMDB-019: getPerson处理网络错误', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            settingsService.setTmdbConfig({ token: 'test-token' });
+
+            const originalMakeRequest = service.makeRequest;
+            service.makeRequest = jest.fn().mockRejectedValue(new Error('Network error'));
+
+            await expect(service.getPerson(118711)).rejects.toThrow('Network error');
+
+            service.makeRequest = originalMakeRequest;
+        });
+    });
 });
