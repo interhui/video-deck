@@ -548,7 +548,7 @@ function loadMovieDetail(movie) {
     // 渲染演员（每行最多6个）
     renderActorsForDisplay(movie.actors);
     elements.movieStudio.textContent = movie.studio || '未知';
-    renderTags(movie.tags || []);
+    renderTags(movie.tag || []);
     elements.movieDescription.textContent = movie.description || '暂无描述';
 
     // 处理fileset：如果original_filename存在但fileset中没有Main文件，则创建一个
@@ -1004,7 +1004,7 @@ function enterEditMode() {
         director: currentMovie.director || '',
         actors: currentMovie.actors || '',
         studio: currentMovie.studio || '',
-        tags: [...(currentMovie.tags || [])],
+        tags: [...(currentMovie.tag || [])],
         description: currentMovie.description || '',
         userComment: currentMovie.userComment || ''
     };
