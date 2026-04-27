@@ -2015,6 +2015,12 @@ function fillEditFormWithMovieData(movieData) {
         editData.description = movieData.overview;
     }
 
+    // 填充标签
+    if (movieData.tags && movieData.tags.length > 0) {
+        editData.tags = movieData.tags;
+        renderEditTags(editData.tags);
+    }
+
     // 如果有海报URL，下载并保存
     if (movieData.poster_url) {
         downloadAndSetPoster(movieData.poster_url);
