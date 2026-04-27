@@ -2073,29 +2073,33 @@ body {
 /* 演员卡片视图 */
 .actor-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(var(--poster-min-width), 1fr));
+    gap: var(--poster-gap);
 }
 
 .actor-card {
-    background: var(--card-bg);
-    border-radius: 8px;
-    overflow: hidden;
+    width: 100%;
+    max-width: var(--poster-max-width);
+    aspect-ratio: 2 / 3;
     cursor: pointer;
-    transition: transform 0.15s, box-shadow 0.15s;
-    border: 2px solid transparent;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    background-color: var(--card-bg);
+    display: flex;
+    flex-direction: column;
     position: relative;
 }
 
 .actor-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    border-color: var(--primary-color);
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px var(--shadow-color);
 }
 
 .actor-card-photo {
     width: 100%;
-    aspect-ratio: 1;
+    height: calc(100% - 50px);
     overflow: hidden;
     background: var(--bg-secondary);
     position: relative;
@@ -2114,13 +2118,17 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 36px;
+    font-size: 30px;
     color: var(--text-secondary);
     background: var(--bg-secondary);
 }
 
 .actor-card-info {
-    padding: 12px;
+    height: 50px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .actor-card-name {

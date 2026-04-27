@@ -130,7 +130,7 @@ async function init() {
 
     // 加载主题设置
     await loadTheme({
-        onLayoutLoaded: applyLayoutSettings
+        onLayoutLoaded: applyPosterSizeSettings
     });
 
     // 加载分类缓存
@@ -208,39 +208,6 @@ function initSplitter() {
             document.body.style.userSelect = '';
         }
     });
-}
-
-/**
- * 应用布局设置
- */
-function applyLayoutSettings(layout) {
-    document.documentElement.style.setProperty('--sidebar-width', `${layout.sidebarWidth}px`);
-    document.documentElement.style.setProperty('--poster-min-width', getPosterMinSize(layout.posterSize));
-    document.documentElement.style.setProperty('--poster-max-width', getPosterMaxSize(layout.posterSize));
-}
-
-/**
- * 获取海报最小尺寸（用于自动响应式计算）
- */
-function getPosterMinSize(size) {
-    const sizes = {
-        small: '100px',
-        medium: '140px',
-        large: '180px'
-    };
-    return sizes[size] || sizes.medium;
-}
-
-/**
- * 获取海报最大尺寸
- */
-function getPosterMaxSize(size) {
-    const sizes = {
-        small: '150px',
-        medium: '220px',
-        large: '280px'
-    };
-    return sizes[size] || sizes.medium;
 }
 
 /**

@@ -1317,6 +1317,7 @@ body {
     text-align: center;
     padding: 20px;
     color: var(--text-secondary);
+    font-size: 13px;
 }
 
 /* 电影错误信息 */

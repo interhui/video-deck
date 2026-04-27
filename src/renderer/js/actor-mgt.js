@@ -552,6 +552,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // 初始加载
-    loadTheme();
+    loadTheme({
+        onLayoutLoaded: applyPosterSizeSettings
+    });
     loadActors();
 });

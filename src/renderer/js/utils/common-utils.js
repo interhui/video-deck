@@ -180,3 +180,40 @@ function formatPlaytime(minutes) {
     if (hours === 0) return `${mins}分钟`;
     return `${hours}小时${mins > 0 ? mins + '分钟' : ''}`;
 }
+
+/**
+ * 获取海报最小尺寸（用于自动响应式计算）
+ * @param {string} size - 尺寸标识 ('small', 'medium', 'large')
+ * @returns {string} CSS尺寸值
+ */
+function getPosterMinSize(size) {
+    const sizes = {
+        small: '100px',
+        medium: '140px',
+        large: '180px'
+    };
+    return sizes[size] || sizes.medium;
+}
+
+/**
+ * 获取海报最大尺寸
+ * @param {string} size - 尺寸标识 ('small', 'medium', 'large')
+ * @returns {string} CSS尺寸值
+ */
+function getPosterMaxSize(size) {
+    const sizes = {
+        small: '150px',
+        medium: '220px',
+        large: '280px'
+    };
+    return sizes[size] || sizes.medium;
+}
+
+/**
+ * 应用海报尺寸设置到CSS变量
+ * @param {Object} layout - 布局设置对象
+ */
+function applyPosterSizeSettings(layout) {
+    document.documentElement.style.setProperty('--poster-min-width', getPosterMinSize(layout.posterSize));
+    document.documentElement.style.setProperty('--poster-max-width', getPosterMaxSize(layout.posterSize));
+}
