@@ -146,7 +146,7 @@ describe('CLI Config Commands', () => {
 
         test('CLI-CONFIG-GET-004: 获取嵌套键值', async () => {
             mockSettingsService.getSettings.mockReturnValue({
-                library: { moviesDir: '/path/to/movies', scanOnStartup: true }
+                library: { moviesDir: '/path/to/movies' }
             });
 
             const services = {
