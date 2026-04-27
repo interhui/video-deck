@@ -168,6 +168,33 @@ class TMDBMovieAdapterService {
             profile_url: this.buildImageUrl(person.profile_path, 'original')
         };
     }
+
+    async searchPerson(actorName) {
+        const config = this.getTmdbConfig();
+
+        if (!config.token) {
+            throw new Error('TMDB token not configured');
+        }
+
+        if (!actorName || typeof actorName !== 'string') {
+            throw new Error('Actor name is required');
+        }
+
+        const encodedName = encodeURIComponent(actorName.trim());
+        const url = `${config.url}/3/search/person?include_adult=false&language=zh-CN&page=1&query=${encodedName}`;
+
+        const response = await this.makeRequest(url, config.token);
+
+        if (!response.results || !Array.isArray(response.results)) {
+            return [];
+        }
+
+        return response.results.map(person => ({
+            actor_id: person.id,
+            actor_name: person.name || '',
+            actor_profile_url: this.buildImageUrl(person.profile_path, 'w200')
+        }));
+    }
 }
 
 module.exports = TMDBMovieAdapterService;
