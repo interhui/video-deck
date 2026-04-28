@@ -9,6 +9,23 @@
     margin-left: 8px;
 }
 
+.titlebar-close-btn {
+    -webkit-app-region: no-drag;
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    font-size: 22px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.titlebar-close-btn:hover {
+    background: var(--hover-bg);
+    color: var(--text-secondary);
+}
+
 /* 盒子描述信息 */
 .box-description {
     position: absolute;

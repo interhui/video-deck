@@ -24,6 +24,7 @@ const state = {
 const elements = {
     backBtn: document.getElementById('back-btn'),
     boxTitle: document.getElementById('box-title'),
+    closeBtn: document.getElementById('close-btn'),
     boxDescription: document.getElementById('box-description'),
     boxDescriptionText: document.getElementById('box-description-text'),
     searchInput: document.getElementById('search-input'),
@@ -216,6 +217,11 @@ function initSplitter() {
 function bindEvents() {
     // 返回按钮
     elements.backBtn.addEventListener('click', () => {
+        window.close();
+    });
+
+    // 关闭按钮
+    elements.closeBtn.addEventListener('click', () => {
         window.close();
     });
 
