@@ -22,6 +22,7 @@ const CategoryService = require('./src/main/services/CategoryService');
 const IndexService = require('./src/main/services/IndexService');
 const ActorService = require('./src/main/services/ActorService');
 const TMDBMovieAdapterService = require('./src/main/services/TMDBAdapterService');
+const PlayerService = require('./src/main/services/PlayerService');
 const { setupIpcHandlers } = require('./src/main/ipc-handlers');
 
 // 全局变量
@@ -41,6 +42,7 @@ let categoryService = null;
 let indexService = null;
 let actorService = null;
 let tmdbMovieAdapterService = null;
+let playerService = null;
 
 /**
  * 初始化服务
@@ -59,6 +61,7 @@ function initializeServices() {
     categoryService = new CategoryService(path.join(__dirname, 'config', 'categories.json'));
     actorService = new ActorService(path.join(__dirname, 'config', 'actor.json'));
     tmdbMovieAdapterService = new TMDBMovieAdapterService(settingsService);
+    playerService = new PlayerService();
 
     // 将 categoryService 传递给 movieService（如果支持）
     if (typeof movieService.setCategoryService === 'function') {
@@ -425,6 +428,48 @@ function createActorManagementWindow() {
     actorManagementWindow.on('closed', () => { actorManagementWindow = null; });
 }
 
+// 播放器窗口
+let playerWindow = null;
+
+function createPlayerWindow(playerData) {
+    if (playerWindow) {
+        playerWindow.focus();
+        // 通知播放器加载新数据
+        playerWindow.webContents.send('load-player-data', playerData);
+        return;
+    }
+
+    playerWindow = new BrowserWindow({
+        width: 1200,
+        height: 800,
+        minWidth: 800,
+        minHeight: 600,
+        title: playerData.movieTitle || '电影播放',
+        frame: false,
+        thickFrame: false,
+        autoHideMenuBar: true,
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
+            contextIsolation: true,
+            nodeIntegration: false,
+            sandbox: false
+        },
+        show: false
+    });
+
+    playerWindow.loadFile(path.join(__dirname, 'src', 'renderer', 'player.html'));
+
+    playerWindow.once('ready-to-show', () => {
+        playerWindow.show();
+        // 窗口准备好后发送播放数据
+        playerWindow.webContents.send('load-player-data', playerData);
+    });
+
+    playerWindow.on('closed', () => {
+        playerWindow = null;
+    });
+}
+
 // 全局异常处理
 process.on('uncaughtException', (error) => {
     log.error('Uncaught Exception:', error);
@@ -458,11 +503,13 @@ app.whenReady().then(async () => {
         categoryService,
         actorService,
         tmdbMovieAdapterService,
+        playerService,
         getMainWindow: () => mainWindow,
         createMovieDetailWindow,
         createBoxWindow,
         createActorManagementWindow,
         createCategoryManagementWindow,
+        createPlayerWindow,
         getPendingDetailMovieData: () => {
             return pendingDetailMovieData;
         },

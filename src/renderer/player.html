@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; media-src 'self' file:;">
+    <title>电影播放器</title>
+    <link rel="stylesheet" href="css/themes/dark.css">
+    <link rel="stylesheet" href="css/player.css">
+</head>
+<body>
+    <div id="app">
+        <header class="player-header">
+            <div id="player-title" class="player-title">电影播放</div>
+            <button id="close-btn" class="close-btn">&times;</button>
+        </header>
+
+        <main class="player-content">
+            <div class="video-section">
+                <div class="video-container">
+                    <video id="video-player" preload="metadata">
+                        您的浏览器不支持 video 标签
+                    </video>
+                </div>
+                <div class="video-controls">
+                    <div class="progress-container">
+                        <input type="range" id="progress-bar" class="progress-bar" min="0" max="100" value="0" step="0.1">
+                        <span id="current-time" class="time-display">00:00</span>
+                        <span class="time-separator">/</span>
+                        <span id="total-time" class="time-display">00:00</span>
+                    </div>
+                    <div class="volume-container">
+                        <button id="mute-btn" class="control-btn">🔊</button>
+                        <input type="range" id="volume-bar" class="volume-bar" min="0" max="100" value="100">
+                        <span id="volume-display" class="volume-display">100%</span>
+                    </div>
+                    <div class="playback-controls">
+                        <button id="prev-btn" class="control-btn" title="上一首">⏮</button>
+                        <button id="play-pause-btn" class="control-btn play-btn" title="播放/暂停">▶</button>
+                        <button id="stop-btn" class="control-btn" title="停止">⏹</button>
+                        <button id="next-btn" class="control-btn" title="下一首">⏭</button>
+                    </div>
+                </div>
+            </div>
+
+            <aside class="playlist-section">
+                <div class="playlist-header">
+                    <h3>播放列表</h3>
+                </div>
+                <div id="playlist" class="playlist"></div>
+            </aside>
+        </main>
+    </div>
+
+    <script src="js/player.js"></script>
+</body>
+</html>

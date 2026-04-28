@@ -554,7 +554,10 @@ function loadMovieDetail(movie) {
     // 处理fileset：如果original_filename存在但fileset中没有Main文件，则创建一个
     let fileset = movie.fileset || [];
     if (movie.original_filename) {
-        const hasMainFile = fileset.some(f => f.type === 'Main');
+        const hasMainFile = fileset.some(f => {
+            const fileType = f.type || f.fileType;
+            return fileType === 'Main';
+        });
         if (!hasMainFile) {
             // 从original_filename提取文件名
             const fullPath = movie.original_filename;
@@ -576,6 +579,21 @@ function loadMovieDetail(movie) {
 
     renderMovieFiles(fileset);
     clearFileDetails();
+
+    // 显示播放按钮（如果有可播放文件则显示）
+    const hasPlayableFile = fileset.some(f => {
+        const fileType = f.type || f.fileType;
+        return fileType === 'Main' && f.fullpath;
+    });
+    if (hasPlayableFile) {
+        elements.playBtn.classList.remove('launch-hidden');
+        if (fromBox) {
+            elements.playBtnBox.classList.remove('launch-hidden');
+        }
+    } else {
+        elements.playBtn.classList.add('launch-hidden');
+        elements.playBtnBox.classList.add('launch-hidden');
+    }
 
     if (fromBox) {
         elements.normalActions.style.display = 'none';
@@ -1308,7 +1326,10 @@ function confirmAddFile() {
 
     // 检查是否已存在Main类型的文件
     if (fileType === 'Main') {
-        const hasMainFile = editFileset.some(f => f.type === 'Main');
+        const hasMainFile = editFileset.some(f => {
+            const existingFileType = f.type || f.fileType;
+            return existingFileType === 'Main';
+        });
         if (hasMainFile) {
             alert('已存在电影正片，一个电影只能添加一个正片文件');
             return;
@@ -1395,7 +1416,7 @@ function bindEvents() {
 
     elements.playBtn.addEventListener('click', async () => {
         try {
-            await window.electronAPI.playMovie(currentMovie.path, currentMovie.category);
+            await window.electronAPI.openPlayerWindow(currentMovie);
         } catch (error) {
             console.error('Error playing movie:', error);
             alert('播放电影失败: ' + error.message);
@@ -1532,7 +1553,7 @@ function bindEvents() {
 
     elements.playBtnBox.addEventListener('click', async () => {
         try {
-            await window.electronAPI.playMovie(currentMovie.path, currentMovie.category);
+            await window.electronAPI.openPlayerWindow(currentMovie);
         } catch (error) {
             console.error('Error playing movie:', error);
             alert('播放电影失败: ' + error.message);

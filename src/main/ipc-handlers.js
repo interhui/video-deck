@@ -203,11 +203,13 @@ function setupIpcHandlers(services) {
         categoryService,
         actorService,
         tmdbMovieAdapterService,
+        playerService,
         getMainWindow,
         createMovieDetailWindow,
         createBoxWindow,
         createActorManagementWindow,
         createCategoryManagementWindow,
+        createPlayerWindow,
         getPendingDetailMovieData,
         clearPendingDetailMovieData
     } = services;
@@ -1150,6 +1152,18 @@ function setupIpcHandlers(services) {
             return { success: true };
         } catch (error) {
             console.error('Error opening category management:', error);
+            return { error: error.message };
+        }
+    });
+
+    // 打开播放器窗口
+    ipcMain.handle('open-player-window', async (event, movieData) => {
+        try {
+            const mainWindow = getMainWindow();
+            playerService.openPlayerWindow(movieData, mainWindow, createPlayerWindow);
+            return { success: true };
+        } catch (error) {
+            console.error('Error opening player window:', error);
             return { error: error.message };
         }
     });

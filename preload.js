@@ -64,6 +64,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     setDetailEditMode: (isEditing) => ipcRenderer.invoke('set-detail-edit-mode', isEditing),
     openActorManagement: () => ipcRenderer.invoke('open-actor-management'),
     openCategoryManagement: () => ipcRenderer.invoke('open-category-management'),
+    openPlayerWindow: (movieData) => ipcRenderer.invoke('open-player-window', movieData),
 
     // 文件选择对话框
     selectDirectory: () => ipcRenderer.invoke('select-directory'),
@@ -169,6 +170,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     },
     onMovieUpdated: (callback) => {
         ipcRenderer.on('movie-updated', (event, movieData) => callback(movieData));
+    },
+    onLoadPlayerData: (callback) => {
+        ipcRenderer.on('load-player-data', (event, data) => callback(data));
     }
 });
 
