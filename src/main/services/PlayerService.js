@@ -71,6 +71,23 @@ class PlayerService {
         }
     }
 
+    openBatchPlayerWindow(playlistData, mainWindow, createPlayerWindow) {
+        if (!playlistData || playlistData.length === 0) {
+            throw new Error('没有可播放的文件');
+        }
+
+        this.currentPlaylist = playlistData;
+        this.currentIndex = 0;
+
+        if (typeof createPlayerWindow === 'function') {
+            createPlayerWindow({
+                playlist: playlistData,
+                currentIndex: 0,
+                movieTitle: '批量播放'
+            });
+        }
+    }
+
     /**
      * 获取当前播放列表
      */

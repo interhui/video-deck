@@ -69,6 +69,23 @@ class TestPlayerService {
     hasPrevious() {
         return this.currentIndex > 0;
     }
+
+    openBatchPlayerWindow(playlistData, mainWindow, createPlayerWindow) {
+        if (!playlistData || playlistData.length === 0) {
+            throw new Error('没有可播放的文件');
+        }
+
+        this.currentPlaylist = playlistData;
+        this.currentIndex = 0;
+
+        if (typeof createPlayerWindow === 'function') {
+            createPlayerWindow({
+                playlist: playlistData,
+                currentIndex: 0,
+                movieTitle: '批量播放'
+            });
+        }
+    }
 }
 
 describe('PlayerService', () => {
@@ -233,6 +250,73 @@ describe('PlayerService', () => {
 
             playerService.currentIndex = 0;
             expect(playerService.hasPrevious()).toBe(false);
+        });
+    });
+
+    describe('openBatchPlayerWindow', () => {
+        let mockCreatePlayerWindow;
+        let mockMainWindow;
+
+        beforeEach(() => {
+            mockCreatePlayerWindow = jest.fn();
+            mockMainWindow = {};
+        });
+
+        test('应正确处理有效播放列表', () => {
+            const playlistData = [
+                { path: '/movies/test/video1.mp4', title: '视频1' },
+                { path: '/movies/test/video2.mp4', title: '视频2' }
+            ];
+
+            playerService.openBatchPlayerWindow(playlistData, mockMainWindow, mockCreatePlayerWindow);
+
+            expect(playerService.currentPlaylist).toEqual(playlistData);
+            expect(playerService.currentIndex).toBe(0);
+            expect(mockCreatePlayerWindow).toHaveBeenCalledWith({
+                playlist: playlistData,
+                currentIndex: 0,
+                movieTitle: '批量播放'
+            });
+        });
+
+        test('空播放列表应抛出错误', () => {
+            expect(() => {
+                playerService.openBatchPlayerWindow([], mockMainWindow, mockCreatePlayerWindow);
+            }).toThrow('没有可播放的文件');
+        });
+
+        test('null播放列表应抛出错误', () => {
+            expect(() => {
+                playerService.openBatchPlayerWindow(null, mockMainWindow, mockCreatePlayerWindow);
+            }).toThrow('没有可播放的文件');
+        });
+
+        test('undefined播放列表应抛出错误', () => {
+            expect(() => {
+                playerService.openBatchPlayerWindow(undefined, mockMainWindow, mockCreatePlayerWindow);
+            }).toThrow('没有可播放的文件');
+        });
+
+        test('createPlayerWindow为null时不应调用', () => {
+            const playlistData = [
+                { path: '/movies/test/video1.mp4', title: '视频1' }
+            ];
+
+            playerService.openBatchPlayerWindow(playlistData, mockMainWindow, null);
+
+            expect(playerService.currentPlaylist).toEqual(playlistData);
+            expect(playerService.currentIndex).toBe(0);
+        });
+
+        test('createPlayerWindow为undefined时不应调用', () => {
+            const playlistData = [
+                { path: '/movies/test/video1.mp4', title: '视频1' }
+            ];
+
+            playerService.openBatchPlayerWindow(playlistData, mockMainWindow, undefined);
+
+            expect(playerService.currentPlaylist).toEqual(playlistData);
+            expect(playerService.currentIndex).toBe(0);
         });
     });
 });

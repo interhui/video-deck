@@ -1614,6 +1614,17 @@ function setupIpcHandlers(services) {
         }
     });
 
+    ipcMain.handle('open-batch-player-window', async (event, playlistData) => {
+        try {
+            const mainWindow = getMainWindow();
+            playerService.openBatchPlayerWindow(playlistData, mainWindow, createPlayerWindow);
+            return { success: true };
+        } catch (error) {
+            console.error('Error opening batch player window:', error);
+            return { error: error.message };
+        }
+    });
+
     console.log('IPC handlers setup complete');
 }
 

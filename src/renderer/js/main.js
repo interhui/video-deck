@@ -105,6 +105,7 @@ const elements = {
     cancelBatchAdd: document.getElementById('cancel-batch-add'),
     closeBatchAdd: document.getElementById('close-batch-add'),
     batchDeleteBtn: document.getElementById('batch-delete-btn'),
+    batchPlayBtn: document.getElementById('batch-play-btn'),
     scanDirBtn: document.getElementById('scan-dir-btn'),
     addMovieModal: document.getElementById('add-movie-modal'),
     closeAddMovie: document.getElementById('close-add-movie'),
@@ -1230,6 +1231,7 @@ function bindCheckboxEvents(movies) {
             renderMovies(movies);
             updateBatchAddButtonVisibility();
             updateBatchDeleteButtonVisibility();
+            updateBatchPlayButtonVisibility();
         });
     }
 
@@ -1260,6 +1262,7 @@ function bindCheckboxEvents(movies) {
             // 更新批量添加按钮可见性
             updateBatchAddButtonVisibility();
             updateBatchDeleteButtonVisibility();
+            updateBatchPlayButtonVisibility();
         });
     });
 
@@ -1293,6 +1296,7 @@ function bindCheckboxEvents(movies) {
             // 更新批量添加按钮可见性
             updateBatchAddButtonVisibility();
             updateBatchDeleteButtonVisibility();
+            updateBatchPlayButtonVisibility();
         });
     });
 }
@@ -1318,6 +1322,15 @@ function updateBatchDeleteButtonVisibility() {
         elements.batchDeleteBtn.textContent = `批量删除 (${state.selectedMovies.size})`;
     } else {
         elements.batchDeleteBtn.style.display = 'none';
+    }
+}
+
+function updateBatchPlayButtonVisibility() {
+    if (state.selectedMovies.size > 0) {
+        elements.batchPlayBtn.style.display = 'block';
+        elements.batchPlayBtn.textContent = `播放 (${state.selectedMovies.size})`;
+    } else {
+        elements.batchPlayBtn.style.display = 'none';
     }
 }
 
@@ -1921,6 +1934,7 @@ function bindEvents() {
             state.selectedMovies.clear();
             updateBatchAddButtonVisibility();
             updateBatchDeleteButtonVisibility();
+            updateBatchPlayButtonVisibility();
             await loadMovies();
         } catch (error) {
             console.error('Error batch adding to box:', error);
@@ -1946,6 +1960,62 @@ function bindEvents() {
     });
 
     // ==================== 批量删除相关事件 ====================
+
+    elements.batchPlayBtn.addEventListener('click', async () => {
+        if (state.selectedMovies.size === 0) {
+            alert('请先选择要播放的电影');
+            return;
+        }
+
+        try {
+            const playlist = [];
+            const selectedMovieIds = Array.from(state.selectedMovies);
+
+            for (const movieId of selectedMovieIds) {
+                const movie = state.movies.find(m => m.id === movieId);
+                if (!movie) continue;
+
+                const movieDetail = await window.electronAPI.getMovieDetail(movieId);
+                if (!movieDetail || movieDetail.error) continue;
+
+                let movieVideoAdded = false;
+
+                if (movieDetail.fileset && Array.isArray(movieDetail.fileset)) {
+                    for (const file of movieDetail.fileset) {
+                        const fileType = file.type || file.fileType;
+                        if (fileType === 'Main' && file.fullpath) {
+                            playlist.push({
+                                path: file.fullpath,
+                                title: `${movieDetail.name} - ${file.filename || path.basename(file.fullpath)}`,
+                                codec: file.codec || file.videoCodec || '',
+                                resolution: file.resolution || (file.videoWidth ? `${file.videoWidth}x${file.videoHeight}` : '')
+                            });
+                            movieVideoAdded = true;
+                        }
+                    }
+                }
+
+                if (!movieVideoAdded && movieDetail.original_filename) {
+                    playlist.push({
+                        path: movieDetail.original_filename,
+                        title: movieDetail.name || path.basename(movieDetail.original_filename),
+                        codec: movieDetail.videoCodec || '',
+                        resolution: movieDetail.videoWidth ? `${movieDetail.videoWidth}x${movieDetail.videoHeight}` : ''
+                    });
+                }
+            }
+
+            if (playlist.length === 0) {
+                alert('所选电影中没有可播放的视频文件');
+                return;
+            }
+
+            await window.electronAPI.openBatchPlayerWindow(playlist);
+        } catch (error) {
+            console.error('Error batch playing movies:', error);
+            alert('播放失败: ' + error.message);
+        }
+    });
 
     // 批量删除按钮点击
     elements.batchDeleteBtn.addEventListener('click', async () => {
@@ -1996,6 +2066,7 @@ category: movie.category,
             state.selectedMovies.clear();
             updateBatchAddButtonVisibility();
             updateBatchDeleteButtonVisibility();
+            updateBatchPlayButtonVisibility();
 
             // 刷新电影库、分类列表和电影盒子
             await loadMovies();

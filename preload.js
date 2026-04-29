@@ -65,6 +65,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     openActorManagement: () => ipcRenderer.invoke('open-actor-management'),
     openCategoryManagement: () => ipcRenderer.invoke('open-category-management'),
     openPlayerWindow: (movieData) => ipcRenderer.invoke('open-player-window', movieData),
+    openBatchPlayerWindow: (playlistData) => ipcRenderer.invoke('open-batch-player-window', playlistData),
 
     // 文件选择对话框
     selectDirectory: () => ipcRenderer.invoke('select-directory'),

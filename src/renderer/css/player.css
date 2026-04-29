@@ -328,6 +328,33 @@ video {
     text-overflow: ellipsis;
 }
 
+.playlist-item-remove {
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s, color 0.2s;
+}
+
+.playlist-item:hover .playlist-item-remove {
+    opacity: 1;
+}
+
+.playlist-item-remove:hover {
+    color: #e81123;
+}
+
+.playlist-item.active .playlist-item-remove {
+    color: var(--text-color);
+}
+
 /* Scrollbar */
 .playlist::-webkit-scrollbar {
     width: 6px;

@@ -53,7 +53,39 @@ document.addEventListener('DOMContentLoaded', async () => {
         playItem(currentIndex);
     }
 
-    // 渲染播放列表
+    function removePlaylistItem(index) {
+        if (index < 0 || index >= playlist.length) return;
+
+        const isCurrentItem = index === currentIndex;
+
+        if (isCurrentItem) {
+            elements.videoPlayer.pause();
+            isPlaying = false;
+            updatePlayPauseBtn();
+        }
+
+        playlist.splice(index, 1);
+
+        if (playlist.length === 0) {
+            elements.videoPlayer.src = '';
+            currentIndex = 0;
+            elements.playerTitle.textContent = '电影播放';
+            renderPlaylist();
+        } else {
+            if (isCurrentItem) {
+                if (currentIndex >= playlist.length) {
+                    currentIndex = playlist.length - 1;
+                }
+                playItem(currentIndex);
+            } else if (index < currentIndex) {
+                currentIndex--;
+                renderPlaylist();
+            } else {
+                renderPlaylist();
+            }
+        }
+    }
+
     function renderPlaylist() {
         elements.playlist.innerHTML = '';
         playlist.forEach((item, index) => {
@@ -62,8 +94,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             div.innerHTML = `
                 <span class="playlist-item-index">${index + 1}</span>
                 <span class="playlist-item-title">${item.title || path.basename(item.path)}</span>
+                <button class="playlist-item-remove" title="从播放列表移除">✕</button>
             `;
-            div.addEventListener('click', () => playItem(index));
+            div.addEventListener('click', (e) => {
+                if (e.target.classList.contains('playlist-item-remove')) {
+                    e.stopPropagation();
+                    removePlaylistItem(index);
+                } else {
+                    playItem(index);
+                }
+            });
             elements.playlist.appendChild(div);
         });
     }
@@ -82,10 +122,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.videoPlayer.src = fileUrl;
         elements.videoPlayer.load();
 
-        // 更新播放列表高亮
-        document.querySelectorAll('.playlist-item').forEach((el, i) => {
-            el.classList.toggle('active', i === currentIndex);
-        });
+        // 重新渲染播放列表以更新高亮
+        renderPlaylist();
 
         // 自动播放
         elements.videoPlayer.play().then(() => {
