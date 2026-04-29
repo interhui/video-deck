@@ -514,7 +514,7 @@ function loadMovieDetail(movie) {
     elements.movieTitle.textContent = movie.name;
     document.title = `${movie.name} - 电影详情`;
 
-    elements.movieId.textContent = movie.movieId || '';
+    elements.movieId.textContent = movie.id || '';
 
     // 显示电影时长
     const duration = movie.videoDuration;

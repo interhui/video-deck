@@ -876,6 +876,13 @@ class MovieService {
                 await this.fileService.ensureDir(movieTempDir);
 
                 // 构建完整的电影数据
+                // 修复 original_filename：如果只有文件名（相对路径），拼入文件夹完整路径
+                let originalFilename = movieData.original_filename || '';
+                if (originalFilename && !path.isAbsolute(originalFilename)) {
+                    // 相对路径：拼入源文件夹路径
+                    originalFilename = path.join(folderInfo.folderPath, originalFilename);
+                }
+
                 const completeMovieData = {
                     id: movieId,
                     movieId: movieId,
@@ -889,7 +896,7 @@ class MovieService {
                     runtime: movieData.runtime || '',
                     tags: movieData.tag || movieData.tags || [],
                     category: category,
-                    original_filename: movieData.original_filename || '',
+                    original_filename: originalFilename,
                     fileset: movieData.fileset || [],
                     videoCodec: movieData.videoCodec || '',
                     videoWidth: movieData.videoWidth || '',
@@ -1135,11 +1142,6 @@ class MovieService {
                     // 拷贝目录到目标位置（保留源文件）
                     await this.fileService.copyDir(srcPath, destPath);
 
-                    // 更新源文件夹中NFO的original_filename（如果存在源路径）
-                    if (movieInfo.sourcePath) {
-                        await this.updateSourceNfoOriginalFilename(movieInfo.sourcePath, overview.scanPath);
-                    }
-
                     // 读取电影数据
                     const movieData = await this.fileService.readMovieNfo(destPath);
 
@@ -1172,39 +1174,6 @@ class MovieService {
         } catch (error) {
             console.error('Error importing scanned movies:', error);
             throw error;
-        }
-    }
-
-    /**
-     * 更新源NFO文件的original_filename字段
-     * 在导入电影后，将扫描路径拼入源NFO文件的original_filename
-     * @param {string} sourcePath - 源电影文件夹路径
-     * @param {string} scanPath - 扫描路径
-     * @returns {Promise<void>}
-     */
-    async updateSourceNfoOriginalFilename(sourcePath, scanPath) {
-        try {
-            const nfoPath = path.join(sourcePath, 'movie.nfo');
-            const nfoExists = await this.fileService.fileExists(nfoPath);
-
-            if (!nfoExists) {
-                return;
-            }
-
-            // 读取源NFO文件
-            const movieData = await this.fileService.readMovieNfo(sourcePath);
-
-            if (movieData) {
-                // 拼接新的original_filename：扫描路径 + 原始文件名
-                const originalPath = movieData.original_filename || '';
-                const newOriginalFilename = `${scanPath}${originalPath ? '/' + originalPath : ''}`;
-                movieData.original_filename = newOriginalFilename;
-
-                // 写回NFO文件
-                await this.fileService.writeMovieNfo(sourcePath, movieData);
-            }
-        } catch (error) {
-            console.error('Error updating source NFO original_filename:', error);
         }
     }
 
