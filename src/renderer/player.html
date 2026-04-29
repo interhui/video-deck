@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; media-src 'self' file:;">
+    <title>电影播放器</title>
+    <link rel="stylesheet" href="css/themes/dark.css">
+    <link rel="stylesheet" href="css/player.css">
+</head>
+<body>
+    <div id="app">
+        <header class="player-header">
+            <div id="player-title" class="player-title">电影播放</div>
+            <div class="window-controls">
+                <button id="minimize-btn" class="window-btn minimize-btn" title="最小化">─</button>
+                <button id="close-btn" class="window-btn close-btn" title="关闭">&times;</button>
+            </div>
+        </header>
+
+        <main class="player-content">
+            <div class="video-section">
+                <div class="video-container">
+                    <video id="video-player" preload="metadata">
+                        您的浏览器不支持 video 标签
+                    </video>
+                </div>
+                <div class="video-controls">
+                    <div class="controls-top-row">
+                        <div class="progress-group">
+                            <input type="range" id="progress-bar" class="progress-bar" min="0" max="100" value="0" step="0.1">
+                            <div class="time-group">
+                                <span id="current-time" class="time-display">00:00</span>
+                                <span class="time-separator">/</span>
+                                <span id="total-time" class="time-display">00:00</span>
+                            </div>
+                        </div>
+                        <div class="volume-group">
+                            <button id="mute-btn" class="volume-btn" title="静音">🔊</button>
+                            <input type="range" id="volume-bar" class="volume-bar" min="0" max="100" value="100">
+                        </div>
+                    </div>
+                    <div class="playback-controls">
+                        <button id="play-pause-btn" class="playback-btn play-btn" title="播放/暂停">▶</button>
+                        <button id="stop-btn" class="playback-btn stop-btn" title="停止">◼︎</button>
+                        <button id="prev-btn" class="playback-btn prev-next-btn" title="上一首">↩︎</button>
+                        <button id="next-btn" class="playback-btn prev-next-btn" title="下一首">↪︎</button>
+                    </div>
+                </div>
+            </div>
+
+            <aside class="playlist-section">
+                <div class="playlist-header">
+                    <h3>播放列表</h3>
+                </div>
+                <div id="playlist" class="playlist"></div>
+            </aside>
+        </main>
+    </div>
+
+    <script src="js/utils/common-utils.js"></script>
+    <script src="js/player.js"></script>
+</body>
+</html>

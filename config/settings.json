@@ -3,39 +3,23 @@
   "lastUpdate": 1773560220649,
   "appearance": {
     "theme": "dark",
-    "language": "zh-CN",
-    "showCategoryIcons": true,
-    "showDescriptions": true,
-    "enableAnimations": true
+    "language": "zh-CN"
   },
   "layout": {
     "sidebarWidth": 200,
-    "posterSize": "large",
+    "posterSize": "medium",
     "columns": 6,
     "viewMode": "grid",
     "sortBy": "name-asc",
     "sortOrder": "asc"
   },
   "library": {
-    "moviesDir": "D:\\Develop\\Workspace\\movie-mgt\\movies",
-    "actorPhotoDir": "D:\\Develop\\Workspace\\movie-mgt\\actors",
-    "scanOnStartup": true,
-    "autoRefresh": false,
-    "showHiddenFiles": false,
-    "includeSubfolders": true,
+    "moviesDir": "D:\\git\\movie-mgt\\movies",
+    "actorPhotoDir": "D:\\git\\movie-mgt\\actor",
     "newMovieHours": 72
   },
-  "notifications": {
-    "enableStartup": true,
-    "enableLibraryUpdate": true,
-    "showPlayReminders": true
-  },
-  "import": {
-    "autoImport": false,
-    "importPaths": []
-  },
   "moviebox": {
-    "movieboxDir": "D:\\Develop\\Workspace\\movie-mgt\\boxes"
+    "movieboxDir": "D:\\git\\movie-mgt\\boxes"
   },
   "tmdb": {
     "url": "api.themoviedb.org",

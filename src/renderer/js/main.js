@@ -608,53 +608,14 @@ function showToast(message, duration = 3000) {
  */
 function applyLayoutSettings(layout) {
     document.documentElement.style.setProperty('--sidebar-width', `${layout.sidebarWidth}px`);
-    document.documentElement.style.setProperty('--poster-min-width', getPosterMinSize(layout.posterSize));
-    document.documentElement.style.setProperty('--poster-max-width', getPosterMaxSize(layout.posterSize));
-
-    // 使用 CSS Grid 的自动填充实现响应式布局
-    // 不再使用固定列数，让浏览器根据窗口大小自动计算
+    
+    applyPosterSizeSettings(layout);
 
     if (layout.viewMode === 'list') {
         elements.moviesGrid.classList.add('list-view');
     } else {
         elements.moviesGrid.classList.remove('list-view');
     }
-}
-
-/**
- * 获取海报尺寸
- */
-function getPosterSize(size) {
-    const sizes = {
-        small: '120px',
-        medium: '180px',
-        large: '240px'
-    };
-    return sizes[size] || sizes.medium;
-}
-
-/**
- * 获取海报最小尺寸（用于自动响应式计算）
- */
-function getPosterMinSize(size) {
-    const sizes = {
-        small: '100px',
-        medium: '140px',
-        large: '180px'
-    };
-    return sizes[size] || sizes.medium;
-}
-
-/**
- * 获取海报最大尺寸
- */
-function getPosterMaxSize(size) {
-    const sizes = {
-        small: '150px',
-        medium: '220px',
-        large: '280px'
-    };
-    return sizes[size] || sizes.medium;
 }
 
 /**

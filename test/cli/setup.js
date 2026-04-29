@@ -67,9 +67,7 @@ beforeAll(() => {
         lastUpdate: Date.now(),
         appearance: { theme: 'dark', language: 'zh-CN' },
         layout: { sidebarWidth: 200, posterSize: 'large', columns: 6, viewMode: 'grid' },
-        library: { moviesDir: path.join(testDataDir, 'movies'), scanOnStartup: true },
-        notifications: { enableStartup: true },
-        import: { autoImport: false, importPaths: [] },
+        library: { moviesDir: path.join(testDataDir, 'movies') },
         moviebox: { movieboxDir: path.join(testDataDir, 'boxes') }
     };
     const settingsPath = path.join(testDataDir, 'config', 'settings.json');

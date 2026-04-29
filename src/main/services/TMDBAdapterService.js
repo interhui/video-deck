@@ -115,12 +115,15 @@ class TMDBMovieAdapterService {
         const runtime = movie.runtime || 0;
         const posterUrl = this.buildImageUrl(movie.poster_path, 'original');
 
-        const actors = (movie.credits?.cast || []).map(actor => ({
-            person_id: actor.id,
-            name: actor.name,
-            character: actor.character,
-            profile_url: this.buildImageUrl(actor.profile_path, 'w200')
-        }));
+        const actors = (movie.credits?.cast || [])
+            .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
+            .slice(0, 15)
+            .map(actor => ({
+                person_id: actor.id,
+                name: actor.name,
+                character: actor.character,
+                profile_url: this.buildImageUrl(actor.profile_path, 'w200')
+            }));
 
         const directors = (movie.credits?.crew || [])
             .filter(crew => crew.job === 'Director')
@@ -134,7 +137,7 @@ class TMDBMovieAdapterService {
             movie_id: movie.imdb_id || '',
             title: movie.title || '',
             overview: movie.overview || '',
-            genres: genres,
+            tags: genres,
             production_companies: productionCompanies,
             runtime: runtime,
             poster_url: posterUrl,
@@ -161,9 +164,36 @@ class TMDBMovieAdapterService {
         return {
             name: person.name || '',
             birthday: person.birthday || '',
-            biography: person.biography || '',
+            memo: person.biography || '',
             profile_url: this.buildImageUrl(person.profile_path, 'original')
         };
+    }
+
+    async searchPerson(actorName) {
+        const config = this.getTmdbConfig();
+
+        if (!config.token) {
+            throw new Error('TMDB token not configured');
+        }
+
+        if (!actorName || typeof actorName !== 'string') {
+            throw new Error('Actor name is required');
+        }
+
+        const encodedName = encodeURIComponent(actorName.trim());
+        const url = `${config.url}/3/search/person?include_adult=false&language=zh-CN&page=1&query=${encodedName}`;
+
+        const response = await this.makeRequest(url, config.token);
+
+        if (!response.results || !Array.isArray(response.results)) {
+            return [];
+        }
+
+        return response.results.map(person => ({
+            actor_id: person.id,
+            actor_name: person.name || '',
+            actor_profile_url: this.buildImageUrl(person.profile_path, 'w200')
+        }));
     }
 }
 

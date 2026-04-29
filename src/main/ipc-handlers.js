@@ -57,6 +57,48 @@ function downloadFileToTemp(url) {
 }
 
 /**
+ * 从 URL 下载图片并返回 base64 编码
+ * @param {string} url - 图片 URL
+ * @returns {Promise<{base64: string, mimeType: string}>} base64 编码和 MIME 类型
+ */
+function downloadImageAsBase64(url) {
+    return new Promise((resolve, reject) => {
+        const protocol = url.startsWith('https:') ? https : http;
+
+        protocol.get(url, (response) => {
+            // 处理重定向
+            if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
+                downloadImageAsBase64(response.headers.location).then(resolve).catch(reject);
+                return;
+            }
+
+            if (response.statusCode !== 200) {
+                reject(new Error(`Failed to download: ${response.statusCode}`));
+                return;
+            }
+
+            const chunks = [];
+            response.on('data', (chunk) => {
+                chunks.push(chunk);
+            });
+
+            response.on('end', () => {
+                const buffer = Buffer.concat(chunks);
+                const base64 = buffer.toString('base64');
+                const mimeType = response.headers['content-type'] || 'image/jpeg';
+                resolve({ base64, mimeType });
+            });
+
+            response.on('error', (err) => {
+                reject(err);
+            });
+        }).on('error', (err) => {
+            reject(err);
+        });
+    });
+}
+
+/**
  * 从 URL 下载文件到电影目录
  * @param {string} url - 文件 URL
  * @param {string} destPath - 目标目录路径
@@ -161,11 +203,13 @@ function setupIpcHandlers(services) {
         categoryService,
         actorService,
         tmdbMovieAdapterService,
+        playerService,
         getMainWindow,
         createMovieDetailWindow,
         createBoxWindow,
         createActorManagementWindow,
         createCategoryManagementWindow,
+        createPlayerWindow,
         getPendingDetailMovieData,
         clearPendingDetailMovieData
     } = services;
@@ -531,6 +575,37 @@ function setupIpcHandlers(services) {
         }
     });
 
+    // 下载演员照片到演员目录
+    ipcMain.handle('download-actor-photo', async (event, { photoUrl }) => {
+        try {
+            if (!photoUrl) {
+                return { error: '照片 URL 为空' };
+            }
+
+            // 下载图片为 base64
+            const { base64 } = await downloadImageAsBase64(photoUrl);
+
+            // 生成文件名
+            const fileName = `actor_${Date.now()}.jpg`;
+
+            // 保存到演员照片目录
+            const photoDir = settingsService.getActorPhotoDir();
+            if (!photoDir) {
+                return { error: '请先在设置中配置演员照片目录' };
+            }
+
+            const filePath = path.join(photoDir, fileName);
+            await fileService.ensureDir(photoDir);
+            const buffer = Buffer.from(base64, 'base64');
+            await fileService.writeFile(filePath, buffer);
+
+            return { success: true, filePath, fileName, base64 };
+        } catch (error) {
+            console.error('Error downloading actor photo:', error);
+            return { error: error.message };
+        }
+    });
+
     // 更新电影目录配置
     ipcMain.handle('update-movies-dir', async (event, dirPath) => {
         try {
@@ -830,6 +905,28 @@ function setupIpcHandlers(services) {
         }
     });
 
+    // 搜索TMDB演员
+    ipcMain.handle('tmdb-search-person', async (event, actorName) => {
+        try {
+            const results = await tmdbMovieAdapterService.searchPerson(actorName);
+            return results;
+        } catch (error) {
+            console.error('Error searching TMDB person:', error);
+            return { error: error.message };
+        }
+    });
+
+    // 获取TMDB演员详情
+    ipcMain.handle('tmdb-get-person', async (event, personId) => {
+        try {
+            const person = await tmdbMovieAdapterService.getPerson(personId);
+            return person;
+        } catch (error) {
+            console.error('Error getting TMDB person:', error);
+            return { error: error.message };
+        }
+    });
+
     // ==================== 电影盒子管理 ====================
 
     // 获取所有电影盒子
@@ -1059,6 +1156,18 @@ function setupIpcHandlers(services) {
         }
     });
 
+    // 打开播放器窗口
+    ipcMain.handle('open-player-window', async (event, movieData) => {
+        try {
+            const mainWindow = getMainWindow();
+            playerService.openPlayerWindow(movieData, mainWindow, createPlayerWindow);
+            return { success: true };
+        } catch (error) {
+            console.error('Error opening player window:', error);
+            return { error: error.message };
+        }
+    });
+
     // ==================== 文件选择对话框 ====================
 
     // 选择目录
@@ -1113,6 +1222,20 @@ function setupIpcHandlers(services) {
             return { success: true };
         } catch (error) {
             console.error('Error resizing window:', error);
+            return { error: error.message };
+        }
+    });
+
+    // 最小化窗口
+    ipcMain.handle('minimize-window', async (event) => {
+        try {
+            const win = BrowserWindow.fromWebContents(event.sender);
+            if (win) {
+                win.minimize();
+            }
+            return { success: true };
+        } catch (error) {
+            console.error('Error minimizing window:', error);
             return { error: error.message };
         }
     });

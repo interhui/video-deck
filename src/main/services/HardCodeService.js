@@ -17,10 +17,7 @@ class HardCodeService {
 
             appearance: {
                 theme: 'dark',
-                language: 'zh-CN',
-                showCategoryIcons: true,
-                showDescriptions: true,
-                enableAnimations: true
+                language: 'zh-CN'
             },
 
             layout: {
@@ -35,21 +32,7 @@ class HardCodeService {
             library: {
                 moviesDir: path.join(__dirname, 'movies'),
                 actorPhotoDir: path.join(__dirname, 'actors'),
-                scanOnStartup: true,
-                autoRefresh: false,
-                showHiddenFiles: false,
-                includeSubfolders: true,
                 newMovieHours: 72
-            },
-            notifications: {
-                enableStartup: true,
-                enableLibraryUpdate: true,
-                showPlayReminders: true
-            },
-
-            import: {
-                autoImport: false,
-                importPaths: []
             },
 
             moviebox: {

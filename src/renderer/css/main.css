@@ -2073,29 +2073,33 @@ body {
 /* 演员卡片视图 */
 .actor-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(var(--poster-min-width), 1fr));
+    gap: var(--poster-gap);
 }
 
 .actor-card {
-    background: var(--card-bg);
-    border-radius: 8px;
-    overflow: hidden;
+    width: 100%;
+    max-width: var(--poster-max-width);
+    aspect-ratio: 2 / 3;
     cursor: pointer;
-    transition: transform 0.15s, box-shadow 0.15s;
-    border: 2px solid transparent;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    background-color: var(--card-bg);
+    display: flex;
+    flex-direction: column;
     position: relative;
 }
 
 .actor-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    border-color: var(--primary-color);
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px var(--shadow-color);
 }
 
 .actor-card-photo {
     width: 100%;
-    aspect-ratio: 1;
+    height: calc(100% - 50px);
     overflow: hidden;
     background: var(--bg-secondary);
     position: relative;
@@ -2114,13 +2118,17 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 36px;
+    font-size: 30px;
     color: var(--text-secondary);
     background: var(--bg-secondary);
 }
 
 .actor-card-info {
-    padding: 12px;
+    height: 50px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .actor-card-name {
@@ -2812,5 +2820,177 @@ body {
     border: 1px solid var(--border-color);
     border-radius: 4px;
     color: var(--text-color);
+}
+
+/* ==================== 演员搜索弹窗样式 ==================== */
+
+/* 演员搜索配置区域 */
+.actor-search-config {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.actor-adapter-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.actor-adapter-radio {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    transition: all 0.2s;
+}
+
+.actor-adapter-radio:hover {
+    background-color: var(--hover-bg);
+    border-color: var(--primary-color);
+}
+
+.actor-adapter-radio input[type="radio"] {
+    margin: 0;
+    width: 5%;
+}
+
+.actor-adapter-radio input[type="radio"]:checked + span {
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.actor-adapter-radio input[type="radio"]:checked ~ span:last-child {
+    font-weight: 500;
+}
+
+.actor-adapter-radio:has(input[type="radio"]:checked) {
+    background-color: var(--active-bg);
+    border-color: var(--primary-color);
+    display: flex;
+}
+
+/* 演员搜索区域 */
+.actor-search-section {
+    margin-top: 16px;
+}
+
+/* 搜索输入组 */
+.actor-search-section .search-input-group {
+    display: flex;
+    gap: 8px;
+}
+
+.actor-search-section .search-input-group .form-input {
+    flex: 1;
+    width: 85%;
+}
+
+/* 演员表单中的搜索输入组 */
+.actor-form-section .search-input-group {
+    display: flex;
+    gap: 8px;
+}
+
+.actor-form-section .search-input-group #actor-name {
+    flex: 1;
+    width: 85%;
+}
+
+/* 演员加载状态 */
+.actor-loading {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+/* 演员错误信息 */
+.actor-error {
+    padding: 12px;
+    background-color: rgba(244, 67, 54, 0.1);
+    border: 1px solid var(--danger-color);
+    border-radius: 4px;
+    color: var(--danger-color);
+    font-size: 13px;
+    margin-top: 12px;
+}
+
+/* 演员搜索结果列表 */
+.actor-results {
+    max-height: 400px;
+    margin-top: 16px;
+    overflow-y: auto;
+}
+
+.actor-result-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 8px;
+}
+
+.actor-result-item:last-child {
+    margin-bottom: 0;
+}
+
+.actor-result-item:hover {
+    border-color: var(--primary-color);
+    background-color: var(--hover-bg);
+}
+
+.actor-result-item.selected {
+    border-color: var(--primary-color) !important;
+    background-color: var(--hover-bg);
+    outline: 3px solid var(--primary-color);
+    outline-offset: -3px;
+}
+
+.actor-result-poster {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    overflow: hidden;
+    background-color: var(--card-bg);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.actor-result-poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.actor-result-poster .no-actor-photo {
+    font-size: 20px;
+    color: var(--text-secondary);
+}
+
+.actor-result-info {
+    margin-left: 16px;
+    flex: 1;
+    min-width: 0;
+}
+
+.actor-result-name {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.actor-result-id {
+    font-size: 12px;
+    color: var(--text-secondary);
 }
 

@@ -46,6 +46,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cancelRatingBtn = document.getElementById('cancel-rating-btn');
     const confirmRatingBtn = document.getElementById('confirm-rating-btn');
 
+    // 演员搜索弹窗 DOM 元素
+    const actorSearchModal = document.getElementById('actor-search-modal');
+    const closeActorSearchBtn = document.getElementById('close-actor-search');
+    const actorSearchInput = document.getElementById('actor-search-input');
+    const actorSearchBtn = document.getElementById('actor-search-btn');
+    const actorSearchLoading = document.getElementById('actor-search-loading');
+    const actorSearchError = document.getElementById('actor-search-error');
+    const actorSearchResults = document.getElementById('actor-search-results');
+    const confirmActorSearchBtn = document.getElementById('confirm-actor-search');
+    const cancelActorSearchBtn = document.getElementById('cancel-actor-search');
+    const actorSearchTriggerBtn = document.getElementById('actor-search-trigger-btn');
+
+    // 演员搜索状态
+    let actorSearchResultsList = [];
+    let selectedActorSearchResult = null;
+
+    // 常量
+    const ACTOR_SEARCH_MAX_RESULTS = 10;
+
     // 状态
     let actors = [];
     let currentView = 'card'; // 'card' or 'table'
@@ -546,12 +565,248 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    // ==================== 演员搜索弹窗功能 ====================
+
+    // 点击演员名称后的搜索按钮
+    actorSearchTriggerBtn.addEventListener('click', () => {
+        openActorSearchModal();
+    });
+
+    // 关闭演员搜索弹窗
+    closeActorSearchBtn.addEventListener('click', () => {
+        closeActorSearchModal();
+    });
+
+    // 取消演员搜索
+    cancelActorSearchBtn.addEventListener('click', () => {
+        closeActorSearchModal();
+    });
+
+    // 点击演员搜索弹窗背景关闭
+    actorSearchModal.addEventListener('click', (e) => {
+        if (e.target === actorSearchModal) {
+            closeActorSearchModal();
+        }
+    });
+
+    // 执行演员搜索
+    actorSearchBtn.addEventListener('click', () => {
+        searchActorPeople();
+    });
+
+    // 搜索输入框回车搜索
+    actorSearchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            searchActorPeople();
+        }
+    });
+
+    // 确认选择演员
+    confirmActorSearchBtn.addEventListener('click', () => {
+        confirmActorSearch();
+    });
+
+    /**
+     * 打开演员搜索弹窗
+     */
+    function openActorSearchModal() {
+        // 将当前 actor-name 的值带入搜索框
+        actorSearchInput.value = actorNameInput.value.trim();
+        resetActorSearchForm();
+        actorSearchModal.style.display = 'flex';
+        actorSearchInput.focus();
+    }
+
+    /**
+     * 重置演员搜索表单
+     */
+    function resetActorSearchForm() {
+        actorSearchLoading.style.display = 'none';
+        actorSearchError.style.display = 'none';
+        actorSearchError.textContent = '';
+        actorSearchResults.innerHTML = '';
+        confirmActorSearchBtn.disabled = true;
+        actorSearchResultsList = [];
+        selectedActorSearchResult = null;
+    }
+
+    /**
+     * 关闭演员搜索弹窗
+     */
+    function closeActorSearchModal() {
+        actorSearchModal.style.display = 'none';
+        resetActorSearchForm();
+    }
+
+    /**
+     * 搜索演员
+     */
+    async function searchActorPeople() {
+        const actorName = actorSearchInput.value.trim();
+
+        if (!actorName) {
+            actorSearchError.textContent = '请输入演员名称';
+            actorSearchError.style.display = 'block';
+            return;
+        }
+
+        // 显示加载状态
+        actorSearchLoading.style.display = 'block';
+        actorSearchError.style.display = 'none';
+        actorSearchResults.innerHTML = '';
+        confirmActorSearchBtn.disabled = true;
+        selectedActorSearchResult = null;
+
+        try {
+            const results = await window.electronAPI.tmdbSearchPerson(actorName);
+
+            actorSearchLoading.style.display = 'none';
+
+            if (results && results.error) {
+                actorSearchError.textContent = results.error;
+                actorSearchError.style.display = 'block';
+                return;
+            }
+
+            if (!results || results.length === 0) {
+                actorSearchResults.innerHTML = '<div class="actor-no-results">未找到相关演员</div>';
+                return;
+            }
+
+            // 限制显示数量
+            actorSearchResultsList = results.slice(0, ACTOR_SEARCH_MAX_RESULTS);
+            renderActorSearchResults(actorSearchResultsList);
+
+        } catch (error) {
+            console.error('Error searching actors:', error);
+            actorSearchLoading.style.display = 'none';
+            actorSearchError.textContent = '搜索失败: ' + error.message;
+            actorSearchError.style.display = 'block';
+        }
+    }
+
+    /**
+     * 渲染演员搜索结果
+     * @param {Array} results - 搜索结果数组
+     */
+    function renderActorSearchResults(results) {
+        const html = results.map((actor, index) => `
+            <div class="actor-result-item" data-index="${index}">
+                <div class="actor-result-poster">
+                    ${actor.actor_profile_url
+                ? `<img src="${actor.actor_profile_url}" alt="${actor.actor_name}" onerror="this.parentElement.innerHTML='<span class=\\'no-actor-photo\\'>👤</span>'">`
+                : '<span class="no-actor-photo">👤</span>'}
+                </div>
+                <div class="actor-result-info">
+                    <div class="actor-result-name">${escapeHtml(actor.actor_name)}</div>
+                    <div class="actor-result-id">ID: ${actor.actor_id}</div>
+                </div>
+            </div>
+        `).join('');
+
+        actorSearchResults.innerHTML = html;
+
+        // 绑定点击事件
+        actorSearchResults.querySelectorAll('.actor-result-item').forEach(item => {
+            item.addEventListener('click', () => {
+                selectActorSearchResult(parseInt(item.dataset.index));
+            });
+        });
+    }
+
+    /**
+     * 选中演员搜索结果
+     * @param {number} index - 选中结果的索引
+     */
+    function selectActorSearchResult(index) {
+        if (index < 0 || index >= actorSearchResultsList.length) return;
+
+        // 更新选中状态
+        selectedActorSearchResult = actorSearchResultsList[index];
+
+        // 更新UI
+        actorSearchResults.querySelectorAll('.actor-result-item').forEach((item, i) => {
+            item.classList.toggle('selected', i === index);
+        });
+
+        // 启用确认按钮
+        confirmActorSearchBtn.disabled = false;
+    }
+
+    /**
+     * 确认选择演员并填充信息
+     */
+    async function confirmActorSearch() {
+        if (!selectedActorSearchResult) {
+            alert('请选择一个演员');
+            return;
+        }
+
+        // 显示加载状态
+        confirmActorSearchBtn.disabled = true;
+        confirmActorSearchBtn.textContent = '加载中...';
+
+        try {
+            // 获取演员详细信息
+            const personDetail = await window.electronAPI.tmdbGetPerson(selectedActorSearchResult.actor_id);
+
+            if (personDetail && personDetail.error) {
+                throw new Error(personDetail.error);
+            }
+
+            // 填充演员信息到表单
+            actorNameInput.value = personDetail.name || selectedActorSearchResult.actor_name;
+            actorBirthdayInput.value = personDetail.birthday || '';
+            actorMemoInput.value = personDetail.memo || '';
+
+            // 下载并填充演员照片
+            if (personDetail.profile_url) {
+                try {
+                    // 下载照片到演员目录
+                    const photoResult = await window.electronAPI.downloadActorPhoto({
+                        photoUrl: personDetail.profile_url
+                    });
+
+                    if (photoResult && photoResult.success && photoResult.filePath) {
+                        currentPhotoFileName = photoResult.fileName || `${Date.now()}_actor.jpg`;
+                        currentPhotoBase64 = photoResult.base64 || '';
+
+                        // 显示照片预览
+                        if (photoResult.base64) {
+                            photoPreview.innerHTML = `<img src="data:image/jpeg;base64,${photoResult.base64}" alt="照片预览">`;
+                        } else {
+                            photoPreview.innerHTML = `<img src="file://${photoResult.filePath}" alt="照片预览">`;
+                        }
+                        removePhotoBtn.style.display = 'block';
+                    } else if (photoResult && photoResult.error) {
+                        console.warn('下载演员照片失败:', photoResult.error);
+                    }
+                } catch (photoError) {
+                    console.error('Error downloading actor photo:', photoError);
+                    // 照片下载失败不影响主流程
+                }
+            }
+
+            // 关闭弹窗
+            closeActorSearchModal();
+
+        } catch (error) {
+            console.error('Error getting actor detail:', error);
+            alert('获取演员详情失败: ' + error.message);
+        } finally {
+            confirmActorSearchBtn.disabled = false;
+            confirmActorSearchBtn.textContent = '确认';
+        }
+    }
+
     // 监听演员更新事件
     window.electronAPI.onActorsUpdated(() => {
         loadActors();
     });
 
     // 初始加载
-    loadTheme();
+    loadTheme({
+        onLayoutLoaded: applyPosterSizeSettings
+    });
     loadActors();
 });

@@ -64,6 +64,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     setDetailEditMode: (isEditing) => ipcRenderer.invoke('set-detail-edit-mode', isEditing),
     openActorManagement: () => ipcRenderer.invoke('open-actor-management'),
     openCategoryManagement: () => ipcRenderer.invoke('open-category-management'),
+    openPlayerWindow: (movieData) => ipcRenderer.invoke('open-player-window', movieData),
 
     // 文件选择对话框
     selectDirectory: () => ipcRenderer.invoke('select-directory'),
@@ -80,6 +81,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     deleteActor: (name) => ipcRenderer.invoke('delete-actor', name),
     getActorPhotoDir: () => ipcRenderer.invoke('get-actor-photo-dir'),
     saveActorPhoto: (data) => ipcRenderer.invoke('save-actor-photo', data),
+    downloadActorPhoto: (data) => ipcRenderer.invoke('download-actor-photo', data),
 
     // 电影目录扫描
     scanMovieDirectory: (params) => ipcRenderer.invoke('scan-movie-directory', params),
@@ -135,6 +137,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // 窗口操作
     resizeWindow: (width, height) => ipcRenderer.invoke('resize-window', width, height),
     setMinSize: (minWidth, minHeight) => ipcRenderer.invoke('set-min-size', minWidth, minHeight),
+    minimizeWindow: () => ipcRenderer.invoke('minimize-window'),
 
     // 下载电影封面
     downloadMovieCover: (data) => ipcRenderer.invoke('download-movie-cover', data),
@@ -158,12 +161,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
     tmdbSearchMovie: (keyword) => ipcRenderer.invoke('tmdb-search-movie', keyword),
     tmdbGetMovie: (searchId) => ipcRenderer.invoke('tmdb-get-movie', searchId),
 
+    // TMDB演员搜索
+    tmdbSearchPerson: (actorName) => ipcRenderer.invoke('tmdb-search-person', actorName),
+    tmdbGetPerson: (personId) => ipcRenderer.invoke('tmdb-get-person', personId),
+
 // 事件监听
     onOpenAddMovie: (callback) => {
         ipcRenderer.on('open-add-movie', callback);
     },
     onMovieUpdated: (callback) => {
         ipcRenderer.on('movie-updated', (event, movieData) => callback(movieData));
+    },
+    onLoadPlayerData: (callback) => {
+        ipcRenderer.on('load-player-data', (event, data) => callback(data));
     }
 });
 

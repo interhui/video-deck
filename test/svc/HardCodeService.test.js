@@ -26,7 +26,7 @@ describe('HardCodeService', () => {
         test('SVC-HARDCODED-003: 包含顶层属性', () => {
             const settings = service.getDefaultSettings();
             const topLevelProps = ['appearance', 'layout', 'library',
-                'notifications', 'import', 'moviebox', 'version', 'lastUpdate'];
+                'moviebox', 'version', 'lastUpdate'];
             topLevelProps.forEach(prop => {
                 expect(settings).toHaveProperty(prop);
             });
@@ -36,7 +36,6 @@ describe('HardCodeService', () => {
             const settings = service.getDefaultSettings();
             expect(settings.appearance.theme).toBe('dark');
             expect(settings.appearance.language).toBe('zh-CN');
-            expect(settings.appearance.showCategoryIcons).toBe(true);
         });
 
         test('SVC-HARDCODED-005: layout属性正确', () => {

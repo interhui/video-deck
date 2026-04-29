@@ -80,9 +80,7 @@ async function initializeServices(options = {}) {
             lastUpdate: Date.now(),
             appearance: { theme: 'dark', language: 'zh-CN' },
             layout: { sidebarWidth: 200, posterSize: 'large', columns: 6, viewMode: 'grid' },
-            library: { moviesDir: path.join(baseDir, 'movies'), scanOnStartup: true },
-            notifications: { enableStartup: true },
-            import: { autoImport: false, importPaths: [] },
+            library: { moviesDir: path.join(baseDir, 'movies') },
             moviebox: { movieboxDir: path.join(baseDir, 'boxes') }
         };
         fs.writeFileSync(settingsPath, JSON.stringify(defaultSettings, null, 2));
