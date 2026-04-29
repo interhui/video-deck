@@ -1,7 +1,15 @@
 /**
  * 播放器逻辑
  */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // 加载主题设置
+    await loadTheme();
+
+    // 监听主题变化
+    window.electronAPI.onThemeChanged((theme) => {
+        applyTheme(theme);
+    });
+
     // 获取 DOM 元素
     const elements = {
         videoPlayer: document.getElementById('video-player'),
@@ -9,7 +17,6 @@ document.addEventListener('DOMContentLoaded', () => {
         currentTime: document.getElementById('current-time'),
         totalTime: document.getElementById('total-time'),
         volumeBar: document.getElementById('volume-bar'),
-        volumeDisplay: document.getElementById('volume-display'),
         muteBtn: document.getElementById('mute-btn'),
         playPauseBtn: document.getElementById('play-pause-btn'),
         stopBtn: document.getElementById('stop-btn'),
@@ -17,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
         nextBtn: document.getElementById('next-btn'),
         playlist: document.getElementById('playlist'),
         playerTitle: document.getElementById('player-title'),
+        minimizeBtn: document.getElementById('minimize-btn'),
         closeBtn: document.getElementById('close-btn')
     };
 
@@ -90,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 更新播放/暂停按钮
     function updatePlayPauseBtn() {
-        elements.playPauseBtn.textContent = isPlaying ? '⏸' : '▶';
+        elements.playPauseBtn.textContent = isPlaying ? '❚❚' : '▶';
     }
 
     // 更新进度条
@@ -163,7 +171,6 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.volumeBar.addEventListener('input', (e) => {
         const volume = e.target.value / 100;
         elements.videoPlayer.volume = volume;
-        elements.volumeDisplay.textContent = `${e.target.value}%`;
         updateMuteBtn();
     });
 
@@ -177,6 +184,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const volume = elements.videoPlayer.muted ? 0 : elements.videoPlayer.volume * 100;
         elements.muteBtn.textContent = volume === 0 ? '🔇' : '🔊';
     }
+
+    // 最小化按钮
+    elements.minimizeBtn.addEventListener('click', () => {
+        window.electronAPI.minimizeWindow();
+    });
 
     // 关闭按钮
     elements.closeBtn.addEventListener('click', () => {

@@ -137,6 +137,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // 窗口操作
     resizeWindow: (width, height) => ipcRenderer.invoke('resize-window', width, height),
     setMinSize: (minWidth, minHeight) => ipcRenderer.invoke('set-min-size', minWidth, minHeight),
+    minimizeWindow: () => ipcRenderer.invoke('minimize-window'),
 
     // 下载电影封面
     downloadMovieCover: (data) => ipcRenderer.invoke('download-movie-cover', data),

@@ -1226,6 +1226,20 @@ function setupIpcHandlers(services) {
         }
     });
 
+    // 最小化窗口
+    ipcMain.handle('minimize-window', async (event) => {
+        try {
+            const win = BrowserWindow.fromWebContents(event.sender);
+            if (win) {
+                win.minimize();
+            }
+            return { success: true };
+        } catch (error) {
+            console.error('Error minimizing window:', error);
+            return { error: error.message };
+        }
+    });
+
     // ==================== 添加电影 ====================
 
     // 添加单部电影
