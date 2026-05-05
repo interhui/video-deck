@@ -15,6 +15,11 @@ class MovieService {
         this.hardCodeService = new HardCodeService();
         this.cacheService = new MovieCacheService();
         this.indexService = new IndexService();
+        this.actorService = null;
+    }
+
+    setActorService(actorService) {
+        this.actorService = actorService;
     }
 
     /**
@@ -1096,9 +1101,11 @@ class MovieService {
      * 使用电影ID作为文件夹名称，拷贝NFO和海报文件到目标目录
      * @param {string} tempDir - 临时目录路径
      * @param {string} moviesDir - 电影目录
+     * @param {Array} excludeIds - 排除的电影ID列表
+     * @param {boolean} importActors - 是否导入演员
      * @returns {Promise<object>} 导入结果
      */
-    async importScannedMovies(tempDir, moviesDir, excludeIds = []) {
+    async importScannedMovies(tempDir, moviesDir, excludeIds = [], importActors = false) {
         try {
             // 验证 moviesDir 参数
             if (!moviesDir) {
@@ -1117,8 +1124,12 @@ class MovieService {
                 success: 0,
                 failed: 0,
                 skipped: 0,
-                errors: []
+                errors: [],
+                actorsImported: 0,
+                actorsSkipped: 0
             };
+
+            const allActorNames = [];
 
             for (const movieInfo of overview.movies) {
                 // 跳过被排除的电影
@@ -1145,6 +1156,19 @@ class MovieService {
                     // 读取电影数据
                     const movieData = await this.fileService.readMovieNfo(destPath);
 
+                    // 收集演员信息（从actors字段，而不是actor字段）
+                    if (importActors && movieData && movieData.actors) {
+                        const actors = Array.isArray(movieData.actors) ? movieData.actors : [movieData.actors];
+                        actors.forEach(actorName => {
+                            if (actorName && typeof actorName === 'string') {
+                                const trimmed = actorName.trim();
+                                if (trimmed && !allActorNames.includes(trimmed)) {
+                                    allActorNames.push(trimmed);
+                                }
+                            }
+                        });
+                    }
+
                     // 生成完整的电影对象
                     const movie = this.generateMovieData(movieData, movieInfo.folderName, overview.category, destPath);
                     movie.poster = await this.getMoviePoster(destPath);
@@ -1162,6 +1186,22 @@ class MovieService {
                     results.failed++;
                     results.errors.push(`电影 "${movieInfo.name}" 导入失败: ${err.message}`);
                 }
+            }
+
+            // 导入演员
+            if (importActors && allActorNames.length > 0 && this.actorService) {
+                try {
+                    console.log('Importing actors:', allActorNames.length, 'actors');
+                    const actorResult = await this.actorService.importActors(allActorNames);
+                    console.log('Actor import result:', actorResult);
+                    results.actorsImported = actorResult.added;
+                    results.actorsSkipped = actorResult.skipped;
+                } catch (err) {
+                    console.error('Error importing actors:', err);
+                    results.errors.push(`导入演员失败: ${err.message}`);
+                }
+            } else if (importActors && allActorNames.length > 0) {
+                console.warn('ActorService not initialized, cannot import actors');
             }
 
             // 删除临时目录

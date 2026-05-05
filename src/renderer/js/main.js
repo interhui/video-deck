@@ -3701,6 +3701,10 @@ async function importAllScannedMovies() {
         elements.scanResultImport.disabled = true;
         elements.scanResultImport.textContent = '导入中...';
 
+        // 获取是否导入演员的选项
+        const importActorsCheckbox = document.getElementById('import-actors-checkbox');
+        const importActors = importActorsCheckbox ? importActorsCheckbox.checked : false;
+
         // 获取电影库中已有的电影ID，用于排除
         const existingMovieIds = new Set();
         try {
@@ -3721,7 +3725,7 @@ async function importAllScannedMovies() {
             }
         });
 
-        const result = await window.electronAPI.importScannedMovies(state.scanTempDir, excludeIds);
+        const result = await window.electronAPI.importScannedMovies(state.scanTempDir, excludeIds, importActors);
 
         if (result.error) {
             alert('导入失败: ' + result.error);
@@ -3735,6 +3739,12 @@ async function importAllScannedMovies() {
         }
         if (result.failed > 0) {
             message += `，失败: ${result.failed} 个`;
+        }
+        if (importActors && result.actorsImported > 0) {
+            message += `，导入演员: ${result.actorsImported} 个`;
+        }
+        if (importActors && result.actorsSkipped > 0) {
+            message += `，跳过演员: ${result.actorsSkipped} 个`;
         }
         if (result.errors && result.errors.length > 0) {
             message += `\n错误: ${result.errors.join('; ')}`;

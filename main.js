@@ -73,6 +73,11 @@ function initializeServices() {
         movieService.setCacheService(movieCacheService);
     }
 
+    // 将 actorService 传递给 movieService
+    if (typeof movieService.setActorService === 'function') {
+        movieService.setActorService(actorService);
+    }
+
     log.info('Services initialized successfully');
 }
 

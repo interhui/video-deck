@@ -382,7 +382,7 @@ describe('MovieService', () => {
                 scanPath: tempDir,
                 category: 'movie',
                 totalMovies: 1,
-                movies: [{ name: 'Imported Movie', folderName: 'imported-movie' }]
+                movies: [{ name: 'Imported Movie', folderName: 'imported-movie', id: 'imported-1' }]
             };
 
             fs.mkdirSync(path.join(tempDir, 'imported-movie'));
@@ -397,6 +397,62 @@ describe('MovieService', () => {
 
             const result = await service.importScannedMovies(tempDir, moviesDir);
             expect(result.success).toBeGreaterThanOrEqual(0);
+        });
+
+        test('SVC-MOVIE-040b: 导入电影时同时导入演员', async () => {
+            const ActorService = require('../../src/main/services/ActorService');
+            const actorService = new ActorService(path.join(testDataDir, 'test-actors.json'));
+            actorService.clearCache();
+            service.setActorService(actorService);
+
+            await service.refreshCache(moviesDir);
+            
+            const tempDir = path.join(testDataDir, 'temp-import-actors');
+            fs.mkdirSync(tempDir, { recursive: true });
+
+            const overview = {
+                scanTime: new Date().toISOString(),
+                scanType: 'directory',
+                scanPath: tempDir,
+                category: 'movie',
+                totalMovies: 1,
+                movies: [{ name: 'Test Movie', folderName: 'test-movie', id: 'test-actor-1' }]
+            };
+
+            fs.mkdirSync(path.join(tempDir, 'test-movie'));
+            const movieNfo = `<?xml version="1.0"?>
+<movie>
+    <id>test-actor-1</id>
+    <title>Test Movie</title>
+    <year>2020</year>
+    <actor>
+        <name>演员A</name>
+    </actor>
+    <actor>
+        <name>演员B</name>
+    </actor>
+    <actor>
+        <name>演员C</name>
+    </actor>
+</movie>`;
+            fs.writeFileSync(path.join(tempDir, 'test-movie', 'movie.nfo'), movieNfo);
+            fs.writeFileSync(path.join(tempDir, 'movies.json'), JSON.stringify(overview));
+
+            const result = await service.importScannedMovies(tempDir, moviesDir, [], true);
+            expect(result.success).toBeGreaterThanOrEqual(1);
+            expect(result.actorsImported).toBe(3);
+            expect(result.actorsSkipped).toBe(0);
+
+            const actors = actorService.getActors();
+            expect(actors.length).toBeGreaterThanOrEqual(3);
+            expect(actors.find(a => a.name === '演员A')).toBeDefined();
+            expect(actors.find(a => a.name === '演员B')).toBeDefined();
+            expect(actors.find(a => a.name === '演员C')).toBeDefined();
+
+            actorService.clearCache();
+            if (fs.existsSync(path.join(testDataDir, 'test-actors.json'))) {
+                fs.unlinkSync(path.join(testDataDir, 'test-actors.json'));
+            }
         });
 
         test('SVC-MOVIE-041: 返回成功失败计数', async () => {

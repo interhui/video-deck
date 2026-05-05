@@ -190,6 +190,62 @@ class ActorService {
         const actors = await this.loadActors();
         return actors.length;
     }
+
+    /**
+     * 批量导入演员（仅导入不在actor.json中的新演员）
+     * @param {Array<string>} actorNames - 演员姓名数组
+     * @returns {Promise<object>} 导入结果 {added: number, skipped: number, addedActors: Array}
+     */
+    async importActors(actorNames) {
+        if (!actorNames || !Array.isArray(actorNames)) {
+            return { added: 0, skipped: 0, addedActors: [] };
+        }
+
+        const actors = await this.loadActors();
+        const existingNames = new Set(actors.map(a => a.name));
+        
+        const addedActors = [];
+        let added = 0;
+        let skipped = 0;
+
+        for (const actorName of actorNames) {
+            if (!actorName || typeof actorName !== 'string') {
+                skipped++;
+                continue;
+            }
+
+            const trimmedName = actorName.trim();
+            if (!trimmedName) {
+                skipped++;
+                continue;
+            }
+
+            if (existingNames.has(trimmedName)) {
+                skipped++;
+                continue;
+            }
+
+            const newActor = {
+                name: trimmedName,
+                nickname: '',
+                birthday: '',
+                memo: '',
+                rating: 0,
+                favorites: false
+            };
+
+            actors.push(newActor);
+            existingNames.add(trimmedName);
+            addedActors.push(newActor);
+            added++;
+        }
+
+        if (added > 0) {
+            await this.saveActors(actors);
+        }
+
+        return { added, skipped, addedActors };
+    }
 }
 
 module.exports = ActorService;
