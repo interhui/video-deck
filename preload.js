@@ -65,6 +65,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     openActorManagement: () => ipcRenderer.invoke('open-actor-management'),
     openCategoryManagement: () => ipcRenderer.invoke('open-category-management'),
     openPlayerWindow: (movieData) => ipcRenderer.invoke('open-player-window', movieData),
+    openBatchPlayerWindow: (playlistData) => ipcRenderer.invoke('open-batch-player-window', playlistData),
 
     // 文件选择对话框
     selectDirectory: () => ipcRenderer.invoke('select-directory'),
@@ -86,7 +87,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // 电影目录扫描
     scanMovieDirectory: (params) => ipcRenderer.invoke('scan-movie-directory', params),
     updateTempMovie: (params) => ipcRenderer.invoke('update-temp-movie', params),
-    importScannedMovies: (tempDir) => ipcRenderer.invoke('import-scanned-movies', tempDir),
+    importScannedMovies: (tempDir, excludeIds, importActors) => ipcRenderer.invoke('import-scanned-movies', tempDir, excludeIds, importActors),
     getTempScannedMovies: (tempDir) => ipcRenderer.invoke('get-temp-scanned-movies', tempDir),
     deleteTempScanDir: (tempDir) => ipcRenderer.invoke('delete-temp-scan-dir', tempDir),
     checkFileExists: (filePath) => ipcRenderer.invoke('check-file-exists', filePath),

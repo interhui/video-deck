@@ -33,6 +33,7 @@ const elements = {
     viewToggle: document.getElementById('view-toggle'),
     batchRemoveBtn: document.getElementById('batch-remove-btn'),
     exportBtn: document.getElementById('export-btn'),
+    playBtn: document.getElementById('play-btn'),
     moviesGrid: document.getElementById('movies-grid'),
     emptyState: document.getElementById('empty-state'),
     statsBar: {
@@ -348,6 +349,10 @@ function bindEvents() {
     // 导出按钮
     elements.exportBtn.addEventListener('click', () => {
         openExportModal();
+    });
+
+    elements.playBtn.addEventListener('click', async () => {
+        await playBoxMovies();
     });
 
     // 导出弹窗按钮
@@ -1279,6 +1284,64 @@ async function confirmExport() {
     } catch (error) {
         console.error('Error exporting box:', error);
         alert('导出失败: ' + error.message);
+    }
+}
+
+async function playBoxMovies() {
+    try {
+        const playlist = [];
+        const allMovies = getFilteredMovies(state.movies);
+
+        for (const movie of allMovies) {
+            const movieIdToUse = movie.movieId || movie.id;
+            const movieDetail = await window.electronAPI.getMovieDetail(movieIdToUse);
+            
+            let movieVideoAdded = false;
+
+            if (movieDetail && !movieDetail.error && movieDetail.fileset && Array.isArray(movieDetail.fileset)) {
+                for (const file of movieDetail.fileset) {
+                    const fileType = file.type || file.fileType;
+                    if (fileType === 'Main' && file.fullpath) {
+                        playlist.push({
+                            path: file.fullpath,
+                            title: `${movieDetail.name} - ${file.filename || path.basename(file.fullpath)}`,
+                            codec: file.codec || file.videoCodec || '',
+                            resolution: file.resolution || (file.videoWidth ? `${file.videoWidth}x${file.videoHeight}` : '')
+                        });
+                        movieVideoAdded = true;
+                    }
+                }
+            }
+
+            if (!movieVideoAdded && movieDetail && !movieDetail.error && movieDetail.original_filename) {
+                playlist.push({
+                    path: movieDetail.original_filename,
+                    title: movieDetail.name || path.basename(movieDetail.original_filename),
+                    codec: movieDetail.videoCodec || '',
+                    resolution: movieDetail.videoWidth ? `${movieDetail.videoWidth}x${movieDetail.videoHeight}` : ''
+                });
+                movieVideoAdded = true;
+            }
+
+            if (!movieVideoAdded && movie.original_filename) {
+                playlist.push({
+                    path: movie.original_filename,
+                    title: movie.name || movie.title || path.basename(movie.original_filename),
+                    codec: '',
+                    resolution: ''
+                });
+            }
+        }
+
+        if (playlist.length === 0) {
+            alert('盒子中没有可播放的视频文件');
+            return;
+        }
+
+        await window.electronAPI.openBatchPlayerWindow(playlist);
+    } catch (error) {
+        console.error('Error playing box movies:', error);
+        alert('播放失败: ' + error.message);
     }
 }
 

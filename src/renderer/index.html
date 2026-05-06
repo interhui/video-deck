@@ -49,6 +49,7 @@
             <div class="toolbar-right">
                 <button id="batch-add-btn" class="btn btn-secondary" style="display: none;">添加到盒子</button>
                 <button id="batch-delete-btn" class="btn btn-danger" style="display: none;">批量删除</button>
+                <button id="batch-play-btn" class="btn btn-primary" style="display: none;">播放</button>
                 <button id="scan-dir-btn" class="btn btn-secondary">导入</button>
                 <div class="search-box">
                     <input type="text" id="search-input" placeholder="搜索电影...">
@@ -605,6 +606,12 @@
             <div class="modal-body">
                 <div class="scan-result-toolbar">
                     <span id="scan-result-info"></span>
+                    <div class="scan-result-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="import-actors-checkbox" checked>
+                            <span>同时导入演员</span>
+                        </label>
+                    </div>
                     <div class="scan-result-actions">
                         <button id="scan-result-import" class="btn btn-primary" disabled>导入</button>
                         <button id="scan-result-cancel" class="btn btn-secondary">取消</button>

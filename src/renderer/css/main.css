@@ -1702,6 +1702,24 @@ body {
     font-size: 14px;
 }
 
+.scan-result-options {
+    display: flex;
+    align-items: center;
+}
+
+.scan-result-options .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.scan-result-options .checkbox-label input[type="checkbox"] {
+    cursor: pointer;
+}
+
 .scan-result-actions {
     display: flex;
     gap: 8px;

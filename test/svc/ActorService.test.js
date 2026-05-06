@@ -152,4 +152,88 @@ describe('ActorService', () => {
             expect(service.actorsCache).toEqual(actors);
         });
     });
+
+    describe('importActors', () => {
+        test('SVC-ACTOR-014: 批量导入新演员', async () => {
+            const actorNames = ['演员A', '演员B', '演员C'];
+            const result = await service.importActors(actorNames);
+
+            expect(result.added).toBe(3);
+            expect(result.skipped).toBe(0);
+            expect(result.addedActors).toHaveLength(3);
+            expect(result.addedActors.map(a => a.name)).toEqual(actorNames);
+
+            const actors = service.getActors();
+            expect(actors).toHaveLength(3);
+            expect(actors.map(a => a.name)).toEqual(actorNames);
+        });
+
+        test('SVC-ACTOR-015: 批量导入包含已存在演员', async () => {
+            await service.addActor({ name: '演员A' });
+            
+            const actorNames = ['演员A', '演员B', '演员C'];
+            const result = await service.importActors(actorNames);
+
+            expect(result.added).toBe(2);
+            expect(result.skipped).toBe(1);
+            expect(result.addedActors).toHaveLength(2);
+            expect(result.addedActors.map(a => a.name)).toEqual(['演员B', '演员C']);
+
+            const actors = service.getActors();
+            expect(actors).toHaveLength(3);
+        });
+
+        test('SVC-ACTOR-016: 批量导入空数组', async () => {
+            const result = await service.importActors([]);
+
+            expect(result.added).toBe(0);
+            expect(result.skipped).toBe(0);
+            expect(result.addedActors).toHaveLength(0);
+        });
+
+        test('SVC-ACTOR-017: 批量导入null或undefined', async () => {
+            const resultNull = await service.importActors(null);
+            expect(resultNull.added).toBe(0);
+            expect(resultNull.skipped).toBe(0);
+
+            const resultUndefined = await service.importActors(undefined);
+            expect(resultUndefined.added).toBe(0);
+            expect(resultUndefined.skipped).toBe(0);
+        });
+
+        test('SVC-ACTOR-018: 批量导入包含空字符串和空白字符串', async () => {
+            const actorNames = ['演员A', '', '   ', '演员B'];
+            const result = await service.importActors(actorNames);
+
+            expect(result.added).toBe(2);
+            expect(result.skipped).toBe(2);
+            expect(result.addedActors.map(a => a.name)).toEqual(['演员A', '演员B']);
+        });
+
+        test('SVC-ACTOR-019: 批量导入所有演员已存在', async () => {
+            await service.addActor({ name: '演员A' });
+            await service.addActor({ name: '演员B' });
+
+            const actorNames = ['演员A', '演员B'];
+            const result = await service.importActors(actorNames);
+
+            expect(result.added).toBe(0);
+            expect(result.skipped).toBe(2);
+            expect(result.addedActors).toHaveLength(0);
+        });
+
+        test('SVC-ACTOR-020: 批量导入后演员数据格式正确', async () => {
+            const actorNames = ['测试演员'];
+            const result = await service.importActors(actorNames);
+
+            expect(result.addedActors[0]).toEqual({
+                name: '测试演员',
+                nickname: '',
+                birthday: '',
+                memo: '',
+                rating: 0,
+                favorites: false
+            });
+        });
+    });
 });

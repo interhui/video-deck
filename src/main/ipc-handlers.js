@@ -1355,7 +1355,7 @@ function setupIpcHandlers(services) {
     });
 
     // 导入扫描的电影
-    ipcMain.handle('import-scanned-movies', async (event, tempDir, excludeIds = []) => {
+    ipcMain.handle('import-scanned-movies', async (event, tempDir, excludeIds = [], importActors = false) => {
         try {
             const settings = settingsService.getSettings();
             if (!settings.library || settings.library.moviesDir === undefined) {
@@ -1363,7 +1363,7 @@ function setupIpcHandlers(services) {
             }
             const moviesDir = getMoviesDirPath(settings.library.moviesDir);
 
-            const result = await movieService.importScannedMovies(tempDir, moviesDir, excludeIds);
+            const result = await movieService.importScannedMovies(tempDir, moviesDir, excludeIds, importActors);
 
             // 通知主窗口刷新
             const mainWindow = getMainWindow();
@@ -1610,6 +1610,17 @@ function setupIpcHandlers(services) {
             return result;
         } catch (error) {
             console.error('Error exporting box:', error);
+            return { error: error.message };
+        }
+    });
+
+    ipcMain.handle('open-batch-player-window', async (event, playlistData) => {
+        try {
+            const mainWindow = getMainWindow();
+            playerService.openBatchPlayerWindow(playlistData, mainWindow, createPlayerWindow);
+            return { success: true };
+        } catch (error) {
+            console.error('Error opening batch player window:', error);
             return { error: error.message };
         }
     });
