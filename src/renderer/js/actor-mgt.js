@@ -658,7 +658,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         selectedActorSearchResult = null;
 
         try {
-            const results = await window.electronAPI.tmdbSearchPerson(actorName);
+            const selectedAdapter = document.querySelector('input[name="actor-adapter"]:checked')?.value || 'tmdb';
+            let results;
+            
+            if (selectedAdapter === 'r18') {
+                results = await window.electronAPI.r18SearchPerson(actorName);
+            } else {
+                results = await window.electronAPI.tmdbSearchPerson(actorName);
+            }
 
             actorSearchLoading.style.display = 'none';
 
@@ -747,8 +754,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         confirmActorSearchBtn.textContent = '加载中...';
 
         try {
-            // 获取演员详细信息
-            const personDetail = await window.electronAPI.tmdbGetPerson(selectedActorSearchResult.actor_id);
+            const selectedAdapter = document.querySelector('input[name="actor-adapter"]:checked')?.value || 'tmdb';
+            let personDetail;
+            
+            if (selectedAdapter === 'r18') {
+                personDetail = await window.electronAPI.r18GetPerson(selectedActorSearchResult.actor_id);
+            } else {
+                personDetail = await window.electronAPI.tmdbGetPerson(selectedActorSearchResult.actor_id);
+            }
 
             if (personDetail && personDetail.error) {
                 throw new Error(personDetail.error);

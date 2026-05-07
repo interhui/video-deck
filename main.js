@@ -22,6 +22,7 @@ const CategoryService = require('./src/main/services/CategoryService');
 const IndexService = require('./src/main/services/IndexService');
 const ActorService = require('./src/main/services/ActorService');
 const TMDBMovieAdapterService = require('./src/main/services/TMDBAdapterService');
+const R18AdapterService = require('./src/main/services/R18AdapterService');
 const PlayerService = require('./src/main/services/PlayerService');
 const { setupIpcHandlers } = require('./src/main/ipc-handlers');
 
@@ -42,6 +43,7 @@ let categoryService = null;
 let indexService = null;
 let actorService = null;
 let tmdbMovieAdapterService = null;
+let r18AdapterService = null;
 let playerService = null;
 
 /**
@@ -61,6 +63,7 @@ function initializeServices() {
     categoryService = new CategoryService(path.join(__dirname, 'config', 'categories.json'));
     actorService = new ActorService(path.join(__dirname, 'config', 'actor.json'));
     tmdbMovieAdapterService = new TMDBMovieAdapterService(settingsService);
+    r18AdapterService = new R18AdapterService(settingsService, tmdbMovieAdapterService);
     playerService = new PlayerService();
 
     // 将 categoryService 传递给 movieService（如果支持）
@@ -508,6 +511,7 @@ app.whenReady().then(async () => {
         categoryService,
         actorService,
         tmdbMovieAdapterService,
+        r18AdapterService,
         playerService,
         getMainWindow: () => mainWindow,
         createMovieDetailWindow,

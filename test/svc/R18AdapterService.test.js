@@ -160,7 +160,6 @@ describe('R18AdapterService', () => {
             expect(result.actors[0]).toEqual({
                 person_id: 'ACT001',
                 name: '演员A',
-                character: '角色A',
                 profile_url: null
             });
             expect(result.directors).toHaveLength(1);

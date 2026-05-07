@@ -203,6 +203,7 @@ function setupIpcHandlers(services) {
         categoryService,
         actorService,
         tmdbMovieAdapterService,
+        r18AdapterService,
         playerService,
         getMainWindow,
         createMovieDetailWindow,
@@ -923,6 +924,48 @@ function setupIpcHandlers(services) {
             return person;
         } catch (error) {
             console.error('Error getting TMDB person:', error);
+            return { error: error.message };
+        }
+    });
+
+    // ==================== R18电影搜索 ====================
+
+    ipcMain.handle('r18-search-movie', async (event, keyword) => {
+        try {
+            const results = await r18AdapterService.searchMovie(keyword);
+            return results;
+        } catch (error) {
+            console.error('Error searching R18 movie:', error);
+            return { error: error.message };
+        }
+    });
+
+    ipcMain.handle('r18-get-movie', async (event, searchId) => {
+        try {
+            const movie = await r18AdapterService.getMovie(searchId);
+            return movie;
+        } catch (error) {
+            console.error('Error getting R18 movie:', error);
+            return { error: error.message };
+        }
+    });
+
+    ipcMain.handle('r18-search-person', async (event, actorName) => {
+        try {
+            const results = await r18AdapterService.searchPerson(actorName);
+            return results;
+        } catch (error) {
+            console.error('Error searching R18 person:', error);
+            return { error: error.message };
+        }
+    });
+
+    ipcMain.handle('r18-get-person', async (event, actorId) => {
+        try {
+            const person = await r18AdapterService.getPerson(actorId);
+            return person;
+        } catch (error) {
+            console.error('Error getting R18 person:', error);
             return { error: error.message };
         }
     });

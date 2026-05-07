@@ -166,6 +166,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     tmdbSearchPerson: (actorName) => ipcRenderer.invoke('tmdb-search-person', actorName),
     tmdbGetPerson: (personId) => ipcRenderer.invoke('tmdb-get-person', personId),
 
+    // R18电影搜索
+    r18SearchMovie: (keyword) => ipcRenderer.invoke('r18-search-movie', keyword),
+    r18GetMovie: (searchId) => ipcRenderer.invoke('r18-get-movie', searchId),
+
+    // R18演员搜索
+    r18SearchPerson: (actorName) => ipcRenderer.invoke('r18-search-person', actorName),
+    r18GetPerson: (actorId) => ipcRenderer.invoke('r18-get-person', actorId),
+
 // 事件监听
     onOpenAddMovie: (callback) => {
         ipcRenderer.on('open-add-movie', callback);
