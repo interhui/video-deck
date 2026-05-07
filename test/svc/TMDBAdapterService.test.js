@@ -206,11 +206,11 @@ describe('TMDBMovieAdapterService', () => {
             expect(result).toHaveProperty('overview', '电影介绍');
             expect(result).toHaveProperty('runtime', 154);
             expect(result).toHaveProperty('year', '2019');
-            expect(result.genres).toEqual(['剧情', '历史']);
+            expect(result.tags).toEqual(['剧情', '历史']);
             expect(result.production_companies).toEqual(['公司A', '公司B']);
             expect(result.poster_url).toBe('https://image.tmdb.org/t/p/original/test.jpg');
-            expect(result.cast).toHaveLength(1);
-            expect(result.cast[0]).toEqual({
+            expect(result.actors).toHaveLength(1);
+            expect(result.actors[0]).toEqual({
                 person_id: 76913,
                 name: '葛优',
                 character: '角色A',
@@ -245,7 +245,7 @@ describe('TMDBMovieAdapterService', () => {
             
             expect(result).toHaveProperty('name', '徐峥');
             expect(result).toHaveProperty('birthday', '1972-04-18');
-            expect(result).toHaveProperty('biography', '演员介绍');
+            expect(result).toHaveProperty('memo', '演员介绍');
             expect(result).toHaveProperty('profile_url', 'https://image.tmdb.org/t/p/original/yclQtqxPnlp7H4seiKltNfJjlrc.jpg');
 
             service.makeRequest = originalMakeRequest;
@@ -287,9 +287,9 @@ describe('TMDBMovieAdapterService', () => {
             expect(result).toHaveProperty('overview', '');
             expect(result).toHaveProperty('runtime', 0);
             expect(result).toHaveProperty('year', '');
-            expect(result.genres).toEqual([]);
+            expect(result.tags).toEqual([]);
             expect(result.production_companies).toEqual([]);
-            expect(result.cast).toEqual([]);
+            expect(result.actors).toEqual([]);
             expect(result.directors).toEqual([]);
 
             service.makeRequest = originalMakeRequest;
@@ -310,7 +310,7 @@ describe('TMDBMovieAdapterService', () => {
             
             expect(result).toHaveProperty('name', '');
             expect(result).toHaveProperty('birthday', '');
-            expect(result).toHaveProperty('biography', '');
+            expect(result).toHaveProperty('memo', '');
             expect(result).toHaveProperty('profile_url', null);
 
             service.makeRequest = originalMakeRequest;

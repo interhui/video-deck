@@ -241,6 +241,15 @@ getActorPhotoDir() {
         this.saveSettings(this.settings);
     }
 
+    getR18Config() {
+        return this.settings.r18 || { dbUrl: '', dbUsername: '', dbPassword: '' };
+    }
+
+    setR18Config(config) {
+        this.settings.r18 = { ...this.settings.r18, ...config };
+        this.saveSettings(this.settings);
+    }
+
     mergeDeep(target, source) {
         const output = { ...target };
 

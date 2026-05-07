@@ -75,6 +75,10 @@ const elements = {
     tmdbUrlInput: document.getElementById('tmdb-url-input'),
     tmdbLanguageSelect: document.getElementById('tmdb-language-select'),
     tmdbTokenInput: document.getElementById('tmdb-token-input'),
+    // R18 设置
+    r18DbUrlInput: document.getElementById('r18-db-url-input'),
+    r18DbUsernameInput: document.getElementById('r18-db-username-input'),
+    r18DbPasswordInput: document.getElementById('r18-db-password-input'),
     // 设置 Tab
     settingsTabs: document.querySelector('.settings-tabs'),
     onlyNewMoviesCheckbox: document.getElementById('only-new-movies'),
@@ -567,6 +571,11 @@ async function loadSettings() {
         if (elements.tmdbUrlInput) elements.tmdbUrlInput.value = state.settings.tmdb?.url || 'api.themoviedb.org';
         if (elements.tmdbLanguageSelect) elements.tmdbLanguageSelect.value = state.settings.tmdb?.language || 'zh-CN';
         if (elements.tmdbTokenInput) elements.tmdbTokenInput.value = state.settings.tmdb?.token || '';
+
+        // 加载 R18 设置
+        if (elements.r18DbUrlInput) elements.r18DbUrlInput.value = state.settings.r18?.dbUrl || '';
+        if (elements.r18DbUsernameInput) elements.r18DbUsernameInput.value = state.settings.r18?.dbUsername || '';
+        if (elements.r18DbPasswordInput) elements.r18DbPasswordInput.value = state.settings.r18?.dbPassword || '';
 
         state.viewMode = state.settings.layout.viewMode;
         state.newMovieHours = state.settings.library?.newMovieHours || 72;
@@ -2995,6 +3004,11 @@ async function saveSettingsHandler() {
                 url: elements.tmdbUrlInput?.value || 'api.themoviedb.org',
                 language: elements.tmdbLanguageSelect?.value || 'zh-CN',
                 token: elements.tmdbTokenInput?.value || ''
+            },
+            r18: {
+                dbUrl: elements.r18DbUrlInput?.value || '',
+                dbUsername: elements.r18DbUsernameInput?.value || '',
+                dbPassword: elements.r18DbPasswordInput?.value || ''
             }
         };
 
