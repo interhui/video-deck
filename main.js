@@ -49,7 +49,7 @@ let playerService = null;
 /**
  * 初始化服务
  */
-function initializeServices() {
+async function initializeServices() {
     const userDataPath = app.getPath('userData');
 
     fileService = new FileService();
@@ -63,6 +63,10 @@ function initializeServices() {
     categoryService = new CategoryService(path.join(__dirname, 'config', 'categories.json'));
     actorService = new ActorService(path.join(__dirname, 'config', 'actor.json'));
     tmdbMovieAdapterService = new TMDBMovieAdapterService(settingsService);
+
+    // 等待设置加载完成后再初始化 R18AdapterService
+    await settingsService.getSettingsPromise();
+    console.log('[main.js] Settings loaded, r18 config:', settingsService.getSettings().r18);
     r18AdapterService = new R18AdapterService(settingsService, tmdbMovieAdapterService);
     playerService = new PlayerService();
 
@@ -493,7 +497,7 @@ app.whenReady().then(async () => {
     log.info('App starting...');
 
     // 初始化服务
-    initializeServices();
+    await initializeServices();
 
     // 检查并重建缺失的 index.json 文件
     await checkAndRebuildIndexes();

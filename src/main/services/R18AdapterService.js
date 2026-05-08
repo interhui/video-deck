@@ -14,6 +14,7 @@ class R18AdapterService {
 
     getR18Config() {
         const settings = this.settingsService.getSettings();
+        console.log('[R18AdapterService] getR18Config settings.r18:', settings.r18);
         return {
             dbUrl: settings.r18?.dbUrl || '',
             dbUsername: settings.r18?.dbUsername || '',
@@ -23,7 +24,15 @@ class R18AdapterService {
 
     async initPool() {
         const config = this.getR18Config();
-        
+
+        console.log('[R18AdapterService] initPool config:', {
+            dbUrl: config.dbUrl,
+            dbUsername: config.dbUsername,
+            dbPassword: config.dbPassword ? '***' : '(empty)',
+            dbPasswordType: typeof config.dbPassword,
+            dbPasswordLength: config.dbPassword ? config.dbPassword.length : 0
+        });
+
         if (!config.dbUrl) {
             throw new Error('R18 database URL not configured');
         }
@@ -32,14 +41,44 @@ class R18AdapterService {
             return this.pool;
         }
 
-        this.pool = new Pool({
-            connectionString: config.dbUrl,
-            user: config.dbUsername,
-            password: config.dbPassword,
+        // 解析 connectionString 提取 host/port/database
+        const urlMatch = config.dbUrl.match(/postgresql:\/\/([^:]+):(\d+)\/(\w+)/);
+        const poolConfig = {
             max: 10,
             idleTimeoutMillis: 30000,
             connectionTimeoutMillis: 5000
+        };
+
+        if (urlMatch) {
+            poolConfig.host = urlMatch[1].split('@').pop(); // 移除可能的 user@ 部分
+            poolConfig.port = parseInt(urlMatch[2], 10);
+            poolConfig.database = urlMatch[3];
+            poolConfig.user = config.dbUsername;
+            poolConfig.password = config.dbPassword;
+            // 处理 user@host 格式
+            const userHostMatch = config.dbUrl.match(/postgresql:\/\/([^@]+)@([^:]+):(\d+)\/(\w+)/);
+            if (userHostMatch) {
+                poolConfig.user = userHostMatch[1];
+                poolConfig.host = userHostMatch[2];
+                poolConfig.port = parseInt(userHostMatch[3], 10);
+                poolConfig.database = userHostMatch[4];
+            }
+        } else {
+            // 后备方案：直接使用 connectionString
+            poolConfig.connectionString = config.dbUrl;
+            poolConfig.user = config.dbUsername;
+            poolConfig.password = config.dbPassword;
+        }
+
+        console.log('[R18AdapterService] Pool config:', {
+            host: poolConfig.host,
+            port: poolConfig.port,
+            database: poolConfig.database,
+            user: poolConfig.user,
+            passwordSet: !!poolConfig.password
         });
+
+        this.pool = new Pool(poolConfig);
 
         return this.pool;
     }
@@ -57,13 +96,19 @@ class R18AdapterService {
             const result = await pool.query(sql);
             return result.rows;
         } catch (error) {
-            console.error('Database query error:', error);
+            console.error('[R18AdapterService] Database query error:', error);
+            console.error('[R18AdapterService] Error details:', error.message);
             throw error;
         }
     }
 
     async makeHttpRequest(url) {
         return makeHttpRequest(url);
+    }
+
+    buildImageUrl(path) {
+        if (!path) return null;
+        return `https://pics.dmm.co.jp/${path}.jpg`;
     }
 
     async searchMovie(keyword) {
@@ -83,7 +128,7 @@ class R18AdapterService {
                 dv.dvd_id as search_id,
                 dv.title_ja as title,
                 dv.release_date as year,
-                dv.jacket_full_url as poster_url
+                '' as poster_url
             from
                 derived_video as dv
             where
@@ -120,11 +165,7 @@ class R18AdapterService {
                 dv.runtime_mins as runtime,
                 dv.release_date as year,
                 dv.jacket_full_url as poster_url,
-                dm.name_ja AS maker_ja as production_companies,
-                dl.name_en AS lable_en,
-                dl.name_ja AS lable_ja,
-                ds.name_en AS series_en,
-                ds.name_ja AS series_ja,
+                dm.name_en as production_companies,
                 (
                     SELECT STRING_AGG(dc.name_ja, ',' ORDER BY dc.name_ja)
                     FROM derived_video_category dvc
@@ -188,7 +229,7 @@ class R18AdapterService {
             tags: tags || '',
             production_companies: movie.productionCompanies || '',
             runtime: movie.runtime || 0,
-            poster_url: movie.poster_url || null,
+            poster_url: this.buildImageUrl(movie.poster_url || null),
             actors: actors,
             directors: directors,
             year: movie.year || ''
@@ -290,7 +331,7 @@ class R18AdapterService {
                         name: tmdbPerson.name || name,
                         birthday: tmdbPerson.birthday || birthday,
                         memo: tmdbPerson.memo || height,
-                        profile_url: tmdbPerson.profile_url || profileUrl
+                        profile_url: this.buildImageUrl(tmdbPerson.profile_url || profileUrl)
                     };
                 } catch (error) {
                     console.error('Error fetching TMDB person:', error);
@@ -298,7 +339,7 @@ class R18AdapterService {
                         name: name,
                         birthday: birthday,
                         memo: height,
-                        profile_url: profileUrl
+                        profile_url: this.buildImageUrl(profileUrl)
                     };
                 }
             }
@@ -307,7 +348,7 @@ class R18AdapterService {
                 name: name,
                 birthday: birthday,
                 memo: height,
-                profile_url: profileUrl
+                profile_url: this.buildImageUrl(profileUrl)
             };
         } catch (error) {
             console.error('Error fetching Wikidata:', error);
