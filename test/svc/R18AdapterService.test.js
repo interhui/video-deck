@@ -130,15 +130,11 @@ describe('R18AdapterService', () => {
                     movie_id: 'TEST001',
                     title: '测试电影',
                     overview: '电影介绍',
-                    tags: ['动作', '剧情'],
-                    production_companies: ['公司A'],
+                    tags: '动作,剧情',
+                    production_companies: '公司A',
                     runtime: 120,
-                    actors: JSON.stringify([
-                        { actor_id: 'ACT001', actor_name: '演员A', character: '角色A' }
-                    ]),
-                    directors: JSON.stringify([
-                        { director_id: 'DIR001', director_name: '导演A' }
-                    ]),
+                    actors: '演员A,演员B',
+                    directors: '导演A',
                     year: '2023',
                     poster_url: 'http://example.com/poster.jpg'
                 }
@@ -154,17 +150,22 @@ describe('R18AdapterService', () => {
             expect(result).toHaveProperty('runtime', 120);
             expect(result).toHaveProperty('year', '2023');
             expect(result.tags).toEqual(['动作', '剧情']);
-            expect(result.production_companies).toEqual(['公司A']);
+            expect(result.production_companies).toEqual('');
             expect(result.poster_url).toBe('http://example.com/poster.jpg');
-            expect(result.actors).toHaveLength(1);
+            expect(result.actors).toHaveLength(2);
             expect(result.actors[0]).toEqual({
-                person_id: 'ACT001',
+                person_id: '',
                 name: '演员A',
+                profile_url: null
+            });
+            expect(result.actors[1]).toEqual({
+                person_id: '',
+                name: '演员B',
                 profile_url: null
             });
             expect(result.directors).toHaveLength(1);
             expect(result.directors[0]).toEqual({
-                person_id: 'DIR001',
+                person_id: '',
                 name: '导演A',
                 profile_url: null
             });
@@ -201,7 +202,7 @@ describe('R18AdapterService', () => {
             expect(result).toHaveProperty('runtime', 0);
             expect(result).toHaveProperty('year', '');
             expect(result.tags).toEqual([]);
-            expect(result.production_companies).toEqual([]);
+            expect(result.production_companies).toEqual('');
             expect(result.actors).toEqual([]);
             expect(result.directors).toEqual([]);
             expect(result.poster_url).toBeNull();
@@ -226,7 +227,7 @@ describe('R18AdapterService', () => {
             expect(result.tags).toEqual(['动作', '剧情', '爱情']);
         });
 
-        test('SVC-R18-014: getMovie处理production_companies字符串格式', async () => {
+        test('SVC-R18-014: getMovie处理actors和directors字符串格式', async () => {
             await new Promise(resolve => setTimeout(resolve, 100));
             settingsService.setR18Config({ dbUrl: 'postgresql://localhost:5432/test' });
             
@@ -234,7 +235,8 @@ describe('R18AdapterService', () => {
                 {
                     movie_id: 'TEST001',
                     title: '测试电影',
-                    production_companies: '公司A,公司B'
+                    actors: '演员A,演员B,演员C',
+                    directors: '导演A,导演B'
                 }
             ];
 
@@ -242,7 +244,13 @@ describe('R18AdapterService', () => {
 
             const result = await service.getMovie('TEST001');
             
-            expect(result.production_companies).toEqual(['公司A', '公司B']);
+            expect(result.actors).toHaveLength(3);
+            expect(result.actors[0].name).toBe('演员A');
+            expect(result.actors[1].name).toBe('演员B');
+            expect(result.actors[2].name).toBe('演员C');
+            expect(result.directors).toHaveLength(2);
+            expect(result.directors[0].name).toBe('导演A');
+            expect(result.directors[1].name).toBe('导演B');
         });
     });
 

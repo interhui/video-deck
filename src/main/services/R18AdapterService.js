@@ -79,16 +79,15 @@ class R18AdapterService {
 
         const escapedKeyword = keyword.trim().replace(/'/g, "''");
         const sql = `
-            select 
-                movie_id as search_id, 
-                movie_name as title, 
-                description as overview, 
-                year, 
-                poster_url 
-            from 
-                movie_lib 
-            where 
-                movie_name like '%${escapedKeyword}%' or movie_id like '%${escapedKeyword}%'
+            select
+                dv.dvd_id as search_id,
+                dv.title_ja as title,
+                dv.release_date as year,
+                dv.jacket_full_url as poster_url
+            from
+                derived_video as dv
+            where
+                dv.title_ja like '%${escapedKeyword}%' or dv.dvd_id like '%${escapedKeyword}%'
         `;
 
         const rows = await this.query(sql);
@@ -115,21 +114,40 @@ class R18AdapterService {
 
         const escapedId = searchId.toString().replace(/'/g, "''");
         const sql = `
-            select 
-                movie_id, 
-                movie_name as title, 
-                description as overview, 
-                tags,
-                studio as production_companies,
-                runtime as runtime,
-                actors,
-                directors,
-                year, 
-                poster_url 
-            from 
-                movie_lib 
-            where
-                movie_id='${escapedId}'
+            SELECT
+                dv.dvd_id as movie_id,
+                dv.title_ja as title,
+                dv.runtime_mins as runtime,
+                dv.release_date as year,
+                dv.jacket_full_url as poster_url,
+                dm.name_ja AS maker_ja as production_companies,
+                dl.name_en AS lable_en,
+                dl.name_ja AS lable_ja,
+                ds.name_en AS series_en,
+                ds.name_ja AS series_ja,
+                (
+                    SELECT STRING_AGG(dc.name_ja, ',' ORDER BY dc.name_ja)
+                    FROM derived_video_category dvc
+                    JOIN derived_category dc ON dvc.category_id = dc.id
+                    WHERE dvc.content_id = dv.content_id
+                ) AS tags,
+                (
+                    SELECT STRING_AGG(DISTINCT da.name_kanji, ',' ORDER BY da.name_kanji)
+                    FROM derived_video_actress dva
+                    JOIN derived_actress da ON dva.actress_id = da.id
+                    WHERE dva.content_id = dv.content_id
+                ) AS actors,
+                (
+                    SELECT STRING_AGG(dd.name_kanji, ',' ORDER BY dd.name_kanji)
+                    FROM derived_video_director dvd
+                    JOIN derived_director dd ON dvd.director_id = dd.id
+                    WHERE dvd.content_id = dv.content_id
+                ) AS directors
+            FROM derived_video dv
+            LEFT JOIN derived_maker dm ON dv.maker_id = dm.id
+            LEFT JOIN derived_label dl ON dv.label_id = dl.id
+            LEFT JOIN derived_series ds ON dv.series_id = ds.id
+            WHERE dv.dvd_id = '${escapedId}'
         `;
 
         const rows = await this.query(sql);
@@ -141,68 +159,26 @@ class R18AdapterService {
         const movie = rows[0];
 
         let actors = [];
-        if (movie.actors) {
-            try {
-                const actorData = typeof movie.actors === 'string' ? JSON.parse(movie.actors) : movie.actors;
-                if (Array.isArray(actorData)) {
-                    actors = actorData.map(actor => ({
-                        person_id: actor.actor_id || actor.id || '',
-                        name: actor.actor_name || actor.name || '',
-                        profile_url: actor.actor_profile_url || actor.profile_url || null
-                    }));
-                }
-            } catch (e) {
-                console.error('Error parsing actors data:', e);
-            }
+        if (movie.actors && typeof movie.actors === 'string') {
+            actors = movie.actors.split(',').map(name => name.trim()).filter(name => name).map(name => ({
+                person_id: '',
+                name: name,
+                profile_url: null
+            }));
         }
 
         let directors = [];
-        if (movie.directors) {
-            try {
-                const directorData = typeof movie.directors === 'string' ? JSON.parse(movie.directors) : movie.directors;
-                if (Array.isArray(directorData)) {
-                    directors = directorData.map(director => ({
-                        person_id: director.director_id || director.id || '',
-                        name: director.director_name || director.name || '',
-                        profile_url: director.director_profile_url || director.profile_url || null
-                    }));
-                }
-            } catch (e) {
-                console.error('Error parsing directors data:', e);
-            }
+        if (movie.directors && typeof movie.directors === 'string') {
+            directors = movie.directors.split(',').map(name => name.trim()).filter(name => name).map(name => ({
+                person_id: '',
+                name: name,
+                profile_url: null
+            }));
         }
 
         let tags = [];
-        if (movie.tags) {
-            try {
-                const tagData = typeof movie.tags === 'string' ? JSON.parse(movie.tags) : movie.tags;
-                if (Array.isArray(tagData)) {
-                    tags = tagData;
-                } else if (typeof tagData === 'string') {
-                    tags = tagData.split(',').map(t => t.trim()).filter(t => t);
-                }
-            } catch (e) {
-                if (typeof movie.tags === 'string') {
-                    tags = movie.tags.split(',').map(t => t.trim()).filter(t => t);
-                }
-            }
-        }
-
-        let productionCompanies = [];
-        if (movie.production_companies) {
-            try {
-                const companyData = typeof movie.production_companies === 'string' 
-                    ? JSON.parse(movie.production_companies) : movie.production_companies;
-                if (Array.isArray(companyData)) {
-                    productionCompanies = companyData;
-                } else if (typeof companyData === 'string') {
-                    productionCompanies = companyData.split(',').map(c => c.trim()).filter(c => c);
-                }
-            } catch (e) {
-                if (typeof movie.production_companies === 'string') {
-                    productionCompanies = movie.production_companies.split(',').map(c => c.trim()).filter(c => c);
-                }
-            }
+        if (movie.tags && typeof movie.tags === 'string') {
+            tags = movie.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
         }
 
         return {
@@ -210,7 +186,7 @@ class R18AdapterService {
             title: movie.title || '',
             overview: movie.overview || '',
             tags: tags || '',
-            production_companies: productionCompanies || '',
+            production_companies: movie.productionCompanies || '',
             runtime: movie.runtime || 0,
             poster_url: movie.poster_url || null,
             actors: actors,
@@ -231,15 +207,15 @@ class R18AdapterService {
         }
 
         const escapedName = actorName.trim().replace(/'/g, "''");
+
         const sql = `
-            select
-                actor_id,
-                actor_name,
-                actor_profile_url
-            from
-                devli_actress
-            where
-                actor_name like '%${escapedName}%'
+        select
+            da.id as actor_id,
+            da.name_kanji as actor_name
+        from
+            derived_actress da
+        where
+            da.name_kanji like '%${escapedName}%'
         `;
 
         const rows = await this.query(sql);
