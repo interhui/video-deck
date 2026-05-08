@@ -16,9 +16,9 @@ const https = require('https');
 function makeHttpRequest(url, options = {}) {
     return new Promise((resolve, reject) => {
         const timeout = options.timeout || 10000;
-        
+
         let requestOptions;
-        
+
         if (url.startsWith('http://') || url.startsWith('https://')) {
             const urlObj = new URL(url);
             requestOptions = {
@@ -81,6 +81,40 @@ function makeHttpRequest(url, options = {}) {
     });
 }
 
+/**
+ * 检查URL是否可访问（返回200状态码）
+ * @param {string} url - 要检查的URL
+ * @param {number} timeout - 超时时间（毫秒，默认5000）
+ * @returns {Promise<boolean>} URL可访问返回true，否则返回false
+ */
+function checkUrlAccessible(url, timeout = 5000) {
+    return new Promise((resolve) => {
+        try {
+            const urlObj = new URL(url);
+            const req = https.request({
+                hostname: urlObj.hostname,
+                port: urlObj.port || 443,
+                path: urlObj.pathname + urlObj.search,
+                method: 'GET',
+                timeout
+            }, (res) => {
+                resolve(res.statusCode === 200);
+            });
+
+            req.on('error', () => resolve(false));
+            req.on('timeout', () => {
+                req.destroy();
+                resolve(false);
+            });
+
+            req.end();
+        } catch (error) {
+            resolve(false);
+        }
+    });
+}
+
 module.exports = {
-    makeHttpRequest
+    makeHttpRequest,
+    checkUrlAccessible
 };

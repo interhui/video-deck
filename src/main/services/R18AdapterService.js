@@ -3,7 +3,7 @@
  * 用于通过电影名称获取电影详细信息，从PostgreSQL数据库查询
  */
 const { Pool } = require('pg');
-const { makeHttpRequest } = require('../utils/http-utils');
+const { makeHttpRequest, checkUrlAccessible } = require('../utils/http-utils');
 
 class R18AdapterService {
     constructor(settingsService, tmdbAdapterService) {
@@ -108,7 +108,26 @@ class R18AdapterService {
 
     buildImageUrl(path) {
         if (!path) return null;
-        return `https://pics.dmm.co.jp/${path}.jpg`;
+        // 如果path以ps结尾，替换为pl
+        let finalPath = path;
+        if (path.endsWith('ps')) {
+            finalPath = path.slice(0, -2) + 'pl';
+        }
+        return `https://pics.dmm.co.jp/${finalPath}.jpg`;
+    }
+
+    /**
+     * 检查图片URL是否可访问
+     * @param {string} url - 图片URL
+     * @returns {Promise<boolean>} URL可访问返回true
+     */
+    async checkImageAccessible(url) {
+        try {
+            return await checkUrlAccessible(url);
+        } catch (error) {
+            console.error(`[R18AdapterService] Error checking image URL: ${url}`, error.message);
+            return false;
+        }
     }
 
     async searchMovie(keyword) {
@@ -222,6 +241,16 @@ class R18AdapterService {
             tags = movie.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
         }
 
+        // 构建海报URL并检查是否可访问
+        const posterUrl = this.buildImageUrl(movie.poster_url || null);
+        let posterAccessible = false;
+        if (posterUrl) {
+            posterAccessible = await this.checkImageAccessible(posterUrl);
+            if (!posterAccessible) {
+                console.log(`[R18AdapterService] Poster URL not accessible: ${posterUrl}`);
+            }
+        }
+
         return {
             movie_id: movie.movie_id || '',
             title: movie.title || '',
@@ -229,7 +258,7 @@ class R18AdapterService {
             tags: tags || '',
             production_companies: movie.productionCompanies || '',
             runtime: movie.runtime || 0,
-            poster_url: this.buildImageUrl(movie.poster_url || null),
+            poster_url: posterAccessible ? posterUrl : null,
             actors: actors,
             directors: directors,
             year: movie.year || ''
@@ -281,19 +310,19 @@ class R18AdapterService {
 
         const escapedId = actorId.toString().replace(/'/g, "''");
         const query = `SELECT DISTINCT ?item ?itemLabel ?image ?imdbId ?birthday ?height WHERE {
-  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
-  {
-    SELECT DISTINCT ?item WHERE {
-      ?item p:P9781 ?statement0.
-      ?statement0 ps:P9781 "${escapedId}".
-    }
-    LIMIT 3
-  }
-  OPTIONAL { ?item wdt:P18 ?image. }
-  OPTIONAL { ?item wdt:P4985 ?imdbId. }
-  OPTIONAL { ?item wdt:P569 ?birthday. }
-  OPTIONAL { ?item wdt:P2048 ?height. }
-}`;
+                SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+                {
+                    SELECT DISTINCT ?item WHERE {
+                    ?item p:P9781 ?statement0.
+                    ?statement0 ps:P9781 "${escapedId}".
+                    }
+                    LIMIT 3
+                }
+                OPTIONAL { ?item wdt:P18 ?image. }
+                OPTIONAL { ?item wdt:P4985 ?imdbId. }
+                OPTIONAL { ?item wdt:P569 ?birthday. }
+                OPTIONAL { ?item wdt:P2048 ?height. }
+            }`;
 
         const encodedQuery = encodeURIComponent(query);
         const url = `https://query.wikidata.org/sparql?query=${encodedQuery}&format=json`;
@@ -331,16 +360,10 @@ class R18AdapterService {
                         name: tmdbPerson.name || name,
                         birthday: tmdbPerson.birthday || birthday,
                         memo: tmdbPerson.memo || height,
-                        profile_url: this.buildImageUrl(tmdbPerson.profile_url || profileUrl)
+                        profile_url: tmdbPerson.profile_url || profileUrl
                     };
                 } catch (error) {
                     console.error('Error fetching TMDB person:', error);
-                    return {
-                        name: name,
-                        birthday: birthday,
-                        memo: height,
-                        profile_url: this.buildImageUrl(profileUrl)
-                    };
                 }
             }
 
@@ -348,7 +371,7 @@ class R18AdapterService {
                 name: name,
                 birthday: birthday,
                 memo: height,
-                profile_url: this.buildImageUrl(profileUrl)
+                profile_url: profileUrl
             };
         } catch (error) {
             console.error('Error fetching Wikidata:', error);
