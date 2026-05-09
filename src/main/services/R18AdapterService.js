@@ -14,7 +14,6 @@ class R18AdapterService {
 
     getR18Config() {
         const settings = this.settingsService.getSettings();
-        console.log('[R18AdapterService] getR18Config settings.r18:', settings.r18);
         return {
             dbUrl: settings.r18?.dbUrl || '',
             dbUsername: settings.r18?.dbUsername || '',
@@ -24,14 +23,6 @@ class R18AdapterService {
 
     async initPool() {
         const config = this.getR18Config();
-
-        console.log('[R18AdapterService] initPool config:', {
-            dbUrl: config.dbUrl,
-            dbUsername: config.dbUsername,
-            dbPassword: config.dbPassword ? '***' : '(empty)',
-            dbPasswordType: typeof config.dbPassword,
-            dbPasswordLength: config.dbPassword ? config.dbPassword.length : 0
-        });
 
         if (!config.dbUrl) {
             throw new Error('R18 database URL not configured');

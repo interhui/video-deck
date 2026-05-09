@@ -745,6 +745,7 @@ function setupIpcHandlers(services) {
 
             // 更新数据
             existingData.name = movieData.name;
+            existingData.title = movieData.name;
             existingData.publishDate = movieData.publishDate;
             existingData.status = movieData.status;
             existingData.userRating = movieData.userRating;
