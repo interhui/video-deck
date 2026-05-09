@@ -22,6 +22,7 @@ const CategoryService = require('./src/main/services/CategoryService');
 const IndexService = require('./src/main/services/IndexService');
 const ActorService = require('./src/main/services/ActorService');
 const TMDBMovieAdapterService = require('./src/main/services/TMDBAdapterService');
+const R18AdapterService = require('./src/main/services/R18AdapterService');
 const PlayerService = require('./src/main/services/PlayerService');
 const { setupIpcHandlers } = require('./src/main/ipc-handlers');
 
@@ -42,12 +43,13 @@ let categoryService = null;
 let indexService = null;
 let actorService = null;
 let tmdbMovieAdapterService = null;
+let r18AdapterService = null;
 let playerService = null;
 
 /**
  * 初始化服务
  */
-function initializeServices() {
+async function initializeServices() {
     const userDataPath = app.getPath('userData');
 
     fileService = new FileService();
@@ -61,6 +63,11 @@ function initializeServices() {
     categoryService = new CategoryService(path.join(__dirname, 'config', 'categories.json'));
     actorService = new ActorService(path.join(__dirname, 'config', 'actor.json'));
     tmdbMovieAdapterService = new TMDBMovieAdapterService(settingsService);
+
+    // 等待设置加载完成后再初始化 R18AdapterService
+    await settingsService.getSettingsPromise();
+    console.log('[main.js] Settings loaded, r18 config:', settingsService.getSettings().r18);
+    r18AdapterService = new R18AdapterService(settingsService, tmdbMovieAdapterService);
     playerService = new PlayerService();
 
     // 将 categoryService 传递给 movieService（如果支持）
@@ -490,7 +497,7 @@ app.whenReady().then(async () => {
     log.info('App starting...');
 
     // 初始化服务
-    initializeServices();
+    await initializeServices();
 
     // 检查并重建缺失的 index.json 文件
     await checkAndRebuildIndexes();
@@ -508,6 +515,7 @@ app.whenReady().then(async () => {
         categoryService,
         actorService,
         tmdbMovieAdapterService,
+        r18AdapterService,
         playerService,
         getMainWindow: () => mainWindow,
         createMovieDetailWindow,

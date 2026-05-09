@@ -43,6 +43,12 @@ class HardCodeService {
                 url: 'api.themoviedb.org',
                 token: '',
                 language: 'zh-CN'
+            },
+
+            r18: {
+                dbUrl: '',
+                dbUsername: '',
+                dbPassword: ''
             }
         };
     }

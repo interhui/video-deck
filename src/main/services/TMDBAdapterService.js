@@ -2,7 +2,7 @@
  * TMDB电影适配服务
  * 用于通过电影名称获取电影详细信息
  */
-const https = require('https');
+const { makeHttpRequest } = require('../utils/http-utils');
 
 class TMDBMovieAdapterService {
     constructor(settingsService) {
@@ -23,49 +23,8 @@ class TMDBMovieAdapterService {
         return `https://image.tmdb.org/t/p/${size}${path}`;
     }
 
-    makeRequest(url, token) {
-        return new Promise((resolve, reject) => {
-            const options = {
-                hostname: url.split('/')[0],
-                path: '/' + url.split('/').slice(1).join('/'),
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json'
-                }
-            };
-
-            const req = https.request(options, (res) => {
-                let data = '';
-
-                res.on('data', (chunk) => {
-                    data += chunk;
-                });
-
-                res.on('end', () => {
-                    if (res.statusCode >= 200 && res.statusCode < 300) {
-                        try {
-                            resolve(JSON.parse(data));
-                        } catch (error) {
-                            reject(new Error(`JSON parse error: ${error.message}`));
-                        }
-                    } else {
-                        reject(new Error(`HTTP ${res.statusCode}: ${data}`));
-                    }
-                });
-            });
-
-            req.on('error', (error) => {
-                reject(error);
-            });
-
-            req.setTimeout(10000, () => {
-                req.destroy();
-                reject(new Error('Request timeout'));
-            });
-
-            req.end();
-        });
+    async makeRequest(url, token) {
+        return makeHttpRequest(url, { token });
     }
 
     async searchMovie(keyword) {
@@ -80,7 +39,7 @@ class TMDBMovieAdapterService {
         }
 
         const encodedKeyword = encodeURIComponent(keyword.trim());
-        const url = `${config.url}/3/search/movie?include_adult=false&include_video=false&language=${config.language}&page=1&query=${encodedKeyword}`;
+        const url = `${config.url}/3/search/movie?include_video=false&language=${config.language}&page=1&query=${encodedKeyword}`;
 
         const response = await this.makeRequest(url, config.token);
 
@@ -181,7 +140,7 @@ class TMDBMovieAdapterService {
         }
 
         const encodedName = encodeURIComponent(actorName.trim());
-        const url = `${config.url}/3/search/person?include_adult=false&language=zh-CN&page=1&query=${encodedName}`;
+        const url = `${config.url}/3/search/person?include_adult=true&language=zh-CN&page=1&query=${encodedName}`;
 
         const response = await this.makeRequest(url, config.token);
 

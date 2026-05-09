@@ -14,7 +14,15 @@ class SettingsService {
         // 同步设置默认配置，保证 getSettings() 能立即返回有效值
         this.settings = this.hardCodeService.getDefaultSettings();
         // 异步加载用户配置并合并
-        this.loadSettings();
+        this.settingsLoadPromise = this.loadSettings();
+    }
+
+    /**
+     * 获取设置加载完成的 Promise
+     * @returns {Promise} 当设置加载完成时 resolve 的 Promise
+     */
+    getSettingsPromise() {
+        return this.settingsLoadPromise;
     }
 
     /**
@@ -238,6 +246,15 @@ getActorPhotoDir() {
 
     setTmdbConfig(config) {
         this.settings.tmdb = { ...this.settings.tmdb, ...config };
+        this.saveSettings(this.settings);
+    }
+
+    getR18Config() {
+        return this.settings.r18 || { dbUrl: '', dbUsername: '', dbPassword: '' };
+    }
+
+    setR18Config(config) {
+        this.settings.r18 = { ...this.settings.r18, ...config };
         this.saveSettings(this.settings);
     }
 

@@ -1861,6 +1861,8 @@ async function searchMovieMovies() {
         return;
     }
 
+    const selectedAdapter = document.querySelector('input[name="movie-adapter"]:checked')?.value || 'tmdb';
+
     // 显示加载状态
     elements.movieSearchLoading.style.display = 'block';
     elements.movieSearchError.style.display = 'none';
@@ -1869,7 +1871,12 @@ async function searchMovieMovies() {
     selectedMovie = null;
 
     try {
-        const results = await window.electronAPI.tmdbSearchMovie(keyword);
+        let results;
+        if (selectedAdapter === 'r18') {
+            results = await window.electronAPI.r18SearchMovie(keyword);
+        } else {
+            results = await window.electronAPI.tmdbSearchMovie(keyword);
+        }
 
         elements.movieSearchLoading.style.display = 'none';
 
@@ -1954,13 +1961,19 @@ async function confirmMovieSearch() {
         return;
     }
 
+    const selectedAdapter = document.querySelector('input[name="movie-adapter"]:checked')?.value || 'tmdb';
+
     // 显示加载状态
     elements.confirmMovieSearch.disabled = true;
     elements.confirmMovieSearch.textContent = '加载中...';
 
     try {
-        // 调用getMovie获取详细信息
-        const movieDetail = await window.electronAPI.tmdbGetMovie(selectedMovie.search_id);
+        let movieDetail;
+        if (selectedAdapter === 'r18') {
+            movieDetail = await window.electronAPI.r18GetMovie(selectedMovie.search_id);
+        } else {
+            movieDetail = await window.electronAPI.tmdbGetMovie(selectedMovie.search_id);
+        }
 
         if (movieDetail && movieDetail.error) {
             throw new Error(movieDetail.error);
