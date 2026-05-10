@@ -271,11 +271,17 @@
                         <h3 class="settings-section-title">视频解析</h3>
                         <div class="settings-item">
                             <label>ffmpeg路径：</label>
-                            <input type="text" id="ffmpeg-path-input" placeholder="如: C:\ffmpeg\bin\ffmpeg.exe">
+                            <div class="dir-input-group">
+                                <input type="text" id="ffmpeg-path-input" placeholder="如: C:\ffmpeg\bin\ffmpeg.exe">
+                                <button id="select-ffmpeg-btn" class="btn btn-small">选择</button>
+                            </div>
                         </div>
                         <div class="settings-item">
                             <label>ffprobe路径：</label>
-                            <input type="text" id="ffprobe-path-input" placeholder="如: C:\ffmpeg\bin\ffprobe.exe">
+                            <div class="dir-input-group">
+                                <input type="text" id="ffprobe-path-input" placeholder="如: C:\ffmpeg\bin\ffprobe.exe">
+                                <button id="select-ffprobe-btn" class="btn btn-small">选择</button>
+                            </div>
                         </div>
                     </div>
                 </div>

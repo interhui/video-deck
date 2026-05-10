@@ -82,6 +82,8 @@ const elements = {
     // 视频解析设置
     ffmpegPathInput: document.getElementById('ffmpeg-path-input'),
     ffprobePathInput: document.getElementById('ffprobe-path-input'),
+    selectFfmpegBtn: document.getElementById('select-ffmpeg-btn'),
+    selectFfprobeBtn: document.getElementById('select-ffprobe-btn'),
     // 设置 Tab
     settingsTabs: document.querySelector('.settings-tabs'),
     onlyNewMoviesCheckbox: document.getElementById('only-new-movies'),
@@ -1668,6 +1670,26 @@ function bindEvents() {
         const result = await window.electronAPI.selectDirectory();
         if (!result.canceled && result.path) {
             elements.actorPhotoDirInput.value = result.path;
+        }
+    });
+
+    // 选择ffmpeg路径
+    elements.selectFfmpegBtn.addEventListener('click', async () => {
+        const result = await window.electronAPI.selectFile([
+            { name: 'Executable Files', extensions: ['exe'] }
+        ]);
+        if (!result.canceled && result.path) {
+            elements.ffmpegPathInput.value = result.path;
+        }
+    });
+
+    // 选择ffprobe路径
+    elements.selectFfprobeBtn.addEventListener('click', async () => {
+        const result = await window.electronAPI.selectFile([
+            { name: 'Executable Files', extensions: ['exe'] }
+        ]);
+        if (!result.canceled && result.path) {
+            elements.ffprobePathInput.value = result.path;
         }
     });
 
