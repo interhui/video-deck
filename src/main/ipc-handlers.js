@@ -966,7 +966,7 @@ function setupIpcHandlers(services) {
             const person = await r18AdapterService.getPerson(actorId);
             return person;
         } catch (error) {
-            console.error('Error getting R18 person:', error);
+            console.error('Error getting R18 person:', error.message);
             return { error: error.message };
         }
     });
@@ -1665,6 +1665,45 @@ function setupIpcHandlers(services) {
             return { success: true };
         } catch (error) {
             console.error('Error opening batch player window:', error);
+            return { error: error.message };
+        }
+    });
+
+    // ==================== 视频信息获取接口 ====================
+
+    /**
+     * 获取视频文件信息
+     * 使用ffmpeg/ffprobe获取视频的编码、分辨率、时长等信息
+     */
+    ipcMain.handle('get-video-info', async (event, videoPath) => {
+        try {
+            const VideoInfoService = require('./services/VideoInfoService');
+            const settings = settingsService.getSettings();
+            const videoParsingConfig = settings.videoParsing || {};
+
+            // 创建视频信息服务实例
+            const videoInfoService = new VideoInfoService(
+                videoParsingConfig.ffmpegPath,
+                videoParsingConfig.ffprobePath
+            );
+
+            const videoInfo = await videoInfoService.getVideoInfo(videoPath);
+
+            if (!videoInfo) {
+                return { error: '无法获取视频信息或文件不是视频文件' };
+            }
+
+            return {
+                success: true,
+                codec: videoInfo.codec,
+                width: videoInfo.width,
+                height: videoInfo.height,
+                duration: videoInfo.duration,
+                resolution: videoInfoService.formatResolution(videoInfo.width, videoInfo.height),
+                formattedDuration: videoInfoService.formatDuration(videoInfo.duration)
+            };
+        } catch (error) {
+            console.error('Error getting video info:', error);
             return { error: error.message };
         }
     });

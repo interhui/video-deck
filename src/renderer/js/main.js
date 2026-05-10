@@ -79,6 +79,9 @@ const elements = {
     r18DbUrlInput: document.getElementById('r18-db-url-input'),
     r18DbUsernameInput: document.getElementById('r18-db-username-input'),
     r18DbPasswordInput: document.getElementById('r18-db-password-input'),
+    // 视频解析设置
+    ffmpegPathInput: document.getElementById('ffmpeg-path-input'),
+    ffprobePathInput: document.getElementById('ffprobe-path-input'),
     // 设置 Tab
     settingsTabs: document.querySelector('.settings-tabs'),
     onlyNewMoviesCheckbox: document.getElementById('only-new-movies'),
@@ -576,6 +579,10 @@ async function loadSettings() {
         if (elements.r18DbUrlInput) elements.r18DbUrlInput.value = state.settings.r18?.dbUrl || '';
         if (elements.r18DbUsernameInput) elements.r18DbUsernameInput.value = state.settings.r18?.dbUsername || '';
         if (elements.r18DbPasswordInput) elements.r18DbPasswordInput.value = state.settings.r18?.dbPassword || '';
+
+        // 加载视频解析设置
+        if (elements.ffmpegPathInput) elements.ffmpegPathInput.value = state.settings.videoParsing?.ffmpegPath || '';
+        if (elements.ffprobePathInput) elements.ffprobePathInput.value = state.settings.videoParsing?.ffprobePath || '';
 
         state.viewMode = state.settings.layout.viewMode;
         state.newMovieHours = state.settings.library?.newMovieHours || 72;
@@ -3009,6 +3016,10 @@ async function saveSettingsHandler() {
                 dbUrl: elements.r18DbUrlInput?.value || '',
                 dbUsername: elements.r18DbUsernameInput?.value || '',
                 dbPassword: elements.r18DbPasswordInput?.value || ''
+            },
+            videoParsing: {
+                ffmpegPath: elements.ffmpegPathInput?.value || '',
+                ffprobePath: elements.ffprobePathInput?.value || ''
             }
         };
 

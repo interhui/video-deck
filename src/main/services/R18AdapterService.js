@@ -365,8 +365,13 @@ class R18AdapterService {
                 profile_url: profileUrl
             };
         } catch (error) {
-            console.error('Error fetching Wikidata:', error);
-            throw error;
+            console.error('Error fetching Wikidata:', error.message);
+            return {
+                name: '',
+                birthday: '',
+                memo: '',
+                profile_url: null
+            };
         }
     }
 }

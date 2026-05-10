@@ -49,6 +49,11 @@ class HardCodeService {
                 dbUrl: '',
                 dbUsername: '',
                 dbPassword: ''
+            },
+
+            videoParsing: {
+                ffmpegPath: '',
+                ffprobePath: ''
             }
         };
     }

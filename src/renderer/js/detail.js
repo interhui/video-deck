@@ -1310,7 +1310,56 @@ async function selectFileForAdd() {
         elements.newFileResolution.value = '';
         elements.newFileDuration.value = '';
         elements.newFileMemo.value = '';
+
+        // 自动获取视频信息
+        await fetchVideoInfo(filePath);
     }
+}
+
+/**
+ * 获取视频文件信息
+ * 使用ffmpeg获取视频的编码、分辨率、时长等信息
+ * @param {string} videoPath - 视频文件路径
+ */
+async function fetchVideoInfo(videoPath) {
+    try {
+        const result = await window.electronAPI.getVideoInfo(videoPath);
+
+        if (result && result.success) {
+            // 填充视频编码
+            if (elements.newFileCodec) {
+                elements.newFileCodec.value = result.codec || '';
+            }
+
+            // 填充视频分辨率
+            if (elements.newFileResolution) {
+                elements.newFileResolution.value = result.resolution || '';
+            }
+
+            // 填充视频时长
+            if (elements.newFileDuration) {
+                elements.newFileDuration.value = result.duration || '';
+            }
+
+            console.log('视频信息获取成功:', result);
+        } else if (result && result.error) {
+            console.log('视频信息获取失败:', result.error);
+        }
+    } catch (error) {
+        console.error('获取视频信息异常:', error);
+    }
+}
+
+/**
+ * 判断文件是否为视频文件
+ * @param {string} filePath - 文件路径
+ * @returns {boolean} 是否为视频文件
+ */
+function isVideoFile(filePath) {
+    if (!filePath) return false;
+    const videoExtensions = ['.mp4', '.avi', '.mkv', '.mov', '.wmv', '.flv', '.webm', '.m4v', '.mpg', '.mpeg', '.3gp', '.ts', '.mts', '.m2ts'];
+    const ext = filePath.substring(filePath.lastIndexOf('.')).toLowerCase();
+    return videoExtensions.includes(ext);
 }
 
 /**
