@@ -174,6 +174,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     r18SearchPerson: (actorName) => ipcRenderer.invoke('r18-search-person', actorName),
     r18GetPerson: (actorId) => ipcRenderer.invoke('r18-get-person', actorId),
 
+    // 视频信息获取
+    getVideoInfo: (videoPath) => ipcRenderer.invoke('get-video-info', videoPath),
+
 // 事件监听
     onOpenAddMovie: (callback) => {
         ipcRenderer.on('open-add-movie', callback);
