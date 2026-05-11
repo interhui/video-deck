@@ -407,6 +407,8 @@
 
 #### 9.3 validateRating - 评分验证
 
+**注意**：评分范围为0-5，不是0-10
+
 | 用例ID | 用例名称 | 测试方法 | 前置条件 | 预期结果 |
 |--------|----------|----------|----------|----------|
 | CLI-VALIDATE-RATING-001 | 有效评分0-5 | 直接调用 | 无 | 返回true |
@@ -414,8 +416,8 @@
 | CLI-VALIDATE-RATING-003 | 评分5 | 直接调用 | 无 | 返回true |
 | CLI-VALIDATE-RATING-004 | 评分6 | 直接调用 | 无 | 返回false |
 | CLI-VALIDATE-RATING-005 | 负数评分 | 直接调用 | 无 | 返回false |
-| CLI-VALIDATE-RATING-006 | 字符串数字 | 直接调用 | 无 | 返回true |
-| CLI-VALIDATE-RATING-007 | 小数评分（如3.5） | 直接调用 | 无 | 返回true |
+| CLI-VALIDATE-RATING-006 | 字符串数字 | 直接调用 | 无 | 返回true（parseInt转换） |
+| CLI-VALIDATE-RATING-007 | 小数评分（如3.5） | 直接调用 | 无 | 返回true（parseInt后为3） |
 | CLI-VALIDATE-RATING-008 | 非数字评分（如"abc"） | 直接调用 | 无 | 返回false |
 
 #### 9.4 validateStatus - 状态验证
@@ -466,16 +468,35 @@
 
 ```xml
 <!-- test/cli/test-data/movies/movie/test-movie/movie.nfo -->
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <movie>
     <id>movie-test-movie</id>
     <title>Test Movie</title>
     <year>2024</year>
     <outline>Test movie description</outline>
     <director>Test Director</director>
-    <actor>
-        <name>Test Actor</name>
-    </actor>
-    <tag>action</tag>
+    <actors>
+        <actor>
+            <name>Test Actor 1</name>
+        </actor>
+        <actor>
+            <name>Test Actor 2</name>
+        </actor>
+    </actors>
+    <tags>
+        <tag>action</tag>
+        <tag>adventure</tag>
+    </tags>
+    <status>unwatched</status>
+    <userRating>0</userRating>
+    <runtime>120</runtime>
+    <publishDate>2024-01-15</publishDate>
+    <files>
+        <file>
+            <path>video.mp4</path>
+            <isDefault>true</isDefault>
+        </file>
+    </files>
 </movie>
 ```
 
@@ -487,10 +508,15 @@
     "name": "Test Box",
     "description": "Test box description",
     "created": "2024-01-01T00:00:00.000Z",
+    "movieCount": 1,
+    "categories": ["movie"],
     "data": {
         "movie": [
-            { "id": "movie-test-movie", "status": "unplayed" }
-        ]
+            { "id": "movie-test-movie", "status": "unwatched", "rating": 0 }
+        ],
+        "metadata": {
+            "lastModified": "2024-01-01T00:00:00.000Z"
+        }
     }
 }
 ```
@@ -503,14 +529,50 @@
     {
         "name": "Import Movie 1",
         "category": "movie",
-        "description": "Imported movie 1",
-        "director": "Test Director"
+        "year": 2024,
+        "director": "Test Director 1",
+        "actors": ["Actor 1", "Actor 2"],
+        "tags": ["action", "adventure"],
+        "overview": "Imported movie 1 description",
+        "runtime": 120,
+        "publishDate": "2024-01-15"
     },
     {
         "name": "Import Movie 2",
         "category": "movie",
-        "description": "Imported movie 2"
+        "year": 2023,
+        "director": "Test Director 2",
+        "actors": ["Actor 3"],
+        "tags": ["comedy"],
+        "overview": "Imported movie 2 description"
     }
+]
+```
+
+### 测试分类数据结构
+
+```json
+// test/cli/test-data/categories.json
+{
+    "categories": [
+        { "id": "movie", "name": "电影", "shortName": "M", "icon": "🎬", "color": "#003791", "order": 1 },
+        { "id": "tv", "name": "电视剧", "shortName": "TV", "icon": "📺", "color": "#107C10", "order": 2 },
+        { "id": "documentary", "name": "纪录片", "shortName": "DOC", "icon": "🎥", "color": "#E60012", "order": 3 },
+        { "id": "anime", "name": "动漫", "shortName": "ANI", "icon": "🎌", "color": "#888888", "order": 4 }
+    ]
+}
+```
+
+### 测试标签数据结构
+
+```json
+// test/cli/test-data/tags.json
+[
+    { "id": "action", "name": "动作" },
+    { "id": "adventure", "name": "冒险" },
+    { "id": "comedy", "name": "喜剧" },
+    { "id": "drama", "name": "剧情" },
+    { "id": "sci-fi", "name": "科幻" }
 ]
 ```
 
