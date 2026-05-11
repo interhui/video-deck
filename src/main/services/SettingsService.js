@@ -258,6 +258,26 @@ getActorPhotoDir() {
         this.saveSettings(this.settings);
     }
 
+    getProxyConfig() {
+        return this.settings.proxy || { enabled: false, address: '', username: '', password: '' };
+    }
+
+    setProxyConfig(config) {
+        this.settings.proxy = { ...this.settings.proxy, ...config };
+        this.saveSettings(this.settings);
+    }
+
+    getProxyAgentUrl() {
+        const proxy = this.settings.proxy || {};
+        if (!proxy.enabled || !proxy.address) {
+            return null;
+        }
+        if (proxy.username && proxy.password) {
+            return `${proxy.address.replace('://', `://${encodeURIComponent(proxy.username)}:${encodeURIComponent(proxy.password)}@`)}`;
+        }
+        return proxy.address;
+    }
+
     mergeDeep(target, source) {
         const output = { ...target };
 

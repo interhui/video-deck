@@ -3,6 +3,22 @@
  * 用于主进程服务的HTTP请求
  */
 const https = require('https');
+const http = require('http');
+const { HttpsProxyAgent } = require('https-proxy-agent');
+
+let globalProxyAgent = null;
+
+function setGlobalProxy(proxyUrl) {
+    if (proxyUrl) {
+        globalProxyAgent = new HttpsProxyAgent(proxyUrl);
+    } else {
+        globalProxyAgent = null;
+    }
+}
+
+function getGlobalProxyAgent() {
+    return globalProxyAgent;
+}
 
 /**
  * 发送HTTPS GET请求
@@ -48,7 +64,12 @@ function makeHttpRequest(url, options = {}) {
             requestOptions.headers['Authorization'] = `Bearer ${options.token}`;
         }
 
-        const req = https.request(requestOptions, (res) => {
+        if (options.proxyAgent || globalProxyAgent) {
+            requestOptions.agent = options.proxyAgent || globalProxyAgent;
+        }
+
+        const protocol = url.startsWith('http://') ? http : https;
+        const req = protocol.request(requestOptions, (res) => {
             let data = '';
 
             res.on('data', (chunk) => {
@@ -87,17 +108,21 @@ function makeHttpRequest(url, options = {}) {
  * @param {number} timeout - 超时时间（毫秒，默认5000）
  * @returns {Promise<boolean>} URL可访问返回true，否则返回false
  */
-function checkUrlAccessible(url, timeout = 5000) {
+function checkUrlAccessible(url, timeout = 5000, proxyAgent = null) {
     return new Promise((resolve) => {
         try {
             const urlObj = new URL(url);
-            const req = https.request({
+            const requestOptions = {
                 hostname: urlObj.hostname,
                 port: urlObj.port || 443,
                 path: urlObj.pathname + urlObj.search,
                 method: 'GET',
                 timeout
-            }, (res) => {
+            };
+            if (proxyAgent || globalProxyAgent) {
+                requestOptions.agent = proxyAgent || globalProxyAgent;
+            }
+            const req = https.request(requestOptions, (res) => {
                 resolve(res.statusCode === 200);
             });
 
@@ -116,5 +141,7 @@ function checkUrlAccessible(url, timeout = 5000) {
 
 module.exports = {
     makeHttpRequest,
-    checkUrlAccessible
+    checkUrlAccessible,
+    setGlobalProxy,
+    getGlobalProxyAgent
 };
