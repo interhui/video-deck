@@ -82,6 +82,13 @@ const elements = {
     // 视频解析设置
     ffmpegPathInput: document.getElementById('ffmpeg-path-input'),
     ffprobePathInput: document.getElementById('ffprobe-path-input'),
+    selectFfmpegBtn: document.getElementById('select-ffmpeg-btn'),
+    selectFfprobeBtn: document.getElementById('select-ffprobe-btn'),
+    // 网络代理设置
+    proxyEnabled: document.getElementById('proxy-enabled'),
+    proxyAddress: document.getElementById('proxy-address'),
+    proxyUsername: document.getElementById('proxy-username'),
+    proxyPassword: document.getElementById('proxy-password'),
     // 设置 Tab
     settingsTabs: document.querySelector('.settings-tabs'),
     onlyNewMoviesCheckbox: document.getElementById('only-new-movies'),
@@ -583,6 +590,12 @@ async function loadSettings() {
         // 加载视频解析设置
         if (elements.ffmpegPathInput) elements.ffmpegPathInput.value = state.settings.videoParsing?.ffmpegPath || '';
         if (elements.ffprobePathInput) elements.ffprobePathInput.value = state.settings.videoParsing?.ffprobePath || '';
+
+        // 加载网络代理设置
+        if (elements.proxyEnabled) elements.proxyEnabled.checked = state.settings.proxy?.enabled || false;
+        if (elements.proxyAddress) elements.proxyAddress.value = state.settings.proxy?.address || '';
+        if (elements.proxyUsername) elements.proxyUsername.value = state.settings.proxy?.username || '';
+        if (elements.proxyPassword) elements.proxyPassword.value = state.settings.proxy?.password || '';
 
         state.viewMode = state.settings.layout.viewMode;
         state.newMovieHours = state.settings.library?.newMovieHours || 72;
@@ -1668,6 +1681,26 @@ function bindEvents() {
         const result = await window.electronAPI.selectDirectory();
         if (!result.canceled && result.path) {
             elements.actorPhotoDirInput.value = result.path;
+        }
+    });
+
+    // 选择ffmpeg路径
+    elements.selectFfmpegBtn.addEventListener('click', async () => {
+        const result = await window.electronAPI.selectFile([
+            { name: 'Executable Files', extensions: ['exe'] }
+        ]);
+        if (!result.canceled && result.path) {
+            elements.ffmpegPathInput.value = result.path;
+        }
+    });
+
+    // 选择ffprobe路径
+    elements.selectFfprobeBtn.addEventListener('click', async () => {
+        const result = await window.electronAPI.selectFile([
+            { name: 'Executable Files', extensions: ['exe'] }
+        ]);
+        if (!result.canceled && result.path) {
+            elements.ffprobePathInput.value = result.path;
         }
     });
 
@@ -3020,6 +3053,12 @@ async function saveSettingsHandler() {
             videoParsing: {
                 ffmpegPath: elements.ffmpegPathInput?.value || '',
                 ffprobePath: elements.ffprobePathInput?.value || ''
+            },
+            proxy: {
+                enabled: elements.proxyEnabled?.checked || false,
+                address: elements.proxyAddress?.value || '',
+                username: elements.proxyUsername?.value || '',
+                password: elements.proxyPassword?.value || ''
             }
         };
 

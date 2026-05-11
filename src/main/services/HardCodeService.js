@@ -54,6 +54,13 @@ class HardCodeService {
             videoParsing: {
                 ffmpegPath: '',
                 ffprobePath: ''
+            },
+
+            proxy: {
+                enabled: false,
+                address: '',
+                username: '',
+                password: ''
             }
         };
     }

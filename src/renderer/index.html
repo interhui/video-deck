@@ -210,7 +210,9 @@
                 <!-- Tab 导航 -->
                 <div class="settings-tabs">
                     <button class="tab-btn active" data-tab="basic-settings">基本设置</button>
+                    <button class="tab-btn" data-tab="path-settings">路径配置</button>
                     <button class="tab-btn" data-tab="movie-settings">电影设置</button>
+                    <button class="tab-btn" data-tab="network-settings">网络配置</button>
                 </div>
                 <!-- Tab 内容 -->
                 <div class="settings-tab-content active" id="tab-basic-settings">
@@ -241,6 +243,9 @@
                             </select>
                         </div>
                     </div>
+                </div>
+                <!-- 路径配置 Tab -->
+                <div class="settings-tab-content" id="tab-path-settings">
                     <!-- 目录设置 -->
                     <div class="settings-section">
                         <h3 class="settings-section-title">目录</h3>
@@ -271,11 +276,17 @@
                         <h3 class="settings-section-title">视频解析</h3>
                         <div class="settings-item">
                             <label>ffmpeg路径：</label>
-                            <input type="text" id="ffmpeg-path-input" placeholder="如: C:\ffmpeg\bin\ffmpeg.exe">
+                            <div class="dir-input-group">
+                                <input type="text" id="ffmpeg-path-input" placeholder="如: C:\ffmpeg\bin\ffmpeg.exe">
+                                <button id="select-ffmpeg-btn" class="btn btn-small">选择</button>
+                            </div>
                         </div>
                         <div class="settings-item">
                             <label>ffprobe路径：</label>
-                            <input type="text" id="ffprobe-path-input" placeholder="如: C:\ffmpeg\bin\ffprobe.exe">
+                            <div class="dir-input-group">
+                                <input type="text" id="ffprobe-path-input" placeholder="如: C:\ffmpeg\bin\ffprobe.exe">
+                                <button id="select-ffprobe-btn" class="btn btn-small">选择</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -323,6 +334,31 @@
                         <div class="settings-item">
                             <label>密码：</label>
                             <input type="password" id="r18-db-password-input" placeholder="请输入数据库密码">
+                        </div>
+                    </div>
+                </div>
+                <!-- 网络配置 Tab -->
+                <div class="settings-tab-content" id="tab-network-settings">
+                    <!-- 网络代理设置 -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">网络代理</h3>
+                        <div class="settings-item">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="proxy-enabled">
+                                <span>启用代理</span>
+                            </label>
+                        </div>
+                        <div class="settings-item">
+                            <label>代理地址：</label>
+                            <input type="text" id="proxy-address" placeholder="http(s)://host:port">
+                        </div>
+                        <div class="settings-item">
+                            <label>用户名：</label>
+                            <input type="text" id="proxy-username" placeholder="代理用户名（可选）">
+                        </div>
+                        <div class="settings-item">
+                            <label>密码：</label>
+                            <input type="password" id="proxy-password" placeholder="代理密码（可选）">
                         </div>
                     </div>
                 </div>

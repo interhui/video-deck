@@ -25,6 +25,7 @@ const TMDBMovieAdapterService = require('./src/main/services/TMDBAdapterService'
 const R18AdapterService = require('./src/main/services/R18AdapterService');
 const PlayerService = require('./src/main/services/PlayerService');
 const { setupIpcHandlers } = require('./src/main/ipc-handlers');
+const { setGlobalProxy } = require('./src/main/utils/http-utils');
 
 // 全局变量
 let mainWindow = null;
@@ -67,6 +68,14 @@ async function initializeServices() {
     // 等待设置加载完成后再初始化 R18AdapterService
     await settingsService.getSettingsPromise();
     console.log('[main.js] Settings loaded, r18 config:', settingsService.getSettings().r18);
+    
+    // 初始化全局代理
+    const proxyUrl = settingsService.getProxyAgentUrl();
+    if (proxyUrl) {
+        setGlobalProxy(proxyUrl);
+        console.log('[main.js] Proxy initialized:', proxyUrl);
+    }
+    
     r18AdapterService = new R18AdapterService(settingsService, tmdbMovieAdapterService);
     playerService = new PlayerService();
 

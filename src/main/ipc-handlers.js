@@ -8,6 +8,7 @@ const fs = require('fs');
 const https = require('https');
 const http = require('http');
 const ExportService = require('./services/ExportService');
+const { setGlobalProxy } = require('./utils/http-utils');
 
 // 程序根目录
 const APP_ROOT = path.join(__dirname, '..', '..');
@@ -475,6 +476,11 @@ function setupIpcHandlers(services) {
         try {
             const oldSettings = settingsService.getSettings();
             settingsService.saveSettings(newSettings);
+
+            // 更新全局代理
+            const proxyUrl = settingsService.getProxyAgentUrl();
+            setGlobalProxy(proxyUrl);
+            console.log('[ipc-handlers] Proxy updated:', proxyUrl);
 
             // 如果电影目录改变，强制刷新缓存
             if (newSettings.library && oldSettings.library.moviesDir !== newSettings.library.moviesDir) {
