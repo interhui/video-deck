@@ -6,20 +6,27 @@
 
 ### 核心功能
 
-- **电影管理**：添加、编辑、删除电影，支持评分、标签、演员等元数据
+- **电影管理**：添加、编辑、删除电影，支持评分、标签、演员、导演等元数据
 - **分类管理**：自定义电影分类（电影、电视剧、纪录片、动漫等）
 - **标签系统**：灵活的标签管理，支持多标签筛选
-- **演员管理**：维护演员信息及照片
-- **电影盒子**：创建自定义电影合集/播放列表
-- **搜索功能**：按名称、标签、分类等条件搜索电影
+- **演员管理**：维护演员信息及照片，支持分页浏览
+- **电影盒子**：创建自定义电影合集/播放列表，支持观看状态和评分管理
+- **搜索功能**：按名称、标签、分类、演员等条件搜索电影
 - **统计信息**：查看影库统计数据（总数、评分分布、播放时长等）
+- **TMDB集成**：支持从TMDB API搜索电影信息、下载海报、获取演员详情
+- **R18数据库集成**：支持从PostgreSQL数据库查询电影和演员信息
+- **视频解析**：集成ffmpeg/ffprobe进行视频元数据解析
+- **批量导入**：支持从JSON文件或目录批量导入电影
 
 ### GUI 特性
 
-- 现代化深色/浅色主题
+- 现代化深色/浅色主题切换
 - 海报墙视图（网格/列表模式）
-- 电影详情窗口
+- 电影详情窗口，支持编辑和文件管理
 - 自动扫描和刷新影库
+- 内置视频播放器，支持播放列表和进度记忆
+- 批量操作支持（批量添加、批量删除）
+- 响应式布局和自定义列数
 
 ### CLI 特性
 
@@ -27,6 +34,7 @@
 - 分类、标签、盒子管理
 - 多种输出格式（表格、JSON、简单文本）
 - 支持全局选项配置路径
+- 导入导出功能
 
 ## 配置说明
 
@@ -34,9 +42,11 @@
 
 ```json
 {
+  "version": "1.0.0",                     // 配置文件版本
+  "lastUpdate": "2026-01-01T00:00:00.000Z",  // 最后更新时间
   "appearance": {
     "theme": "dark",              // 主题: dark | light
-    "language": "zh-CN",          // 语言
+    "language": "zh-CN",          // 语言: zh-CN | en-US
     "showCategoryIcons": true,    // 显示分类图标
     "showDescriptions": true,     // 显示描述
     "enableAnimations": true      // 启用动画
@@ -44,18 +54,37 @@
   "layout": {
     "sidebarWidth": 200,           // 侧边栏宽度
     "posterSize": "large",         // 海报尺寸: small | medium | large
+    "posterStyle": "cover",        // 海报样式: cover | contain
     "columns": 6,                  // 网格列数
     "viewMode": "grid",            // 视图模式: grid | list
-    "sortBy": "name-asc",          // 排序字段
+    "sortBy": "name-asc",          // 排序字段: name-asc | name-desc | year-asc | year-desc | rating-asc | rating-desc | dateAdded-asc | dateAdded-desc
     "sortOrder": "asc"             // 排序方向: asc | desc
   },
   "library": {
     "moviesDir": "movies",         // 电影库目录
     "actorPhotoDir": "actor",      // 演员照片目录
+    "newMovieHours": 168,          // 新电影判定时间（小时），默认168小时（7天）
     "scanOnStartup": true,         // 启动时扫描
     "autoRefresh": false,          // 自动刷新
     "showHiddenFiles": false,      // 显示隐藏文件
     "includeSubfolders": true      // 包含子文件夹
+  },
+  "moviebox": {
+    "movieboxDir": "boxes"         // 电影盒子目录
+  },
+  "tmdb": {
+    "url": "https://api.themoviedb.org",  // TMDB API地址
+    "language": "zh-CN",                  // TMDB返回语言
+    "token": ""                           // TMDB API Token（必需）
+  },
+  "r18": {
+    "dbUrl": "",                          // PostgreSQL数据库连接字符串
+    "dbUsername": "",                     // 数据库用户名
+    "dbPassword": ""                      // 数据库密码
+  },
+  "videoParsing": {
+    "ffmpegPath": "ffmpeg",               // ffmpeg可执行文件路径
+    "ffprobePath": "ffprobe"              // ffprobe可执行文件路径
   },
   "notifications": {
     "enableStartup": true,         // 启动通知
@@ -66,15 +95,18 @@
     "autoImport": false,           // 自动导入
     "importPaths": []              // 导入路径列表
   },
-  "moviebox": {
-    "movieboxDir": "boxes"         // 电影盒子目录
+  "network": {
+    "proxy": ""                    // 网络代理设置（HTTP/HTTPS代理）
   }
 }
 ```
-首次使用需要在“电影”->“配置”中设置
-- moviesDir 电影库目录
-- movieboxDir 电影盒子目录
-- actorPhotoDir 演员照片目录
+
+首次使用需要在"设置"中配置以下必填项：
+- **moviesDir**: 电影库目录（存放按分类组织的电影文件夹）
+- **movieboxDir**: 电影盒子目录（存放盒子定义文件）
+- **actorPhotoDir**: 演员照片目录（存放演员头像图片）
+- **tmdb.token**: TMDB API Token（如需使用TMDB搜索功能）
+- **r18.dbUrl**: R18数据库连接（如需使用R18数据源）
 
 ### 分类配置
 
@@ -232,10 +264,20 @@ movie-mgt config reset
 movie-mgt stats
 
 # 按分类统计
-movie-mgt stats -c movie
+movie-mgt stats --category
 
 # 显示播放时长统计
 movie-mgt stats --playtime
+```
+
+#### 导入命令
+
+```bash
+# 从JSON文件导入电影
+movie-mgt import file <JSON文件路径>
+
+# 生成导入模板
+movie-mgt import template
 ```
 
 ### CLI 全局选项
