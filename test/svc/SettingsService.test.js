@@ -70,6 +70,24 @@ describe('SettingsService', () => {
             service.setLayoutSettings({ sidebarWidth: 300 });
             expect(service.getLayoutSettings().sidebarWidth).toBe(300);
         });
+
+        test('SVC-SETTINGS-007: 返回默认海报样式为vertical', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            const layout = service.getLayoutSettings();
+            expect(layout.posterStyle).toBe('vertical');
+        });
+
+        test('SVC-SETTINGS-008: 设置海报样式为horizontal', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            service.setLayoutSettings({ posterStyle: 'horizontal' });
+            expect(service.getLayoutSettings().posterStyle).toBe('horizontal');
+        });
+
+        test('SVC-SETTINGS-008A: 海报样式值只能是vertical或horizontal', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            const layout = service.getLayoutSettings();
+            expect(['vertical', 'horizontal']).toContain(layout.posterStyle);
+        });
     });
 
     describe('getMoviesDir / setMoviesDir', () => {

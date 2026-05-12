@@ -11,6 +11,10 @@
     --stats-bar-height: 36px;
     --poster-min-width: 140px;
     --poster-max-width: 220px;
+    --poster-horizontal-width: 220px;
+    --poster-horizontal-height: 147px;
+    --poster-horizontal-min-width: 180px;
+    --poster-horizontal-max-width: 300px;
 }
 
 /* 基础样式 */
@@ -413,6 +417,23 @@ body {
 .movie-card.selected {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+.movie-card.horizontal-poster {
+    aspect-ratio: 3 / 2;
+}
+
+.movie-card.horizontal-poster .movie-poster,
+.movie-card.horizontal-poster .movie-poster-placeholder {
+    height: calc(100% - 50px);
+}
+
+.movies-grid.horizontal-style {
+    grid-template-columns: repeat(auto-fill, minmax(var(--poster-min-width), 1fr));
+}
+
+.movies-grid.horizontal-style .movie-card {
+    max-width: var(--poster-max-width);
 }
 
 .movie-card-checkbox {

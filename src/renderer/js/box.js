@@ -17,7 +17,8 @@ const state = {
     detailEditModeLocked: false,
     currentTag: '',         // 当前选中的标签筛选
     currentRating: '',      // 当前选中的评分筛选
-    lazyLoader: null        // 懒加载管理器
+    lazyLoader: null,       // 懒加载管理器
+    settings: {}            // 设置对象
 };
 
 // DOM 元素
@@ -132,7 +133,10 @@ async function init() {
 
     // 加载主题设置
     await loadTheme({
-        onLayoutLoaded: applyPosterSizeSettings
+        onLayoutLoaded: (layout) => {
+            applyPosterSizeSettings(layout);
+            state.settings.layout = layout;
+        }
     });
 
     // 加载分类缓存
@@ -852,9 +856,10 @@ function renderMovies(movies, isAppend = false) {
                 </div>
             `;
         } else {
+            const posterStyleClass = state.settings.layout?.posterStyle === 'horizontal' ? 'horizontal-poster' : '';
             // 网格视图
             return `
-                <div class="box-movie-card movie-card" data-movie-id="${movie.movieId}">
+                <div class="box-movie-card movie-card ${posterStyleClass}" data-movie-id="${movie.movieId}">
                     <button class="remove-btn" data-movie-id="${movie.movieId}" title="从盒子中移除">✕</button>
                     <span class="box-status-tag ${movie.boxStatus || 'unwatched'}" data-movie-id="${movie.movieId}" data-category="${movie.category}">${getStatusText(movie.boxStatus)}</span>
                     <div class="movie-poster-container" style="width: 100%; height: calc(100% - 50px); position: relative;">

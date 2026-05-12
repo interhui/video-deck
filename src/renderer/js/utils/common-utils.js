@@ -184,9 +184,18 @@ function formatPlaytime(minutes) {
 /**
  * 获取海报最小尺寸（用于自动响应式计算）
  * @param {string} size - 尺寸标识 ('small', 'medium', 'large')
+ * @param {string} style - 样式标识 ('vertical', 'horizontal')
  * @returns {string} CSS尺寸值
  */
-function getPosterMinSize(size) {
+function getPosterMinSize(size, style = 'vertical') {
+    if (style === 'horizontal') {
+        const sizes = {
+            small: '150px',
+            medium: '180px',
+            large: '240px'
+        };
+        return sizes[size] || sizes.medium;
+    }
     const sizes = {
         small: '100px',
         medium: '140px',
@@ -198,9 +207,18 @@ function getPosterMinSize(size) {
 /**
  * 获取海报最大尺寸
  * @param {string} size - 尺寸标识 ('small', 'medium', 'large')
+ * @param {string} style - 样式标识 ('vertical', 'horizontal')
  * @returns {string} CSS尺寸值
  */
-function getPosterMaxSize(size) {
+function getPosterMaxSize(size, style = 'vertical') {
+    if (style === 'horizontal') {
+        const sizes = {
+            small: '200px',
+            medium: '300px',
+            large: '400px'
+        };
+        return sizes[size] || sizes.medium;
+    }
     const sizes = {
         small: '150px',
         medium: '220px',
@@ -214,6 +232,14 @@ function getPosterMaxSize(size) {
  * @param {Object} layout - 布局设置对象
  */
 function applyPosterSizeSettings(layout) {
-    document.documentElement.style.setProperty('--poster-min-width', getPosterMinSize(layout.posterSize));
-    document.documentElement.style.setProperty('--poster-max-width', getPosterMaxSize(layout.posterSize));
+    const posterStyle = layout.posterStyle || 'vertical';
+    const posterSize = layout.posterSize || 'medium';
+    
+    if (posterStyle === 'horizontal') {
+        document.documentElement.style.setProperty('--poster-min-width', getPosterMinSize(posterSize, 'horizontal'));
+        document.documentElement.style.setProperty('--poster-max-width', getPosterMaxSize(posterSize, 'horizontal'));
+    } else {
+        document.documentElement.style.setProperty('--poster-min-width', getPosterMinSize(posterSize, 'vertical'));
+        document.documentElement.style.setProperty('--poster-max-width', getPosterMaxSize(posterSize, 'vertical'));
+    }
 }

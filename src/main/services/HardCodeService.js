@@ -23,6 +23,7 @@ class HardCodeService {
             layout: {
                 sidebarWidth: 200,
                 posterSize: 'medium',
+                posterStyle: 'vertical',
                 columns: 6,
                 viewMode: 'grid',
                 sortBy: 'name-asc',

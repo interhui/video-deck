@@ -64,6 +64,7 @@ const elements = {
     themeSelect: document.getElementById('theme-select'),
     sidebarWidth: document.getElementById('sidebar-width'),
     posterSize: document.getElementById('poster-size'),
+    posterStyle: document.getElementById('poster-style'),
     moviesDirInput: document.getElementById('movies-dir-input'),
     selectDirBtn: document.getElementById('select-dir-btn'),
     movieboxDirInput: document.getElementById('moviebox-dir-input'),
@@ -572,6 +573,7 @@ async function loadSettings() {
         if (elements.themeSelect) elements.themeSelect.value = state.settings.appearance?.theme || 'dark';
         if (elements.sidebarWidth) elements.sidebarWidth.value = state.settings.layout?.sidebarWidth || 200;
         if (elements.posterSize) elements.posterSize.value = state.settings.layout?.posterSize || 'medium';
+        if (elements.posterStyle) elements.posterStyle.value = state.settings.layout?.posterStyle || 'vertical';
         if (elements.moviesDirInput) elements.moviesDirInput.value = state.settings.library?.moviesDir || '';
         if (elements.movieboxDirInput) elements.movieboxDirInput.value = state.settings.moviebox?.movieboxDir || '';
         if (elements.actorPhotoDirInput) elements.actorPhotoDirInput.value = state.settings.library?.actorPhotoDir || '';
@@ -641,8 +643,15 @@ function applyLayoutSettings(layout) {
     
     applyPosterSizeSettings(layout);
 
+    if (layout.posterStyle === 'horizontal') {
+        elements.moviesGrid.classList.add('horizontal-style');
+    } else {
+        elements.moviesGrid.classList.remove('horizontal-style');
+    }
+
     if (layout.viewMode === 'list') {
         elements.moviesGrid.classList.add('list-view');
+        elements.moviesGrid.classList.remove('horizontal-style');
     } else {
         elements.moviesGrid.classList.remove('list-view');
     }
@@ -1143,8 +1152,9 @@ function renderMovies(movies, isAppend = false) {
                 </div>
             `;
         } else {
+            const posterStyleClass = state.settings.layout?.posterStyle === 'horizontal' ? 'horizontal-poster' : '';
             return `
-                <div class="movie-card ${isSelected ? 'selected' : ''}" data-movie-id="${movie.id}">
+                <div class="movie-card ${isSelected ? 'selected' : ''} ${posterStyleClass}" data-movie-id="${movie.id}">
                     <div class="movie-card-checkbox">
                         <input type="checkbox" class="movie-select-checkbox" data-movie-id="${movie.id}" ${isSelected ? 'checked' : ''}>
                     </div>
@@ -3028,6 +3038,7 @@ async function saveSettingsHandler() {
                 ...state.settings.layout,
                 sidebarWidth: parseInt(elements.sidebarWidth.value),
                 posterSize: elements.posterSize.value,
+                posterStyle: elements.posterStyle.value,
                 viewMode: state.viewMode
             },
             library: {

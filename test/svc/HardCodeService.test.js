@@ -42,6 +42,13 @@ describe('HardCodeService', () => {
             const settings = service.getDefaultSettings();
             expect(settings.layout.sidebarWidth).toBe(200);
             expect(settings.layout.viewMode).toBe('grid');
+            expect(settings.layout.posterStyle).toBe('vertical');
+        });
+
+        test('SVC-HARDCODED-005A: posterStyle默认为vertical', () => {
+            const settings = service.getDefaultSettings();
+            expect(settings.layout.posterStyle).toBe('vertical');
+            expect(['vertical', 'horizontal']).toContain(settings.layout.posterStyle);
         });
 
         test('SVC-HARDCODED-006: library属性正确', () => {
