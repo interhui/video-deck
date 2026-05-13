@@ -397,7 +397,7 @@ body {
 .movie-card {
     width: 100%;
     max-width: var(--poster-max-width);
-    aspect-ratio: 2 / 3;
+    aspect-ratio: 2 / 3.3;
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
     border-radius: 4px;
@@ -420,7 +420,7 @@ body {
 }
 
 .movie-card.horizontal-poster {
-    aspect-ratio: 3 / 2;
+    aspect-ratio: 3 / 2.5;
 }
 
 .movie-card.horizontal-poster .movie-poster,
