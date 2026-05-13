@@ -102,6 +102,31 @@ body {
     gap: 24px;
 }
 
+.movie-info-layout.horizontal-poster {
+    flex-direction:row;
+}
+
+.movie-info-layout.horizontal-poster .movie-poster-section {
+    width: 50%;
+    max-width: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.movie-info-layout.horizontal-poster .detail-poster,
+.movie-info-layout.horizontal-poster .poster-placeholder {
+    width: 100%;
+    max-width: 450px;
+    max-height: 300px;
+    object-fit: contain;
+    aspect-ratio: 3 / 2;
+}
+
+.movie-info-layout.horizontal-poster .movie-info-section {
+    width: 100%;
+}
+
 /* 海报区 */
 .movie-poster-section {
     width: 300px;
@@ -314,7 +339,7 @@ body {
 .movie-files-layout {
     display: flex;
     gap: 20px;
-    height: calc(100vh - 220px);
+    height: calc(100vh - 230px);
     min-height: 400px;
 }
 

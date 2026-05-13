@@ -25,7 +25,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         playlist: document.getElementById('playlist'),
         playerTitle: document.getElementById('player-title'),
         minimizeBtn: document.getElementById('minimize-btn'),
-        closeBtn: document.getElementById('close-btn')
+        closeBtn: document.getElementById('close-btn'),
+        fullscreenBtn: document.getElementById('fullscreen-btn')
     };
 
     // 状态
@@ -231,6 +232,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 关闭按钮
     elements.closeBtn.addEventListener('click', () => {
         window.close();
+    });
+
+    // 全屏按钮
+    elements.fullscreenBtn.addEventListener('click', () => {
+        if (document.fullscreenElement) {
+            document.exitFullscreen();
+        } else {
+            elements.videoPlayer.requestFullscreen();
+        }
+    });
+
+    // 全屏状态变化
+    document.addEventListener('fullscreenchange', () => {
+        elements.fullscreenBtn.textContent = document.fullscreenElement ? '⛶' : '⛶';
+        elements.fullscreenBtn.title = document.fullscreenElement ? '退出全屏' : '全屏';
     });
 
     // 键盘快捷键

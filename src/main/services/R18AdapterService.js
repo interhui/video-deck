@@ -61,7 +61,7 @@ class R18AdapterService {
             poolConfig.password = config.dbPassword;
         }
 
-        console.log('[R18AdapterService] Pool config:', {
+        console.debug('[R18AdapterService] Pool config:', {
             host: poolConfig.host,
             port: poolConfig.port,
             database: poolConfig.database,

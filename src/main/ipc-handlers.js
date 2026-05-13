@@ -480,7 +480,7 @@ function setupIpcHandlers(services) {
             // 更新全局代理
             const proxyUrl = settingsService.getProxyAgentUrl();
             setGlobalProxy(proxyUrl);
-            console.log('[ipc-handlers] Proxy updated:', proxyUrl);
+            console.debug('[ipc-handlers] Proxy updated:', proxyUrl);
 
             // 如果电影目录改变，强制刷新缓存
             if (newSettings.library && oldSettings.library.moviesDir !== newSettings.library.moviesDir) {

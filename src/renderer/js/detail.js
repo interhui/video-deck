@@ -26,6 +26,9 @@ let movieSearchResults = [];
 let selectedMovie = null;
 const MOVIE_SEARCH_MAX_RESULTS = 10;
 
+// 设置对象
+let detailSettings = {};
+
 // DOM 元素
 const elements = {
     closeBtn: document.getElementById('close-btn'),
@@ -170,7 +173,12 @@ async function init() {
     await loadTags();
     await loadCategories();
     await loadActors();
-    await loadTheme();
+    await loadTheme({
+        onLayoutLoaded: (layout) => {
+            detailSettings.layout = layout;
+            applyDetailPosterStyle(layout);
+        }
+    });
     bindEvents();
     bindTabEvents();
     bindFileEvents();
@@ -187,6 +195,19 @@ async function init() {
             });
         }
     });
+}
+
+/**
+ * 应用详情页海报样式
+ * @param {Object} layout - 布局设置
+ */
+function applyDetailPosterStyle(layout) {
+    const movieInfoLayout = document.querySelector('.movie-info-layout');
+    if (movieInfoLayout && layout.posterStyle === 'horizontal') {
+        movieInfoLayout.classList.add('horizontal-poster');
+    } else if (movieInfoLayout) {
+        movieInfoLayout.classList.remove('horizontal-poster');
+    }
 }
 
 /**
