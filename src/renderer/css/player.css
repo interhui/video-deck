@@ -162,14 +162,14 @@ video {
 }
 
 .time-display {
-    font-size: 11px;
+    font-size: 13px;
     color: var(--text-secondary);
     font-family: monospace;
 }
 
 .time-separator {
     color: var(--text-secondary);
-    font-size: 11px;
+    font-size: 13px;
     margin: 0 2px;
 }
 
@@ -231,6 +231,7 @@ video {
     border-radius: 4px;
     display: flex;
     justify-content: center;
+    align-items: center;
     transition: background-color 0.2s;
 }
 
@@ -260,6 +261,10 @@ video {
 }
 
 .prev-next-btn {
+    font-size: 26px;
+}
+
+.fullscreen-btn {
     font-size: 26px;
 }
 

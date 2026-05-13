@@ -467,7 +467,6 @@ function createPlayerWindow(playerData) {
         minHeight: 600,
         title: playerData.movieTitle || '电影播放',
         frame: false,
-        thickFrame: false,
         autoHideMenuBar: true,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
