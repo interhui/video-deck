@@ -103,11 +103,11 @@ body {
 }
 
 .movie-info-layout.horizontal-poster {
-    flex-direction: column;
+    flex-direction:row;
 }
 
 .movie-info-layout.horizontal-poster .movie-poster-section {
-    width: 100%;
+    width: 50%;
     max-width: none;
     display: flex;
     flex-direction: column;
@@ -339,7 +339,7 @@ body {
 .movie-files-layout {
     display: flex;
     gap: 20px;
-    height: calc(100vh - 220px);
+    height: calc(100vh - 230px);
     min-height: 400px;
 }
 

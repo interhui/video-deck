@@ -67,13 +67,13 @@ async function initializeServices() {
 
     // 等待设置加载完成后再初始化 R18AdapterService
     await settingsService.getSettingsPromise();
-    console.log('[main.js] Settings loaded, r18 config:', settingsService.getSettings().r18);
+    console.debug('[main.js] Settings loaded, r18 config:', settingsService.getSettings().r18);
     
     // 初始化全局代理
     const proxyUrl = settingsService.getProxyAgentUrl();
     if (proxyUrl) {
         setGlobalProxy(proxyUrl);
-        console.log('[main.js] Proxy initialized:', proxyUrl);
+        console.debug('[main.js] Proxy initialized:', proxyUrl);
     }
     
     r18AdapterService = new R18AdapterService(settingsService, tmdbMovieAdapterService);
@@ -277,7 +277,7 @@ function createMovieDetailWindow(movieData) {
     }
 
     detailWindow = new BrowserWindow({
-        width: 1120,
+        width: 1200,
         height: 750,
         minWidth: 840,
         minHeight: 750,
