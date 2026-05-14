@@ -18,8 +18,16 @@
         <main class="detail-content">
             <!-- Tab Navigation -->
             <div class="detail-tabs">
-                <button class="tab-btn active" data-tab="movie-info">电影信息</button>
-                <button class="tab-btn" data-tab="movie-files">电影文件</button>
+                <div class="tab-buttons">
+                    <button class="tab-btn active" data-tab="movie-info">电影信息</button>
+                    <button class="tab-btn" data-tab="movie-files">电影文件</button>
+                </div>
+                <div class="action-buttons-right">
+                    <button id="play-btn" class="btn btn-primary launch-hidden">播放</button>
+                    <button id="edit-btn" class="btn btn-secondary">编辑</button>
+                    <button id="delete-btn" class="btn btn-danger">删除</button>
+                    <button id="add-to-box-btn" class="btn btn-secondary">添加到盒子</button>
+                </div>
             </div>
 
             <!-- Movie Info Tab -->
@@ -149,13 +157,7 @@
                 </div>
             </div>
 
-            <!-- Action Buttons (shown only when not in edit mode on movie-info tab) -->
-            <div id="normal-actions" class="action-buttons">
-                <button id="play-btn" class="btn btn-primary launch-hidden">播放</button>
-                <button id="edit-btn" class="btn btn-secondary">编辑</button>
-                <button id="delete-btn" class="btn btn-danger">删除</button>
-                <button id="add-to-box-btn" class="btn btn-secondary">添加到盒子</button>
-            </div>
+            
 
             <div id="box-actions" class="action-buttons" style="display: none;">
                 <button id="play-btn-box" class="btn btn-primary launch-hidden">播放</button>

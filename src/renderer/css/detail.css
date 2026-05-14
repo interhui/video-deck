@@ -54,10 +54,17 @@ body {
 /* Tab 导航 */
 .detail-tabs {
     display: flex;
-    gap: 0;
+    justify-content: space-between;
+    align-items: center;
+    height: 60px;
     padding: 0 20px;
     background-color: var(--sidebar-bg);
     border-bottom: 1px solid var(--border-color);
+}
+
+.tab-buttons {
+    display: flex;
+    gap: 0;
 }
 
 .tab-btn {
@@ -79,6 +86,17 @@ body {
 .tab-btn.active {
     color: var(--primary-color);
     border-bottom-color: var(--primary-color);
+}
+
+.action-buttons-right {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.action-buttons-right .btn {
+    padding: 6px 16px;
+    font-size: 12px;
 }
 
 /* 内容区 */
