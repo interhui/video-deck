@@ -6,6 +6,7 @@ const FileService = require('./FileService');
 const HardCodeService = require('./HardCodeService');
 const MovieCacheService = require('./MovieCacheService');
 const IndexService = require('./IndexService');
+const VideoInfoService = require('./VideoInfoService');
 const path = require('path');
 
 class MovieService {
@@ -800,9 +801,12 @@ class MovieService {
      * @param {string} category - 分类
      * @param {string} moviesDir - 电影目录
      * @param {string} dirNaming - 目录命名方式：'movieId'（电影ID）或 'movieName'（电影名称/年份）
+     * @param {object} options - 可选配置参数
+     * @param {string} options.ffmpegPath - ffmpeg路径
+     * @param {string} options.ffprobePath - ffprobe路径
      * @returns {Promise<object>} 扫描结果
      */
-    async scanMovieDirectory(scanPath, scanType, category, moviesDir, dirNaming = 'movieId') {
+    async scanMovieDirectory(scanPath, scanType, category, moviesDir, dirNaming = 'movieId', options = {}) {
         try {
             // 生成临时目录路径
             const timestamp = Date.now();
@@ -821,7 +825,7 @@ class MovieService {
                 scannedMovies = await this.scanCsvMode(scanPath, tempDir, category, dirNaming);
             } else if (scanType === 'video') {
                 // 视频扫描模式：以视频文件作为电影来源
-                scannedMovies = await this.scanVideoMode(scanPath, tempDir, category, dirNaming);
+                scannedMovies = await this.scanVideoMode(scanPath, tempDir, category, dirNaming, options);
             }
 
             // 写入总览文件
@@ -1013,10 +1017,19 @@ class MovieService {
      * @param {string} tempDir - 临时目录
      * @param {string} category - 分类
      * @param {string} dirNaming - 目录命名方式（视频模式强制为'movieId'）
+     * @param {object} options - 可选配置参数
+     * @param {string} options.ffmpegPath - ffmpeg路径
+     * @param {string} options.ffprobePath - ffprobe路径
      * @returns {Promise<object[]>} 扫描结果
      */
-    async scanVideoMode(scanPath, tempDir, category, dirNaming = 'movieId') {
+    async scanVideoMode(scanPath, tempDir, category, dirNaming = 'movieId', options = {}) {
         const scannedMovies = [];
+        const { ffmpegPath, ffprobePath } = options || {};
+
+        // 如果配置了ffmpeg和ffprobe路径，创建VideoInfoService实例
+        const videoInfoService = (ffmpegPath || ffprobePath)
+            ? new VideoInfoService(ffmpegPath, ffprobePath)
+            : null;
 
         // 扫描目录下所有视频文件
         const videoFiles = await this.fileService.scanDirectoryForVideoFiles(scanPath);
@@ -1035,6 +1048,26 @@ class MovieService {
                 // 构建完整的电影数据
                 // 电影ID和电影名都使用视频文件名称命名
                 // original_filename 为视频文件的完整路径
+                let videoCodec = '';
+                let videoWidth = '';
+                let videoHeight = '';
+                let videoDuration = '';
+
+                // 如果配置了ffmpeg/ffprobe，获取视频信息
+                if (videoInfoService) {
+                    try {
+                        const videoInfo = await videoInfoService.getVideoInfo(videoFile.filePath);
+                        if (videoInfo) {
+                            videoCodec = videoInfo.codec || '';
+                            videoWidth = videoInfo.width || '';
+                            videoHeight = videoInfo.height || '';
+                            videoDuration = videoInfo.duration ? String(videoInfo.duration) : '';
+                        }
+                    } catch (videoInfoError) {
+                        console.warn(`Failed to get video info for ${videoFile.fileName}:`, videoInfoError.message);
+                    }
+                }
+
                 const completeMovieData = {
                     id: movieId,
                     movieId: movieId,
@@ -1053,10 +1086,10 @@ class MovieService {
                     // original_filename 填入视频文件的完整路径
                     original_filename: videoFile.filePath,
                     fileset: [],
-                    videoCodec: '',
-                    videoWidth: '',
-                    videoHeight: '',
-                    videoDuration: ''
+                    videoCodec: videoCodec,
+                    videoWidth: videoWidth,
+                    videoHeight: videoHeight,
+                    videoDuration: videoDuration
                 };
 
                 // 写入movie.nfo到临时目录
