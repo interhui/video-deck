@@ -589,4 +589,92 @@ movie-002,电影2,描述2,标题2,演员3,导演2,2021,发行商2,100,标签2,D:
             expect(fs.readFileSync(destFile, 'utf-8')).toBe('test content');
         });
     });
+
+    describe('scanDirectoryForVideoFiles', () => {
+        test('SVC-FILE-063: 扫描视频文件-正常情况', async () => {
+            // 创建测试视频文件
+            const videoDir = path.join(testDataDir, 'videos');
+            fs.mkdirSync(videoDir, { recursive: true });
+            fs.writeFileSync(path.join(videoDir, 'movie1.mp4'), 'video content 1');
+            fs.writeFileSync(path.join(videoDir, 'movie2.mkv'), 'video content 2');
+            fs.writeFileSync(path.join(videoDir, 'movie3.avi'), 'video content 3');
+            fs.writeFileSync(path.join(videoDir, 'other.txt'), 'not a video');
+
+            const result = await service.scanDirectoryForVideoFiles(videoDir);
+
+            expect(result).toHaveLength(3);
+            expect(result.map(v => v.fileName)).toEqual(['movie1.mp4', 'movie2.mkv', 'movie3.avi']);
+            result.forEach(v => {
+                expect(v.filePath).toBeDefined();
+                expect(v.fileNameWithoutExt).toBeDefined();
+                expect(v.fileExt).toBeDefined();
+                expect(v.fileSize).toBeGreaterThan(0);
+            });
+        });
+
+        test('SVC-FILE-064: 扫描视频文件-目录不存在', async () => {
+            const result = await service.scanDirectoryForVideoFiles(path.join(testDataDir, 'notexists'));
+            expect(result).toEqual([]);
+        });
+
+        test('SVC-FILE-065: 扫描视频文件-空目录', async () => {
+            const emptyDir = path.join(testDataDir, 'empty');
+            fs.mkdirSync(emptyDir, { recursive: true });
+
+            const result = await service.scanDirectoryForVideoFiles(emptyDir);
+            expect(result).toEqual([]);
+        });
+
+        test('SVC-FILE-066: 扫描视频文件-仅非视频文件', async () => {
+            const dir = path.join(testDataDir, 'novideos');
+            fs.mkdirSync(dir, { recursive: true });
+            fs.writeFileSync(path.join(dir, 'readme.txt'), 'readme');
+            fs.writeFileSync(path.join(dir, 'data.json'), '{}');
+
+            const result = await service.scanDirectoryForVideoFiles(dir);
+            expect(result).toEqual([]);
+        });
+
+        test('SVC-FILE-067: 扫描视频文件-文件名排序（数字）', async () => {
+            const videoDir = path.join(testDataDir, 'sorted');
+            fs.mkdirSync(videoDir, { recursive: true });
+            fs.writeFileSync(path.join(videoDir, 'video10.mp4'), '10');
+            fs.writeFileSync(path.join(videoDir, 'video2.mp4'), '2');
+            fs.writeFileSync(path.join(videoDir, 'video1.mp4'), '1');
+
+            const result = await service.scanDirectoryForVideoFiles(videoDir);
+
+            expect(result).toHaveLength(3);
+            expect(result[0].fileName).toBe('video1.mp4');
+            expect(result[1].fileName).toBe('video2.mp4');
+            expect(result[2].fileName).toBe('video10.mp4');
+        });
+
+        test('SVC-FILE-068: 扫描视频文件-文件名不含扩展名正确', async () => {
+            const videoDir = path.join(testDataDir, 'noext');
+            fs.mkdirSync(videoDir, { recursive: true });
+            fs.writeFileSync(path.join(videoDir, 'Test.Movie.2024.mp4'), 'content');
+
+            const result = await service.scanDirectoryForVideoFiles(videoDir);
+
+            expect(result).toHaveLength(1);
+            expect(result[0].fileNameWithoutExt).toBe('Test.Movie.2024');
+        });
+    });
+
+    describe('VIDEO_EXTENSIONS', () => {
+        test('SVC-FILE-069: 支持常用视频扩展名', () => {
+            expect(FileService.VIDEO_EXTENSIONS).toContain('.mp4');
+            expect(FileService.VIDEO_EXTENSIONS).toContain('.mkv');
+            expect(FileService.VIDEO_EXTENSIONS).toContain('.avi');
+            expect(FileService.VIDEO_EXTENSIONS).toContain('.mov');
+        });
+
+        test('SVC-FILE-070: 支持其他视频格式', () => {
+            expect(FileService.VIDEO_EXTENSIONS).toContain('.wmv');
+            expect(FileService.VIDEO_EXTENSIONS).toContain('.flv');
+            expect(FileService.VIDEO_EXTENSIONS).toContain('.webm');
+            expect(FileService.VIDEO_EXTENSIONS).toContain('.m4v');
+        });
+    });
 });

@@ -134,7 +134,7 @@ class ExportService {
         });
 
         const csvContent = headers.join(',') + '\n' + rows.join('\n');
-        await fs.promises.writeFile(exportPath, csvContent, 'utf8');
+        await fs.promises.writeFile(exportPath, csvContent, 'utf-8');
 
         return { success: true, count: movies.length };
     }
@@ -167,7 +167,7 @@ class ExportService {
             content += `Played${index}=0\n\n`;
         }
 
-        await fs.promises.writeFile(exportPath, content, 'utf8');
+        await fs.promises.writeFile(exportPath, content, 'utf-8');
 
         console.log(`[ExportService] DPL导出完成`);
         return { success: true, count: movies.length };
@@ -200,7 +200,7 @@ class ExportService {
         };
 
         const jsonContent = JSON.stringify(boxData, null, 2);
-        await fs.promises.writeFile(exportPath, jsonContent, 'utf8');
+        await fs.promises.writeFile(exportPath, jsonContent, 'utf-8');
 
         console.log(`[ExportService] JSON导出完成，导出数量: ${movies.length}`);
         return { success: true, count: movies.length };

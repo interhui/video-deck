@@ -1062,6 +1062,11 @@ class FileService {
     }
 
     /**
+     * 支持的视频文件扩展名列表
+     */
+    static VIDEO_EXTENSIONS = ['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm', '.m4v', '.mpg', '.mpeg', '.3gp', '.ts'];
+
+    /**
      * 递归扫描目录，查找包含nfo文件的文件夹
      * 优先查找movie.nfo，如果不存在则查找*.nfo
      * @param {string} dirPath - 目录路径
@@ -1169,6 +1174,52 @@ class FileService {
         }
 
         return { posterPath: null, posterExt: null };
+    }
+
+    /**
+     * 扫描目录中的视频文件
+     * 查找指定目录下的所有视频文件（不支持递归），返回文件信息数组
+     * @param {string} dirPath - 目录路径
+     * @returns {Promise<object[]>} 视频文件信息数组 [{filePath, fileName, fileExt, fileSize}, ...]
+     */
+    async scanDirectoryForVideoFiles(dirPath) {
+        const videoFiles = [];
+
+        try {
+            const exists = await this.fileExists(dirPath);
+            if (!exists) {
+                return videoFiles;
+            }
+
+            const entries = await fs.readdir(dirPath, { withFileTypes: true });
+
+            for (const entry of entries) {
+                if (entry.isFile()) {
+                    const fileExt = path.extname(entry.name).toLowerCase();
+
+                    // 检查是否是视频文件
+                    if (FileService.VIDEO_EXTENSIONS.includes(fileExt)) {
+                        const filePath = path.join(dirPath, entry.name);
+                        const fileStats = await fs.stat(filePath);
+
+                        videoFiles.push({
+                            filePath: filePath,
+                            fileName: entry.name,
+                            fileNameWithoutExt: path.basename(entry.name, fileExt),
+                            fileExt: fileExt,
+                            fileSize: fileStats.size
+                        });
+                    }
+                }
+            }
+
+            // 按文件名排序
+            videoFiles.sort((a, b) => a.fileName.localeCompare(b.fileName, undefined, { numeric: true }));
+        } catch (error) {
+            console.error('Error scanning directory for video files:', error);
+        }
+
+        return videoFiles;
     }
 
     /**

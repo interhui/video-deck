@@ -631,6 +631,10 @@
                             <input type="radio" name="scan-type" value="file">
                             文件导入（每行作为一部电影）
                         </label>
+                        <label class="radio-label">
+                            <input type="radio" name="scan-type" value="video">
+                            视频导入（视频文件作为电影）
+                        </label>
                     </div>
                 </div>
                 <div class="form-group">
@@ -646,7 +650,16 @@
                         <option value="">选择分类...</option>
                     </select>
                 </div>
-                <div class="form-group">
+                <div id="video-dir-naming-group" class="form-group" style="display: none;">
+                    <label>目录创建：</label>
+                    <div class="scan-type-group">
+                        <label class="radio-label">
+                            <input type="radio" name="dir-naming" value="movieId" checked>
+                            电影ID为目录名
+                        </label>
+                    </div>
+                </div>
+                <div id="normal-dir-naming-group" class="form-group">
                     <label>目录创建：</label>
                     <div class="scan-type-group">
                         <label class="radio-label">

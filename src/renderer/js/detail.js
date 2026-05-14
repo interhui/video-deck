@@ -72,7 +72,7 @@ const elements = {
     confirmActorSelection: document.getElementById('confirm-actor-selection'),
     cancelActorSelection: document.getElementById('cancel-actor-selection'),
     deleteBtn: document.getElementById('delete-btn'),
-    saveEditBtn: document.getElementById('save-edit-btn'),
+    confirmEditBtn: document.getElementById('confirm-edit-btn'),
     cancelEditBtn: document.getElementById('cancel-edit-btn'),
     editActions: document.getElementById('normal-actions'),
     normalActions: document.getElementById('normal-actions'),
@@ -91,7 +91,6 @@ const elements = {
     cancelAddToBox: document.getElementById('cancel-add-to-box'),
     removeFromBoxBtn: document.getElementById('remove-from-box-btn'),
     playBtnBox: document.getElementById('play-btn-box'),
-    detailFooter: document.getElementById('detail-footer'),
     tabMovieInfo: document.getElementById('tab-movie-info'),
     tabMovieFiles: document.getElementById('tab-movie-files'),
     addFileBtn: document.getElementById('add-file-btn'),
@@ -628,12 +627,15 @@ function loadMovieDetail(movie) {
         // 更新评分星星
         updateBoxRating(movie.boxRating || 0);
     } else {
-        elements.normalActions.style.display = 'flex';
-        elements.boxActions.style.display = 'none';
+        if (elements.normalActions) elements.normalActions.style.display = 'flex';
+        if (elements.boxActions) elements.boxActions.style.display = 'none';
         elements.boxInfoSection.style.display = 'none';
     }
 
-    elements.detailFooter.style.display = 'none';
+    // 初始化时确保编辑模式按钮隐藏
+    elements.confirmEditBtn.style.display = 'none';
+    elements.cancelEditBtn.style.display = 'none';
+
     switchTab('movie-info');
 }
 
@@ -1063,9 +1065,13 @@ function enterEditMode() {
     renderEditTags(editData.tags);
     elements.movieDescriptionContainer.innerHTML = `<textarea id="edit-description" class="edit-textarea">${editData.description}</textarea>`;
 
-    elements.normalActions.style.display = 'none';
-    elements.boxActions.style.display = 'none';
-    elements.detailFooter.style.display = 'flex';
+    // 隐藏普通操作按钮，显示编辑模式按钮
+    elements.playBtn.style.display = 'none';
+    elements.editBtn.style.display = 'none';
+    elements.deleteBtn.style.display = 'none';
+    elements.addToBoxBtn.style.display = 'none';
+    elements.confirmEditBtn.style.display = 'inline-block';
+    elements.cancelEditBtn.style.display = 'inline-block';
     elements.uploadPosterBtn.style.display = 'block';
     elements.moviePoster.style.cursor = 'pointer';
     elements.moviePoster.title = '点击上传新海报';
@@ -1117,7 +1123,9 @@ function exitEditMode() {
     elements.movieDescriptionContainer.innerHTML = `<p id="movie-description" class="description">${currentMovie.description || '暂无描述'}</p>`;
     elements.movieDescription = document.getElementById('movie-description');
 
-    elements.detailFooter.style.display = 'none';
+    // 隐藏编辑模式按钮，恢复普通操作按钮
+    elements.confirmEditBtn.style.display = 'none';
+    elements.cancelEditBtn.style.display = 'none';
     elements.addFileBtn.style.display = 'none';
     elements.uploadPosterBtn.style.display = 'none';
     elements.movieSearchBtn.style.display = 'none';
@@ -1128,10 +1136,15 @@ function exitEditMode() {
 
     if (fromBox) {
         elements.boxActions.style.display = 'flex';
-        elements.normalActions.style.display = 'none';
+        elements.playBtn.style.display = 'none';
+        elements.editBtn.style.display = 'none';
+        elements.deleteBtn.style.display = 'none';
+        elements.addToBoxBtn.style.display = 'none';
     } else {
-        elements.normalActions.style.display = 'flex';
-        elements.boxActions.style.display = 'none';
+        elements.playBtn.style.display = 'inline-block';
+        elements.editBtn.style.display = 'inline-block';
+        elements.deleteBtn.style.display = 'inline-block';
+        elements.addToBoxBtn.style.display = 'inline-block';
     }
 
     clearFileDetails();
@@ -1184,7 +1197,7 @@ async function saveEdit() {
     const studioInput = document.getElementById('edit-studio');
     const descriptionInput = document.getElementById('edit-description');
 
-    if (selectedFileIndex >= 0 && selectedFileIndex < editFileset.length) {
+    if (selectedFileIndex >= 0 && selectedFileIndex < editFileset.length && elements.fileDetailMemo) {
         editFileset[selectedFileIndex].memo = elements.fileDetailMemo.value;
     }
 
@@ -1497,7 +1510,7 @@ function bindEvents() {
         enterEditMode();
     });
 
-    elements.saveEditBtn.addEventListener('click', () => {
+    elements.confirmEditBtn.addEventListener('click', () => {
         saveEdit();
     });
 

@@ -3102,6 +3102,21 @@ function openScanDirModal() {
     elements.scanCategorySelect.innerHTML = '<option value="">选择分类...</option>';
     elements.confirmScanDir.disabled = true;
 
+    // 重置目录创建选项为默认状态
+    const videoDirNamingGroup = document.getElementById('video-dir-naming-group');
+    const normalDirNamingGroup = document.getElementById('normal-dir-naming-group');
+    if (videoDirNamingGroup) {
+        videoDirNamingGroup.style.display = 'none';
+    }
+    if (normalDirNamingGroup) {
+        normalDirNamingGroup.style.display = 'block';
+    }
+    // 默认选中"电影ID为目录名"选项
+    const movieIdRadio = document.querySelector('input[name="dir-naming"][value="movieId"]');
+    if (movieIdRadio) {
+        movieIdRadio.checked = true;
+    }
+
     // 填充分类选择
     state.categories.forEach(category => {
         const option = document.createElement('option');
@@ -3126,15 +3141,17 @@ function closeScanDirModal() {
 async function handleSelectScanPath() {
     const scanType = document.querySelector('input[name="scan-type"]:checked').value;
 
-    if (scanType === 'directory') {
+    if (scanType === 'directory' || scanType === 'video') {
+        // 目录模式或视频模式：选择目录
         const result = await window.electronAPI.selectDirectory();
         if (!result.canceled && result.path) {
             elements.scanPathInput.value = result.path;
             elements.scanPathInput.dataset.path = result.path;
-            elements.scanPathInput.dataset.type = 'directory';
+            elements.scanPathInput.dataset.type = scanType;
             updateScanConfirmButton();
         }
     } else {
+        // 文件模式（CSV）：选择文件
         const result = await window.electronAPI.selectFile([
             { name: 'Text Files', extensions: ['txt', 'csv'] }
         ]);
@@ -3887,13 +3904,28 @@ function initScanDirEvents() {
     // 选择扫描路径
     elements.selectScanPathBtn.addEventListener('click', handleSelectScanPath);
 
-    // 扫描类型变化时清空路径
+    // 扫描类型变化时清空路径并切换目录创建选项
     document.querySelectorAll('input[name="scan-type"]').forEach(radio => {
         radio.addEventListener('change', () => {
             elements.scanPathInput.value = '';
             delete elements.scanPathInput.dataset.path;
             delete elements.scanPathInput.dataset.type;
             updateScanConfirmButton();
+
+            // 视频模式：只显示"电影ID为目录名"选项；其他模式：显示全部选项
+            const videoDirNamingGroup = document.getElementById('video-dir-naming-group');
+            const normalDirNamingGroup = document.getElementById('normal-dir-naming-group');
+            const scanType = document.querySelector('input[name="scan-type"]:checked').value;
+
+            if (scanType === 'video') {
+                videoDirNamingGroup.style.display = 'block';
+                normalDirNamingGroup.style.display = 'none';
+                // 强制选中 movieId 选项
+                document.querySelector('input[name="dir-naming"][value="movieId"]').checked = true;
+            } else {
+                videoDirNamingGroup.style.display = 'none';
+                normalDirNamingGroup.style.display = 'block';
+            }
         });
     });
 

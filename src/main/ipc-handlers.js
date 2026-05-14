@@ -1349,8 +1349,12 @@ function setupIpcHandlers(services) {
         try {
             const settings = settingsService.getSettings();
             const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const videoParsingConfig = settings.videoParsing || {};
 
-            const result = await movieService.scanMovieDirectory(scanPath, scanType, category, moviesDir, dirNaming);
+            const result = await movieService.scanMovieDirectory(
+                scanPath, scanType, category, moviesDir, dirNaming,
+                { ffmpegPath: videoParsingConfig.ffmpegPath, ffprobePath: videoParsingConfig.ffprobePath }
+            );
             return result;
         } catch (error) {
             console.error('Error scanning movie directory:', error);
