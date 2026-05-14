@@ -67,7 +67,6 @@ async function initializeServices() {
 
     // 等待设置加载完成后再初始化 R18AdapterService
     await settingsService.getSettingsPromise();
-    console.debug('[main.js] Settings loaded, r18 config:', settingsService.getSettings().r18);
     
     // 初始化全局代理
     const proxyUrl = settingsService.getProxyAgentUrl();
