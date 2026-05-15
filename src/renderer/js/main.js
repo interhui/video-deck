@@ -34,7 +34,9 @@ const state = {
     actorSelectorPageSize: 10,
     lazyLoader: null,
     onlyNewMovies: false,
-    newMovieHours: 72
+    newMovieHours: 72,
+    batchSearchResults: [],
+    batchSearchInProgress: false
 };
 
 // DOM 元素
@@ -221,7 +223,15 @@ const elements = {
     refreshProgressText: document.getElementById('refresh-progress-text'),
     refreshProgressBar: document.getElementById('refresh-progress-bar'),
     confirmScanMovieEdit: document.getElementById('confirm-scan-movie-edit'),
-    cancelScanMovieEdit: document.getElementById('cancel-scan-movie-edit')
+    cancelScanMovieEdit: document.getElementById('cancel-scan-movie-edit'),
+    batchSearchBtn: document.getElementById('batch-search-btn'),
+    batchSearchModal: document.getElementById('batch-search-modal'),
+    closeBatchSearch: document.getElementById('close-batch-search'),
+    batchSearchProgress: document.getElementById('batch-search-progress'),
+    batchSearchStart: document.getElementById('batch-search-start'),
+    batchSearchCancel: document.getElementById('batch-search-cancel'),
+    batchSearchConfirm: document.getElementById('batch-search-confirm'),
+    batchSearchMoviesList: document.getElementById('batch-search-movies-list')
 };
 
 /**
@@ -253,6 +263,9 @@ async function init() {
 
     // 初始化目录扫描事件
     initScanDirEvents();
+
+    // 初始化批量搜索事件
+    initBatchSearchEvents();
 
     // 初始化分隔线拖动
     initSplitter();
@@ -1271,6 +1284,7 @@ function bindCheckboxEvents(movies) {
             updateBatchAddButtonVisibility();
             updateBatchDeleteButtonVisibility();
             updateBatchPlayButtonVisibility();
+            updateBatchSearchButtonVisibility();
         });
     }
 
@@ -1302,6 +1316,7 @@ function bindCheckboxEvents(movies) {
             updateBatchAddButtonVisibility();
             updateBatchDeleteButtonVisibility();
             updateBatchPlayButtonVisibility();
+            updateBatchSearchButtonVisibility();
         });
     });
 
@@ -1336,6 +1351,7 @@ function bindCheckboxEvents(movies) {
             updateBatchAddButtonVisibility();
             updateBatchDeleteButtonVisibility();
             updateBatchPlayButtonVisibility();
+            updateBatchSearchButtonVisibility();
         });
     });
 }
@@ -1370,6 +1386,15 @@ function updateBatchPlayButtonVisibility() {
         elements.batchPlayBtn.textContent = `播放 (${state.selectedMovies.size})`;
     } else {
         elements.batchPlayBtn.style.display = 'none';
+    }
+}
+
+function updateBatchSearchButtonVisibility() {
+    if (state.selectedMovies.size > 0) {
+        elements.batchSearchBtn.style.display = 'block';
+        elements.batchSearchBtn.textContent = `批量搜索 (${state.selectedMovies.size})`;
+    } else {
+        elements.batchSearchBtn.style.display = 'none';
     }
 }
 
@@ -1994,6 +2019,7 @@ function bindEvents() {
             updateBatchAddButtonVisibility();
             updateBatchDeleteButtonVisibility();
             updateBatchPlayButtonVisibility();
+            updateBatchSearchButtonVisibility();
             await loadMovies();
         } catch (error) {
             console.error('Error batch adding to box:', error);
@@ -2126,6 +2152,7 @@ category: movie.category,
             updateBatchAddButtonVisibility();
             updateBatchDeleteButtonVisibility();
             updateBatchPlayButtonVisibility();
+            updateBatchSearchButtonVisibility();
 
             // 刷新电影库、分类列表和电影盒子
             await loadMovies();
@@ -3989,6 +4016,237 @@ function initScanDirEvents() {
 
     // 确认保存
     elements.confirmScanMovieEdit.addEventListener('click', confirmScanMovieEdit);
+}
+
+function initBatchSearchEvents() {
+    elements.batchSearchBtn.addEventListener('click', openBatchSearchModal);
+    elements.closeBatchSearch.addEventListener('click', closeBatchSearchModal);
+    elements.batchSearchCancel.addEventListener('click', closeBatchSearchModal);
+    elements.batchSearchStart.addEventListener('click', startBatchSearch);
+    elements.batchSearchConfirm.addEventListener('click', confirmBatchSearch);
+    
+    elements.batchSearchModal.addEventListener('click', (e) => {
+        if (e.target === elements.batchSearchModal) {
+            closeBatchSearchModal();
+        }
+    });
+    
+    window.electronAPI.onBatchSearchProgress((progress) => {
+        updateBatchSearchProgress(progress);
+    });
+    
+    window.electronAPI.onBatchSaveProgress((progress) => {
+        updateBatchSaveProgress(progress);
+    });
+}
+
+function openBatchSearchModal() {
+    if (state.selectedMovies.size === 0) return;
+    
+    const selectedMoviesData = state.movies.filter(m => state.selectedMovies.has(m.id));
+    state.batchSearchResults = selectedMoviesData.map(movie => ({
+        movie: movie,
+        status: 'pending',
+        searchResult: null
+    }));
+    
+    elements.batchSearchProgress.textContent = `准备搜索 ${selectedMoviesData.length} 部电影`;
+    elements.batchSearchStart.style.display = 'inline-block';
+    elements.batchSearchCancel.style.display = 'inline-block';
+    elements.batchSearchConfirm.style.display = 'none';
+    state.batchSearchInProgress = false;
+    
+    renderBatchSearchMoviesList();
+    elements.batchSearchModal.style.display = 'flex';
+}
+
+function closeBatchSearchModal() {
+    if (state.batchSearchInProgress) {
+        const confirmed = confirm('搜索任务正在进行中，是否强制取消？');
+        if (!confirmed) {
+            return;
+        }
+        window.electronAPI.cancelBatchSearch();
+        state.batchSearchInProgress = false;
+    }
+    elements.batchSearchModal.style.display = 'none';
+    state.batchSearchResults = [];
+}
+
+function renderBatchSearchMoviesList() {
+    const html = `
+        <table>
+            <thead>
+                <tr>
+                    <th class="batch-search-movie-id">电影ID</th>
+                    <th class="batch-search-movie-name">电影名称</th>
+                    <th class="batch-search-movie-actors">演员</th>
+                    <th class="batch-search-movie-publisher">发行商</th>
+                    <th class="batch-search-movie-year">年份</th>
+                    <th class="batch-search-movie-poster">海报</th>
+                    <th class="batch-search-movie-status">状态</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${state.batchSearchResults.map(item => {
+                    const result = item.searchResult && item.searchResult.result;
+                    const displayData = item.status === 'completed' && result ? {
+                        name: result.title || item.movie.name,
+                        actors: result.actors && result.actors.length > 0 
+                            ? result.actors.map(a => a.name).join(', ') 
+                            : item.movie.actors || '-',
+                        publisher: result.production_companies || item.movie.studio || '-',
+                        year: result.year || item.movie.publishDate || item.movie.year || '-',
+                        poster: result.poster_url ? '有' : '无'
+                    } : {
+                        name: item.movie.name || '-',
+                        actors: item.movie.actors || '-',
+                        publisher: item.movie.studio || '-',
+                        year: item.movie.publishDate || item.movie.year || '-',
+                        poster: item.movie.poster ? '有' : '无'
+                    };
+                    
+                    return `
+                        <tr data-movie-id="${item.movie.id}">
+                            <td class="batch-search-movie-id">${item.movie.id || '-'}</td>
+                            <td class="batch-search-movie-name">${displayData.name}</td>
+                            <td class="batch-search-movie-actors">${displayData.actors}</td>
+                            <td class="batch-search-movie-publisher">${displayData.publisher}</td>
+                            <td class="batch-search-movie-year">${displayData.year}</td>
+                            <td class="batch-search-movie-poster">${displayData.poster}</td>
+                            <td class="batch-search-movie-status ${getStatusClass(item.status)}">
+                                ${getStatusText(item.status)}
+                            </td>
+                        </tr>
+                    `;
+                }).join('')}
+            </tbody>
+        </table>
+    `;
+    
+    elements.batchSearchMoviesList.innerHTML = html;
+}
+
+function getStatusClass(status) {
+    switch(status) {
+        case 'pending': return 'batch-search-status-pending';
+        case 'searching': return 'batch-search-status-searching';
+        case 'completed': return 'batch-search-status-completed';
+        case 'none': return 'batch-search-status-none';
+        case 'error': return 'batch-search-status-none';
+        default: return 'batch-search-status-pending';
+    }
+}
+
+function getStatusText(status) {
+    switch(status) {
+        case 'pending': return '未搜索';
+        case 'searching': return '搜索中';
+        case 'completed': return '完成搜索';
+        case 'none': return '无记录';
+        case 'error': return '搜索错误';
+        default: return '未搜索';
+    }
+}
+
+async function startBatchSearch() {
+    if (state.batchSearchInProgress) return;
+    
+    const adapterType = document.querySelector('input[name="batch-search-adapter"]:checked').value;
+    
+    state.batchSearchInProgress = true;
+    elements.batchSearchStart.style.display = 'none';
+    
+    const movies = state.batchSearchResults.map(item => ({
+        id: item.movie.id,
+        movieId: item.movie.id,
+        name: item.movie.name || item.movie.title,
+        category: item.movie.category,
+        folderName: item.movie.folderName,
+        path: item.movie.path || item.movie.basePath
+    }));
+    
+    try {
+        const result = await window.electronAPI.batchSearchMovies({ movies, adapterType });
+        
+        if (result.error) {
+            showToast('批量搜索失败: ' + result.error);
+            state.batchSearchInProgress = false;
+            elements.batchSearchStart.style.display = 'inline-block';
+            return;
+        }
+        
+        state.batchSearchResults = result.results.map(item => ({
+            movie: item.movie,
+            status: item.searchResult.status,
+            searchResult: item.searchResult
+        }));
+        
+        renderBatchSearchMoviesList();
+        elements.batchSearchProgress.textContent = `搜索完成: ${state.batchSearchResults.filter(r => r.status === 'completed').length} 部找到`;
+        
+        const completedCount = state.batchSearchResults.filter(r => r.status === 'completed').length;
+        if (completedCount > 0) {
+            elements.batchSearchConfirm.style.display = 'inline-block';
+        }
+        
+        state.batchSearchInProgress = false;
+    } catch (error) {
+        console.error('Batch search error:', error);
+        showToast('批量搜索失败: ' + error.message);
+        state.batchSearchInProgress = false;
+        elements.batchSearchStart.style.display = 'inline-block';
+    }
+}
+
+function updateBatchSearchProgress(progress) {
+    const { current, total, movieId, status } = progress;
+    elements.batchSearchProgress.textContent = `正在搜索: ${current}/${total}`;
+    
+    const item = state.batchSearchResults.find(r => r.movie.id === movieId);
+    if (item) {
+        item.status = status;
+        renderBatchSearchMoviesList();
+    }
+}
+
+function updateBatchSaveProgress(progress) {
+    const { current, total, movieName } = progress;
+    elements.batchSearchProgress.textContent = `正在保存: ${current}/${total}（${movieName || '未知'}）`;
+}
+
+async function confirmBatchSearch() {
+    if (state.batchSearchInProgress) return;
+    
+    const completedItems = state.batchSearchResults.filter(r => r.status === 'completed' && r.searchResult && r.searchResult.result);
+    
+    if (completedItems.length === 0) {
+        showToast('没有可保存的搜索结果');
+        return;
+    }
+    
+    state.batchSearchInProgress = true;
+    elements.batchSearchConfirm.disabled = true;
+    elements.batchSearchConfirm.textContent = '保存中...';
+    elements.batchSearchProgress.textContent = '正在保存...';
+    
+    try {
+        const result = await window.electronAPI.batchSaveMovies({ batchResults: completedItems });
+        
+        if (result.error) {
+            showToast('保存失败: ' + result.error);
+        } else {
+            elements.batchSearchProgress.textContent = '完成电影保存';
+            elements.batchSearchConfirm.style.display = 'none';
+            showToast(`成功保存 ${completedItems.length} 部电影信息`);
+        }
+    } catch (error) {
+        console.error('Batch save error:', error);
+        showToast('保存失败: ' + error.message);
+    }
+    
+    state.batchSearchInProgress = false;
+    elements.batchSearchConfirm.disabled = false;
 }
 
 // 初始化应用

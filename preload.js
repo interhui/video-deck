@@ -177,6 +177,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // 视频信息获取
     getVideoInfo: (videoPath) => ipcRenderer.invoke('get-video-info', videoPath),
 
+    // 批量电影搜索
+    batchSearchMovies: (data) => ipcRenderer.invoke('batch-search-movies', data),
+    batchSaveMovies: (data) => ipcRenderer.invoke('batch-save-movies', data),
+    cancelBatchSearch: () => ipcRenderer.invoke('cancel-batch-search'),
+    
+    onBatchSearchProgress: (callback) => {
+        ipcRenderer.on('batch-search-progress', (event, data) => callback(data));
+    },
+    onBatchSaveProgress: (callback) => {
+        ipcRenderer.on('batch-save-progress', (event, data) => callback(data));
+    },
+
 // 事件监听
     onOpenAddMovie: (callback) => {
         ipcRenderer.on('open-add-movie', callback);

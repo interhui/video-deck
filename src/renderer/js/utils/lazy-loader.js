@@ -62,7 +62,6 @@ class LazyLoader {
     async loadNextPage() {
         console.debug('LazyLoader: loadNextPage called', { isLoading: this.isLoading, hasMore: this.hasMore });
         if (this.isLoading || !this.hasMore) {
-            console.debug('LazyLoader: Skipping loadNextPage');
             return;
         }
 
@@ -122,10 +121,8 @@ class LazyLoader {
      * 检测滚动是否到达底部
      */
     handleScroll() {
-        console.debug('LazyLoader: handleScroll called', { isLoading: this.isLoading, hasMore: this.hasMore });
 
         if (this.isLoading || !this.hasMore) {
-            console.debug('LazyLoader: Skipping - isLoading:', this.isLoading, 'hasMore:', this.hasMore);
             return;
         }
 

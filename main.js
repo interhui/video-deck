@@ -24,6 +24,7 @@ const ActorService = require('./src/main/services/ActorService');
 const TMDBMovieAdapterService = require('./src/main/services/TMDBAdapterService');
 const R18AdapterService = require('./src/main/services/R18AdapterService');
 const PlayerService = require('./src/main/services/PlayerService');
+const BatchSearchService = require('./src/main/services/BatchSearchService');
 const { setupIpcHandlers } = require('./src/main/ipc-handlers');
 const { setGlobalProxy } = require('./src/main/utils/http-utils');
 
@@ -46,6 +47,7 @@ let actorService = null;
 let tmdbMovieAdapterService = null;
 let r18AdapterService = null;
 let playerService = null;
+let batchSearchService = null;
 
 /**
  * 初始化服务
@@ -77,6 +79,7 @@ async function initializeServices() {
     
     r18AdapterService = new R18AdapterService(settingsService, tmdbMovieAdapterService);
     playerService = new PlayerService();
+    batchSearchService = new BatchSearchService(settingsService, tmdbMovieAdapterService, r18AdapterService, movieService, fileService);
 
     // 将 categoryService 传递给 movieService（如果支持）
     if (typeof movieService.setCategoryService === 'function') {
@@ -524,6 +527,7 @@ app.whenReady().then(async () => {
         tmdbMovieAdapterService,
         r18AdapterService,
         playerService,
+        batchSearchService,
         getMainWindow: () => mainWindow,
         createMovieDetailWindow,
         createBoxWindow,
