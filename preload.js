@@ -181,12 +181,23 @@ contextBridge.exposeInMainWorld('electronAPI', {
     batchSearchMovies: (data) => ipcRenderer.invoke('batch-search-movies', data),
     batchSaveMovies: (data) => ipcRenderer.invoke('batch-save-movies', data),
     cancelBatchSearch: () => ipcRenderer.invoke('cancel-batch-search'),
-    
+
+    // 批量演员搜索
+    batchSearchActors: (data) => ipcRenderer.invoke('batch-search-actors', data),
+    batchSaveActors: (data) => ipcRenderer.invoke('batch-save-actors', data),
+    cancelBatchActorSearch: () => ipcRenderer.invoke('cancel-batch-actor-search'),
+
     onBatchSearchProgress: (callback) => {
         ipcRenderer.on('batch-search-progress', (event, data) => callback(data));
     },
     onBatchSaveProgress: (callback) => {
         ipcRenderer.on('batch-save-progress', (event, data) => callback(data));
+    },
+    onBatchActorSearchProgress: (callback) => {
+        ipcRenderer.on('batch-actor-search-progress', (event, data) => callback(data));
+    },
+    onBatchActorSaveProgress: (callback) => {
+        ipcRenderer.on('batch-actor-save-progress', (event, data) => callback(data));
     },
 
 // 事件监听

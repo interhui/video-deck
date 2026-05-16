@@ -108,6 +108,26 @@ class R18AdapterService {
     }
 
     /**
+     * 从日期字符串中提取年份
+     * @param {string} dateStr - 日期字符串
+     * @returns {string} 年份字符串，无法解析时返回空字符串
+     */
+    extractYear(dateStr) {
+        if (!dateStr) return '';
+        try {
+            const year = new Date(dateStr).getFullYear();
+            if (isNaN(year)) {
+                console.warn(`[R18AdapterService] Cannot parse year from date: ${dateStr}`);
+                return '';
+            }
+            return year.toString();
+        } catch (error) {
+            console.warn(`[R18AdapterService] Error parsing date: ${dateStr}`, error.message);
+            return '';
+        }
+    }
+
+    /**
      * 检查图片URL是否可访问
      * @param {string} url - 图片URL
      * @returns {Promise<boolean>} URL可访问返回true
@@ -142,7 +162,8 @@ class R18AdapterService {
             from
                 derived_video as dv
             where
-                dv.title_ja like '%${escapedKeyword}%' or dv.dvd_id like '%${escapedKeyword}%'
+                dv.dvd_id is not null and
+                (dv.title_ja like '%${escapedKeyword}%' or dv.dvd_id like '%${escapedKeyword}%')
         `;
 
         const rows = await this.query(sql);
@@ -150,7 +171,7 @@ class R18AdapterService {
         return rows.map(row => ({
             title: row.title || '',
             overview: row.overview || '',
-            year: row.year || '',
+            year: this.extractYear(row.year),
             search_id: row.search_id,
             poster_url: row.poster_url || null
         }));
@@ -163,7 +184,8 @@ class R18AdapterService {
             throw new Error('R18 database URL not configured');
         }
 
-        if (!searchId) {
+        if (!searchId || typeof searchId !== 'string' || searchId.trim() === '') {
+            console.error('[R18AdapterService] Invalid searchId:', searchId);
             throw new Error('Search ID is required');
         }
 
@@ -247,12 +269,12 @@ class R18AdapterService {
             title: movie.title || '',
             overview: movie.overview || '',
             tags: tags || '',
-            production_companies: movie.productionCompanies || '',
+            production_companies: movie.production_companies || '',
             runtime: movie.runtime || 0,
             poster_url: posterAccessible ? posterUrl : null,
             actors: actors,
             directors: directors,
-            year: movie.year || ''
+            year: this.extractYear(movie.year)
         };
     }
 
