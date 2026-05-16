@@ -310,4 +310,51 @@ describe('IndexService', () => {
             expect(typeof updatedMovie.update_time).toBe('number');
         });
     });
+
+    describe('sortMovies', () => {
+        test('SVC-INDEX-022: 按添加时间升序排序', async () => {
+            await service.rebuildAllIndexes(moviesDir);
+            
+            const testMovies = [
+                { name: 'Movie A', update_time: 1000 },
+                { name: 'Movie B', update_time: 3000 },
+                { name: 'Movie C', update_time: 2000 }
+            ];
+            
+            const sorted = service.sortMovies(testMovies, 'addtime', 'asc');
+            expect(sorted[0].name).toBe('Movie A');
+            expect(sorted[1].name).toBe('Movie C');
+            expect(sorted[2].name).toBe('Movie B');
+        });
+
+        test('SVC-INDEX-023: 按添加时间降序排序', async () => {
+            await service.rebuildAllIndexes(moviesDir);
+            
+            const testMovies = [
+                { name: 'Movie A', update_time: 1000 },
+                { name: 'Movie B', update_time: 3000 },
+                { name: 'Movie C', update_time: 2000 }
+            ];
+            
+            const sorted = service.sortMovies(testMovies, 'addtime', 'desc');
+            expect(sorted[0].name).toBe('Movie B');
+            expect(sorted[1].name).toBe('Movie C');
+            expect(sorted[2].name).toBe('Movie A');
+        });
+
+        test('SVC-INDEX-024: 缺少update_time时按默认值排序', async () => {
+            await service.rebuildAllIndexes(moviesDir);
+            
+            const testMovies = [
+                { name: 'Movie A', update_time: 1000 },
+                { name: 'Movie B' },
+                { name: 'Movie C', update_time: 2000 }
+            ];
+            
+            const sorted = service.sortMovies(testMovies, 'addtime', 'asc');
+            expect(sorted[0].name).toBe('Movie B');
+            expect(sorted[1].name).toBe('Movie A');
+            expect(sorted[2].name).toBe('Movie C');
+        });
+    });
 });
