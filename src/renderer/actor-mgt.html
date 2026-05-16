@@ -26,6 +26,9 @@
                 </div>
             </div>
             <div class="toolbar-actions">
+                <button id="batch-search-actor-btn" class="btn btn-secondary" style="display: none;">
+                    批量搜索 (<span id="selected-count">0</span>)
+                </button>
                 <button id="add-actor-btn" class="btn btn-primary">新建演员</button>
                 <div class="view-toggle">
                     <button id="view-card-btn" class="btn btn-icon active" title="卡片视图">▦</button>
@@ -223,6 +226,60 @@
             <div class="modal-footer">
                 <button id="confirm-actor-search" class="btn btn-primary" disabled>确认</button>
                 <button id="cancel-actor-search" class="btn btn-secondary">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 批量演员搜索弹窗 -->
+    <div id="batch-actor-search-modal" class="modal" style="display: none;">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>批量演员搜索</h2>
+                <button class="close-btn" id="close-batch-actor-search">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- 进度提示 -->
+                <div id="batch-actor-progress" class="batch-actor-progress" style="display: none;">
+                    <span id="batch-actor-progress-text">正在搜索: 0/0</span>
+                </div>
+                <!-- 搜索配置区域 -->
+                <div class="batch-actor-config">
+                    <div class="form-group">
+                        <label>搜索适配器：</label>
+                        <div class="actor-adapter-options">
+                            <label class="actor-adapter-radio">
+                                <input type="radio" name="batch-actor-adapter" value="tmdb" checked>
+                                <span>TMDB演员搜索</span>
+                            </label>
+                            <label class="actor-adapter-radio">
+                                <input type="radio" name="batch-actor-adapter" value="r18">
+                                <span>R18演员搜索</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <!-- 批量搜索结果表格 -->
+                <div class="batch-actor-results-container">
+                    <table class="batch-actor-table">
+                        <thead>
+                            <tr>
+                                <th>姓名</th>
+                                <th>生日</th>
+                                <th>备注</th>
+                                <th>照片</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody id="batch-actor-results-body">
+                            <!-- 动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="batch-actor-search-btn" class="btn btn-primary">搜索</button>
+                <button id="batch-actor-save-btn" class="btn btn-primary" style="display: none;">保存</button>
+                <button id="batch-actor-close-btn" class="btn btn-secondary">关闭</button>
             </div>
         </div>
     </div>

@@ -207,6 +207,7 @@ function setupIpcHandlers(services) {
         r18AdapterService,
         playerService,
         batchSearchService,
+        batchActorSearchService,
         getMainWindow,
         createMovieDetailWindow,
         createBoxWindow,
@@ -1764,6 +1765,51 @@ function setupIpcHandlers(services) {
             return { success: true };
         } catch (error) {
             console.error('Error cancelling batch search:', error);
+            return { error: error.message };
+        }
+    });
+
+    // ==================== 批量演员搜索 ====================
+
+    ipcMain.handle('batch-search-actors', async (event, { actors, adapterType }) => {
+        try {
+            const webContents = event.sender;
+
+            const results = await batchActorSearchService.batchSearchActors(actors, adapterType, (progress) => {
+                webContents.send('batch-actor-search-progress', progress);
+            });
+
+            return { success: true, results };
+        } catch (error) {
+            console.error('Error in batch actor search:', error);
+            return { error: error.message };
+        }
+    });
+
+    ipcMain.handle('batch-save-actors', async (event, { batchResults }) => {
+        try {
+            const webContents = event.sender;
+
+            const savedResults = await batchActorSearchService.batchSaveActors(batchResults, (progress) => {
+                webContents.send('batch-actor-save-progress', progress);
+            });
+
+            // 广播演员更新
+            broadcastActorsUpdated();
+
+            return { success: true, savedResults };
+        } catch (error) {
+            console.error('Error in batch actor save:', error);
+            return { error: error.message };
+        }
+    });
+
+    ipcMain.handle('cancel-batch-actor-search', async () => {
+        try {
+            batchActorSearchService.cancel();
+            return { success: true };
+        } catch (error) {
+            console.error('Error cancelling batch actor search:', error);
             return { error: error.message };
         }
     });

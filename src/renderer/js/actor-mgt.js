@@ -58,9 +58,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cancelActorSearchBtn = document.getElementById('cancel-actor-search');
     const actorSearchTriggerBtn = document.getElementById('actor-search-trigger-btn');
 
+    // 批量演员搜索弹窗 DOM 元素
+    const batchActorSearchModal = document.getElementById('batch-actor-search-modal');
+    const closeBatchActorSearchBtn = document.getElementById('close-batch-actor-search');
+    const batchActorSearchBtn = document.getElementById('batch-actor-search-btn');
+    const batchActorSaveBtn = document.getElementById('batch-actor-save-btn');
+    const batchActorCloseBtn = document.getElementById('batch-actor-close-btn');
+    const batchActorProgress = document.getElementById('batch-actor-progress');
+    const batchActorProgressText = document.getElementById('batch-actor-progress-text');
+    const batchActorResultsBody = document.getElementById('batch-actor-results-body');
+    const batchSearchActorBtn = document.getElementById('batch-search-actor-btn');
+    const selectedCountSpan = document.getElementById('selected-count');
+
     // 演员搜索状态
     let actorSearchResultsList = [];
     let selectedActorSearchResult = null;
+
+    // 批量搜索状态
+    let selectedActors = new Set(); // 选中的演员名称集合
+    let batchSearchResults = []; // 批量搜索结果
+    let isBatchSearching = false;
+    let isBatchSaving = false;
 
     // 常量
     const ACTOR_SEARCH_MAX_RESULTS = 10;
@@ -131,6 +149,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         emptyCardList.style.display = 'none';
         actorCards.innerHTML = actorList.map(actor => `
             <div class="actor-card" data-name="${escapeHtml(actor.name)}">
+                <label class="actor-checkbox-label">
+                    <input type="checkbox" class="actor-checkbox" data-name="${escapeHtml(actor.name)}" ${selectedActors.has(actor.name) ? 'checked' : ''}>
+                </label>
                 <span class="actor-favorite-tag ${actor.favorites ? 'favorited' : ''}" data-name="${escapeHtml(actor.name)}" onclick="event.stopPropagation(); openActorRatingModal('${escapeHtml(actor.name)}')">${actor.favorites ? '❤' : '♡'}</span>
                 <div class="actor-card-photo">
                     ${actor.photo
@@ -148,7 +169,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // 绑定点击事件
         actorCards.querySelectorAll('.actor-card').forEach(card => {
-            card.addEventListener('click', () => editActor(card.dataset.name));
+            card.addEventListener('click', (e) => {
+                // 如果点击的是复选框，不触发行编辑
+                if (e.target.classList.contains('actor-checkbox')) {
+                    return;
+                }
+                editActor(card.dataset.name);
+            });
+        });
+
+        // 绑定复选框事件
+        actorCards.querySelectorAll('.actor-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                const actorName = e.target.dataset.name;
+                if (e.target.checked) {
+                    selectedActors.add(actorName);
+                } else {
+                    selectedActors.delete(actorName);
+                }
+                updateBatchSearchButton();
+            });
         });
     }
 
@@ -163,6 +203,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         emptyTableList.style.display = 'none';
         actorTableBody.innerHTML = actorList.map(actor => `
             <tr data-name="${escapeHtml(actor.name)}">
+                <td class="actor-table-checkbox">
+                    <input type="checkbox" class="actor-checkbox" data-name="${escapeHtml(actor.name)}" ${selectedActors.has(actor.name) ? 'checked' : ''}>
+                </td>
                 <td class="actor-table-photo">
                     ${actor.photo
                         ? `<img src="file://${actor.photo}" alt="${escapeHtml(actor.name)}">`
@@ -181,6 +224,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </td>
             </tr>
         `).join('');
+
+        // 绑定复选框事件
+        actorTableBody.querySelectorAll('.actor-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                const actorName = e.target.dataset.name;
+                if (e.target.checked) {
+                    selectedActors.add(actorName);
+                } else {
+                    selectedActors.delete(actorName);
+                }
+                updateBatchSearchButton();
+            });
+        });
     }
 
     // 关闭评分模态框
@@ -809,6 +865,283 @@ document.addEventListener('DOMContentLoaded', async () => {
         } finally {
             confirmActorSearchBtn.disabled = false;
             confirmActorSearchBtn.textContent = '确认';
+        }
+    }
+
+    // ==================== 批量演员搜索功能 ====================
+
+    // 更新批量搜索按钮状态
+    function updateBatchSearchButton() {
+        const count = selectedActors.size;
+        selectedCountSpan.textContent = count;
+        batchSearchActorBtn.style.display = count > 0 ? 'inline-block' : 'none';
+    }
+
+    // 批量搜索按钮点击
+    batchSearchActorBtn.addEventListener('click', () => {
+        openBatchActorSearchModal();
+    });
+
+    // 关闭批量演员搜索弹窗
+    batchActorCloseBtn.addEventListener('click', () => {
+        if (isBatchSearching) {
+            if (!confirm('搜索正在进行中，确定要关闭吗？')) {
+                return;
+            }
+            window.electronAPI.cancelBatchActorSearch();
+        }
+        closeBatchActorSearchModal();
+    });
+
+    // 点击批量演员搜索弹窗背景关闭
+    batchActorSearchModal.addEventListener('click', (e) => {
+        if (e.target === batchActorSearchModal) {
+            if (isBatchSearching) {
+                if (!confirm('搜索正在进行中，确定要关闭吗？')) {
+                    return;
+                }
+                window.electronAPI.cancelBatchActorSearch();
+            }
+            closeBatchActorSearchModal();
+        }
+    });
+
+    // 关闭批量演员搜索弹窗按钮
+    closeBatchActorSearchBtn.addEventListener('click', () => {
+        if (isBatchSearching) {
+            if (!confirm('搜索正在进行中，确定要关闭吗？')) {
+                return;
+            }
+            window.electronAPI.cancelBatchActorSearch();
+        }
+        closeBatchActorSearchModal();
+    });
+
+    // 执行批量搜索
+    batchActorSearchBtn.addEventListener('click', () => {
+        startBatchActorSearch();
+    });
+
+    // 执行批量保存
+    batchActorSaveBtn.addEventListener('click', () => {
+        startBatchActorSave();
+    });
+
+    /**
+     * 打开批量演员搜索弹窗
+     */
+    function openBatchActorSearchModal() {
+        batchSearchResults = [];
+        resetBatchActorSearchForm();
+        renderBatchActorResults();
+        batchActorSearchModal.style.display = 'flex';
+    }
+
+    /**
+     * 重置批量演员搜索表单
+     */
+    function resetBatchActorSearchForm() {
+        batchActorProgress.style.display = 'none';
+        batchActorProgressText.textContent = '正在搜索: 0/0';
+        batchActorSearchBtn.style.display = 'inline-block';
+        batchActorSaveBtn.style.display = 'none';
+        batchActorCloseBtn.textContent = '关闭';
+        batchActorSearchBtn.disabled = false;
+        batchActorSaveBtn.disabled = false;
+        isBatchSearching = false;
+        isBatchSaving = false;
+    }
+
+    /**
+     * 关闭批量演员搜索弹窗
+     */
+    function closeBatchActorSearchModal() {
+        batchActorSearchModal.style.display = 'none';
+        resetBatchActorSearchForm();
+    }
+
+    /**
+     * 渲染批量搜索结果表格
+     */
+    function renderBatchActorResults() {
+        batchActorResultsBody.innerHTML = batchSearchResults.map((item, index) => {
+            let statusText = '';
+            let statusClass = '';
+            switch (item.status) {
+                case 'pending':
+                    statusText = '未搜索';
+                    statusClass = 'status-pending';
+                    break;
+                case 'searching':
+                    statusText = '搜索中...';
+                    statusClass = 'status-searching';
+                    break;
+                case 'completed':
+                    statusText = '已完成';
+                    statusClass = 'status-completed';
+                    break;
+                case 'none':
+                    statusText = '未找到';
+                    statusClass = 'status-none';
+                    break;
+                case 'error':
+                    statusText = '错误';
+                    statusClass = 'status-error';
+                    break;
+                case 'saving':
+                    statusText = '保存中...';
+                    statusClass = 'status-saving';
+                    break;
+                case 'saved':
+                    statusText = '已保存';
+                    statusClass = 'status-saved';
+                    break;
+                default:
+                    statusText = item.status || '未知';
+                    statusClass = '';
+            }
+
+            return `
+                <tr data-index="${index}">
+                    <td>${escapeHtml(item.actorName)}</td>
+                    <td>${escapeHtml(item.result?.birthday || '-')}</td>
+                    <td>${escapeHtml(item.result?.memo || '-')}</td>
+                    <td>${item.result?.profile_url ? '●' : '-'}</td>
+                    <td class="batch-actor-status ${statusClass}">${statusText}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    /**
+     * 开始批量演员搜索
+     */
+    async function startBatchActorSearch() {
+        const actors = Array.from(selectedActors);
+        if (actors.length === 0) {
+            alert('请选择要搜索的演员');
+            return;
+        }
+
+        const selectedAdapter = document.querySelector('input[name="batch-actor-adapter"]:checked')?.value || 'tmdb';
+
+        // 初始化批量搜索结果
+        batchSearchResults = actors.map(name => ({
+            actorName: name,
+            status: 'pending',
+            result: null
+        }));
+        renderBatchActorResults();
+
+        // 更新UI状态
+        batchActorProgress.style.display = 'block';
+        batchActorSearchBtn.style.display = 'none';
+        batchActorCloseBtn.textContent = '取消';
+        isBatchSearching = true;
+
+        // 监听进度更新
+        window.electronAPI.onBatchActorSearchProgress((progress) => {
+            if (progress.status === 'searching') {
+                batchActorProgressText.textContent = `正在搜索: ${progress.current}/${progress.total}（${progress.actorName}）`;
+
+                // 更新对应演员的状态
+                const item = batchSearchResults.find(r => r.actorName === progress.actorName);
+                if (item) {
+                    item.status = 'searching';
+                    renderBatchActorResults();
+                }
+            } else {
+                // 搜索完成
+                batchActorProgressText.textContent = `搜索完成: ${progress.current}/${progress.total}`;
+
+                const item = batchSearchResults.find(r => r.actorName === progress.actorName);
+                if (item) {
+                    item.status = progress.status;
+                    item.result = progress.result;
+                    renderBatchActorResults();
+                }
+            }
+        });
+
+        try {
+            const result = await window.electronAPI.batchSearchActors({
+                actors: actors,
+                adapterType: selectedAdapter
+            });
+
+            isBatchSearching = false;
+            batchActorCloseBtn.textContent = '关闭';
+
+            if (result.error) {
+                alert('批量搜索失败: ' + result.error);
+                return;
+            }
+
+            // 显示保存按钮
+            batchActorSaveBtn.style.display = 'inline-block';
+
+        } catch (error) {
+            isBatchSearching = false;
+            batchActorCloseBtn.textContent = '关闭';
+            console.error('Error in batch actor search:', error);
+            alert('批量搜索失败: ' + error.message);
+        }
+    }
+
+    /**
+     * 开始批量保存演员
+     */
+    async function startBatchActorSave() {
+        const successItems = batchSearchResults.filter(r => r.status === 'completed' && r.result);
+        if (successItems.length === 0) {
+            alert('没有可保存的演员');
+            return;
+        }
+
+        // 更新UI状态
+        batchActorSearchBtn.style.display = 'none';
+        batchActorSaveBtn.style.display = 'none';
+        batchActorCloseBtn.textContent = '取消';
+        isBatchSaving = true;
+        batchActorProgressText.textContent = '正在保存...';
+
+        // 监听保存进度
+        window.electronAPI.onBatchActorSaveProgress((progress) => {
+            batchActorProgressText.textContent = `正在保存: ${progress.current}/${progress.total}（${progress.actorName}）`;
+
+            const item = batchSearchResults.find(r => r.actorName === progress.actorName);
+            if (item) {
+                item.status = progress.status;
+                renderBatchActorResults();
+            }
+        });
+
+        try {
+            const result = await window.electronAPI.batchSaveActors({
+                batchResults: batchSearchResults.filter(r => r.status === 'completed' && r.result)
+            });
+
+            isBatchSaving = false;
+            batchActorCloseBtn.textContent = '关闭';
+
+            if (result.error) {
+                alert('批量保存失败: ' + result.error);
+                return;
+            }
+
+            alert('批量保存完成！');
+            closeBatchActorSearchModal();
+
+            // 清空选中状态并刷新列表
+            selectedActors.clear();
+            updateBatchSearchButton();
+            await loadActors();
+
+        } catch (error) {
+            isBatchSaving = false;
+            batchActorCloseBtn.textContent = '关闭';
+            console.error('Error in batch actor save:', error);
+            alert('批量保存失败: ' + error.message);
         }
     }
 
