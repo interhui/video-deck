@@ -4018,6 +4018,17 @@ function initScanDirEvents() {
     elements.confirmScanMovieEdit.addEventListener('click', confirmScanMovieEdit);
 }
 
+/**
+ * 截断文本到指定长度，超长部分用省略号替代
+ * @param {string} text - 要截断的文本
+ * @param {number} maxLength - 最大长度
+ * @returns {string} 截断后的文本
+ */
+function truncateText(text, maxLength) {
+    if (!text || text.length <= maxLength) return text || '';
+    return text.substring(0, maxLength) + '...';
+}
+
 function initBatchSearchEvents() {
     elements.batchSearchBtn.addEventListener('click', openBatchSearchModal);
     elements.closeBatchSearch.addEventListener('click', closeBatchSearchModal);
@@ -4050,7 +4061,7 @@ function openBatchSearchModal() {
         searchResult: null
     }));
     
-    elements.batchSearchProgress.textContent = `准备搜索 ${selectedMoviesData.length} 部电影`;
+    elements.batchSearchProgress.textContent = truncateText(`准备搜索 ${selectedMoviesData.length} 部电影`, 54);
     elements.batchSearchStart.style.display = 'inline-block';
     elements.batchSearchCancel.style.display = 'inline-block';
     elements.batchSearchConfirm.style.display = 'none';
@@ -4156,6 +4167,8 @@ async function startBatchSearch() {
     
     state.batchSearchInProgress = true;
     elements.batchSearchStart.style.display = 'none';
+
+    elements.batchSearchConfirm.textContent = '保存';
     
     const movies = state.batchSearchResults.map(item => ({
         id: item.movie.id,
@@ -4183,7 +4196,7 @@ async function startBatchSearch() {
         }));
         
         renderBatchSearchMoviesList();
-        elements.batchSearchProgress.textContent = `搜索完成: ${state.batchSearchResults.filter(r => r.status === 'completed').length} 部找到`;
+        elements.batchSearchProgress.textContent = truncateText(`搜索完成: ${state.batchSearchResults.filter(r => r.status === 'completed').length} 部找到`, 54);
         
         const completedCount = state.batchSearchResults.filter(r => r.status === 'completed').length;
         if (completedCount > 0) {
@@ -4201,7 +4214,7 @@ async function startBatchSearch() {
 
 function updateBatchSearchProgress(progress) {
     const { current, total, movieId, status } = progress;
-    elements.batchSearchProgress.textContent = `正在搜索: ${current}/${total}`;
+    elements.batchSearchProgress.textContent = truncateText(`正在搜索: ${current}/${total}`, 54);
     
     const item = state.batchSearchResults.find(r => r.movie.id === movieId);
     if (item) {
@@ -4212,7 +4225,7 @@ function updateBatchSearchProgress(progress) {
 
 function updateBatchSaveProgress(progress) {
     const { current, total, movieName } = progress;
-    elements.batchSearchProgress.textContent = `正在保存: ${current}/${total}（${movieName || '未知'}）`;
+    elements.batchSearchProgress.textContent = truncateText(`正在保存: ${current}/${total}（${movieName || '未知'}）`, 54);
 }
 
 async function confirmBatchSearch() {
@@ -4228,7 +4241,7 @@ async function confirmBatchSearch() {
     state.batchSearchInProgress = true;
     elements.batchSearchConfirm.disabled = true;
     elements.batchSearchConfirm.textContent = '保存中...';
-    elements.batchSearchProgress.textContent = '正在保存...';
+    elements.batchSearchProgress.textContent = truncateText('正在保存...', 54);
     
     try {
         const result = await window.electronAPI.batchSaveMovies({ batchResults: completedItems });
@@ -4236,7 +4249,7 @@ async function confirmBatchSearch() {
         if (result.error) {
             showToast('保存失败: ' + result.error);
         } else {
-            elements.batchSearchProgress.textContent = '完成电影保存';
+            elements.batchSearchProgress.textContent = truncateText('完成电影保存', 54);
             elements.batchSearchConfirm.style.display = 'none';
             showToast(`成功保存 ${completedItems.length} 部电影信息`);
         }

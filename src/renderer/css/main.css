@@ -3042,9 +3042,11 @@ body {
     border-bottom: 1px solid var(--border-color);
 }
 
-.batch-search-progress {
+#batch-search-progress {
+    max-width: 1000px;
     color: var(--text-secondary);
-    font-size: 14px;
+    font-size: 13px;
+    display: block;
 }
 
 .batch-search-actions {
