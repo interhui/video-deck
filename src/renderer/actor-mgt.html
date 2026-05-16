@@ -238,9 +238,14 @@
                 <button class="close-btn" id="close-batch-actor-search">&times;</button>
             </div>
             <div class="modal-body">
-                <!-- 进度提示 -->
-                <div id="batch-actor-progress" class="batch-actor-progress" style="display: none;">
-                    <span id="batch-actor-progress-text">正在搜索: 0/0</span>
+                <!-- 批量搜索工具栏 -->
+                <div class="batch-search-toolbar">
+                    <span id="batch-actor-progress">准备就绪</span>
+                    <div class="batch-search-actions">
+                        <button id="batch-actor-search-btn" class="btn btn-primary">搜索</button>
+                        <button id="batch-actor-save-btn" class="btn btn-primary" style="display: none;">保存</button>
+                        <button id="batch-actor-close-btn" class="btn btn-secondary">关闭</button>
+                    </div>
                 </div>
                 <!-- 搜索配置区域 -->
                 <div class="batch-actor-config">
@@ -263,11 +268,11 @@
                     <table class="batch-actor-table">
                         <thead>
                             <tr>
-                                <th>姓名</th>
-                                <th>生日</th>
-                                <th>备注</th>
-                                <th>照片</th>
-                                <th>状态</th>
+                                <th class="col-name">姓名</th>
+                                <th class="col-birthday">生日</th>
+                                <th class="col-memo">备注</th>
+                                <th class="col-photo">照片</th>
+                                <th class="col-status">状态</th>
                             </tr>
                         </thead>
                         <tbody id="batch-actor-results-body">
@@ -275,11 +280,6 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button id="batch-actor-search-btn" class="btn btn-primary">搜索</button>
-                <button id="batch-actor-save-btn" class="btn btn-primary" style="display: none;">保存</button>
-                <button id="batch-actor-close-btn" class="btn btn-secondary">关闭</button>
             </div>
         </div>
     </div>

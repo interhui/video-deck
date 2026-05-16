@@ -931,7 +931,19 @@ document.addEventListener('DOMContentLoaded', async () => {
      * 打开批量演员搜索弹窗
      */
     function openBatchActorSearchModal() {
-        batchSearchResults = [];
+        // 用选中演员的当前信息初始化批量搜索结果
+        batchSearchResults = Array.from(selectedActors).map(name => {
+            const actor = actors.find(a => a.name === name);
+            return {
+                actorName: name,
+                status: 'pending',
+                result: actor ? {
+                    birthday: actor.birthday || '',
+                    memo: actor.memo || '',
+                    profile_url: actor.photo ? 'exists' : null
+                } : null
+            };
+        });
         resetBatchActorSearchForm();
         renderBatchActorResults();
         batchActorSearchModal.style.display = 'flex';
@@ -941,8 +953,7 @@ document.addEventListener('DOMContentLoaded', async () => {
      * 重置批量演员搜索表单
      */
     function resetBatchActorSearchForm() {
-        batchActorProgress.style.display = 'none';
-        batchActorProgressText.textContent = '正在搜索: 0/0';
+        batchActorProgress.textContent = '准备就绪';
         batchActorSearchBtn.style.display = 'inline-block';
         batchActorSaveBtn.style.display = 'none';
         batchActorCloseBtn.textContent = '关闭';
@@ -958,6 +969,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     function closeBatchActorSearchModal() {
         batchActorSearchModal.style.display = 'none';
         resetBatchActorSearchForm();
+    }
+
+    /**
+     * 截断文本
+     */
+    function truncateText(text, maxLength = 40) {
+        if (!text) return '-';
+        if (text.length <= maxLength) return escapeHtml(text);
+        return escapeHtml(text.substring(0, maxLength)) + '...';
     }
 
     /**
@@ -1003,10 +1023,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             return `
                 <tr data-index="${index}">
-                    <td>${escapeHtml(item.actorName)}</td>
-                    <td>${escapeHtml(item.result?.birthday || '-')}</td>
-                    <td>${escapeHtml(item.result?.memo || '-')}</td>
-                    <td>${item.result?.profile_url ? '●' : '-'}</td>
+                    <td class="col-name">${escapeHtml(item.actorName)}</td>
+                    <td class="col-birthday">${escapeHtml(item.result?.birthday || '-')}</td>
+                    <td class="col-memo" title="${escapeHtml(item.result?.memo || '')}">${truncateText(item.result?.memo || '-', 40)}</td>
+                    <td class="col-photo">${item.result?.profile_url ? '有' : '无'}</td>
                     <td class="batch-actor-status ${statusClass}">${statusText}</td>
                 </tr>
             `;
@@ -1034,7 +1054,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderBatchActorResults();
 
         // 更新UI状态
-        batchActorProgress.style.display = 'block';
+        batchActorProgress.textContent = '正在搜索...';
         batchActorSearchBtn.style.display = 'none';
         batchActorCloseBtn.textContent = '取消';
         isBatchSearching = true;
@@ -1042,7 +1062,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 监听进度更新
         window.electronAPI.onBatchActorSearchProgress((progress) => {
             if (progress.status === 'searching') {
-                batchActorProgressText.textContent = `正在搜索: ${progress.current}/${progress.total}（${progress.actorName}）`;
+                batchActorProgress.textContent = `正在搜索: ${progress.current}/${progress.total}（${progress.actorName}）`;
 
                 // 更新对应演员的状态
                 const item = batchSearchResults.find(r => r.actorName === progress.actorName);
@@ -1052,7 +1072,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             } else {
                 // 搜索完成
-                batchActorProgressText.textContent = `搜索完成: ${progress.current}/${progress.total}`;
+                batchActorProgress.textContent = `搜索完成: ${progress.current}/${progress.total}`;
 
                 const item = batchSearchResults.find(r => r.actorName === progress.actorName);
                 if (item) {
@@ -1103,11 +1123,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         batchActorSaveBtn.style.display = 'none';
         batchActorCloseBtn.textContent = '取消';
         isBatchSaving = true;
-        batchActorProgressText.textContent = '正在保存...';
+        batchActorProgress.textContent = '正在保存...';
 
         // 监听保存进度
         window.electronAPI.onBatchActorSaveProgress((progress) => {
-            batchActorProgressText.textContent = `正在保存: ${progress.current}/${progress.total}（${progress.actorName}）`;
+            batchActorProgress.textContent = `正在保存: ${progress.current}/${progress.total}（${progress.actorName}）`;
 
             const item = batchSearchResults.find(r => r.actorName === progress.actorName);
             if (item) {

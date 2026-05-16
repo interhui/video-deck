@@ -2119,7 +2119,7 @@ body {
 .actor-card {
     width: 100%;
     max-width: var(--poster-max-width);
-    aspect-ratio: 2 / 3;
+    aspect-ratio: 2 / 3.3;
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
     border-radius: 4px;
@@ -3116,7 +3116,7 @@ body {
     padding: 10px 12px;
     text-align: left;
     border-bottom: 1px solid var(--border-color);
-    font-size: 12px;
+    font-size: 13px;
 }
 
 .batch-actor-table th {
@@ -3167,12 +3167,73 @@ body {
 .batch-actor-status.status-saved {
     color: var(--success-color);
 }
+
+/* 批量演员搜索表格列宽固定 */
+.batch-actor-table th.col-name,
+.batch-actor-table td.col-name {
+    width: 120px;
+    min-width: 120px;
+}
+
+.batch-actor-table th.col-birthday,
+.batch-actor-table td.col-birthday {
+    width: 100px;
+    min-width: 100px;
+}
+
+.batch-actor-table th.col-memo,
+.batch-actor-table td.col-memo {
+    width: auto;
+    min-width: 150px;
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.batch-actor-table th.col-photo,
+.batch-actor-table td.col-photo {
+    width: 50px;
+    min-width: 50px;
+    text-align: center;
+}
+
+.batch-actor-table th.col-status,
+.batch-actor-table td.col-status {
+    width: 80px;
+    min-width: 80px;
+}
+
+/* 批量演员搜索工具栏 */
+.batch-actor-config {
+    margin-bottom: 12px;
+}
+
+.batch-search-toolbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border-color);
+    padding: 10px 16px;
+    background-color: var(--bg-secondary);
+    border-radius: 4px;
+    margin-bottom: 12px;
+}
+
+.batch-search-toolbar span {
+    color: var(--text-color);
+    font-size: 13px;
+}
+
+.batch-search-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.batch-actor-results-container {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
 }
 
 #batch-search-progress {
@@ -3180,11 +3241,6 @@ body {
     color: var(--text-secondary);
     font-size: 13px;
     display: block;
-}
-
-.batch-search-actions {
-    display: flex;
-    gap: 8px;
 }
 
 .batch-search-config {

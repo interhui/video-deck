@@ -242,11 +242,14 @@ class BatchActorSearchService {
 
             const item = batchResults[i];
 
-            if (!item.searchResult.success || !item.searchResult.result) {
+            // 支持两种格式：1) {actorName, searchResult: {success, result}} 2) {actorName, status, result}
+            const searchResult = item.searchResult || { success: item.status === 'completed', result: item.result, status: item.status };
+
+            if (!searchResult.success || !searchResult.result) {
                 savedResults.push({
                     actorName: item.actorName,
                     success: false,
-                    status: item.searchResult.status
+                    status: searchResult.status || 'none'
                 });
                 continue;
             }
@@ -260,7 +263,7 @@ class BatchActorSearchService {
                 });
             }
 
-            const saveResult = await this.saveActorInfo(item.actorName, item.searchResult.result);
+            const saveResult = await this.saveActorInfo(item.actorName, searchResult.result);
 
             savedResults.push({
                 actorName: item.actorName,
