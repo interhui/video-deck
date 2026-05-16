@@ -978,6 +978,10 @@ function sortMovies(movies, sortBy = 'name', sortOrder = 'asc') {
                 valA = a.boxRating || 0;
                 valB = b.boxRating || 0;
                 break;
+            case 'addtime':
+                valA = a.update_time || 0;
+                valB = b.update_time || 0;
+                break;
             default:
                 valA = a.name.toLowerCase();
                 valB = b.name.toLowerCase();

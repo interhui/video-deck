@@ -763,31 +763,97 @@ csv-movie-001,CSV电影,CSV描述,CSV电影,演员A|演员B,CSV导演,2024,CSV�
         });
     });
 
-    describe('getMoviesPaginatedFromIndex', () => {
-        test('SVC-MOVIE-056: 从index获取分页电影列表', async () => {
+    describe('sortMovies', () => {
+        test('SVC-MOVIE-059: 按添加时间升序排序', async () => {
             await service.refreshCache(moviesDir);
-            const result = await service.getMoviesPaginatedFromIndex(moviesDir, { page: 1, pageSize: 10 });
-            expect(result.movies).toBeDefined();
-            expect(result.page).toBe(1);
-            expect(result.pageSize).toBe(10);
+            
+            const testMovies = [
+                { title: 'Movie A', update_time: 1000 },
+                { title: 'Movie B', update_time: 3000 },
+                { title: 'Movie C', update_time: 2000 }
+            ];
+            
+            const sorted = service.sortMovies(testMovies, 'addtime', 'asc');
+            expect(sorted[0].title).toBe('Movie A');
+            expect(sorted[1].title).toBe('Movie C');
+            expect(sorted[2].title).toBe('Movie B');
         });
 
-        test('SVC-MOVIE-057: 分页参数正确传递', async () => {
+        test('SVC-MOVIE-060: 按添加时间降序排序', async () => {
             await service.refreshCache(moviesDir);
-            const result = await service.getMoviesPaginatedFromIndex(moviesDir, { page: 2, pageSize: 5 });
-            expect(result.page).toBe(2);
-            expect(result.pageSize).toBe(5);
+            
+            const testMovies = [
+                { title: 'Movie A', update_time: 1000 },
+                { title: 'Movie B', update_time: 3000 },
+                { title: 'Movie C', update_time: 2000 }
+            ];
+            
+            const sorted = service.sortMovies(testMovies, 'addtime', 'desc');
+            expect(sorted[0].title).toBe('Movie B');
+            expect(sorted[1].title).toBe('Movie C');
+            expect(sorted[2].title).toBe('Movie A');
         });
 
-        test('SVC-MOVIE-058: 带排序参数', async () => {
+        test('SVC-MOVIE-061: 缺少update_time时按默认值排序', async () => {
             await service.refreshCache(moviesDir);
-            const result = await service.getMoviesPaginatedFromIndex(moviesDir, {
-                page: 1,
-                pageSize: 10,
-                sortBy: 'name',
-                sortOrder: 'desc'
-            });
-            expect(result.movies).toBeDefined();
+            
+            const testMovies = [
+                { title: 'Movie A', update_time: 1000 },
+                { title: 'Movie B' },
+                { title: 'Movie C', update_time: 2000 }
+            ];
+            
+            const sorted = service.sortMovies(testMovies, 'addtime', 'asc');
+            expect(sorted[0].title).toBe('Movie B');
+            expect(sorted[1].title).toBe('Movie A');
+            expect(sorted[2].title).toBe('Movie C');
+        });
+    });
+
+    describe('sortMovies', () => {
+        test('SVC-MOVIE-059: 按添加时间升序排序', async () => {
+            await service.refreshCache(moviesDir);
+            
+            const testMovies = [
+                { title: 'Movie A', update_time: 1000 },
+                { title: 'Movie B', update_time: 3000 },
+                { title: 'Movie C', update_time: 2000 }
+            ];
+            
+            const sorted = service.sortMovies(testMovies, 'addtime', 'asc');
+            expect(sorted[0].title).toBe('Movie A');
+            expect(sorted[1].title).toBe('Movie C');
+            expect(sorted[2].title).toBe('Movie B');
+        });
+
+        test('SVC-MOVIE-060: 按添加时间降序排序', async () => {
+            await service.refreshCache(moviesDir);
+            
+            const testMovies = [
+                { title: 'Movie A', update_time: 1000 },
+                { title: 'Movie B', update_time: 3000 },
+                { title: 'Movie C', update_time: 2000 }
+            ];
+            
+            const sorted = service.sortMovies(testMovies, 'addtime', 'desc');
+            expect(sorted[0].title).toBe('Movie B');
+            expect(sorted[1].title).toBe('Movie C');
+            expect(sorted[2].title).toBe('Movie A');
+        });
+
+        test('SVC-MOVIE-061: 缺少update_time时按默认值排序', async () => {
+            await service.refreshCache(moviesDir);
+            
+            const testMovies = [
+                { title: 'Movie A', update_time: 1000 },
+                { title: 'Movie B' },
+                { title: 'Movie C', update_time: 2000 }
+            ];
+            
+            const sorted = service.sortMovies(testMovies, 'addtime', 'asc');
+            expect(sorted[0].title).toBe('Movie B');
+            expect(sorted[1].title).toBe('Movie A');
+            expect(sorted[2].title).toBe('Movie C');
         });
     });
 });

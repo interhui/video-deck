@@ -207,6 +207,10 @@ class IndexService {
                     valA = a.year || 0;
                     valB = b.year || 0;
                     break;
+                case 'addtime':
+                    valA = a.update_time || 0;
+                    valB = b.update_time || 0;
+                    break;
                 default:
                     valA = (a.name || '').toLowerCase();
                     valB = (b.name || '').toLowerCase();

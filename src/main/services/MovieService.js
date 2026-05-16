@@ -680,6 +680,10 @@ class MovieService {
                     valA = a.year || 0;
                     valB = b.year || 0;
                     break;
+                case 'addtime':
+                    valA = a.update_time || 0;
+                    valB = b.update_time || 0;
+                    break;
                 default:
                     valA = a.title.toLowerCase();
                     valB = b.title.toLowerCase();
@@ -1302,7 +1306,6 @@ class MovieService {
                 try {
                     console.log('Importing actors:', allActorNames.length, 'actors');
                     const actorResult = await this.actorService.importActors(allActorNames);
-                    console.log('Actor import result:', actorResult);
                     results.actorsImported = actorResult.added;
                     results.actorsSkipped = actorResult.skipped;
                 } catch (err) {
