@@ -47,6 +47,7 @@
                 </div>
             </div>
             <div class="toolbar-right">
+                <button id="batch-search-btn" class="btn btn-secondary" style="display: none;">批量搜索</button>
                 <button id="batch-add-btn" class="btn btn-secondary" style="display: none;">添加到盒子</button>
                 <button id="batch-delete-btn" class="btn btn-danger" style="display: none;">批量删除</button>
                 <button id="batch-play-btn" class="btn btn-primary" style="display: none;">播放</button>
@@ -863,6 +864,43 @@
             <div class="modal-footer">
                 <button id="confirm-actor-filter" class="btn btn-primary">确定</button>
                 <button id="cancel-actor-filter" class="btn btn-secondary">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 批量电影搜索模态框 -->
+    <div id="batch-search-modal" class="modal" style="display: none;">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>批量电影搜索</h2>
+                <button class="close-btn" id="close-batch-search">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="batch-search-toolbar">
+                    <span id="batch-search-progress"></span>
+                    <div class="batch-search-actions">
+                        <button id="batch-search-start" class="btn btn-primary">搜索</button>
+                        <button id="batch-search-confirm" class="btn btn-primary" style="display: none;">确定</button>
+                        <button id="batch-search-cancel" class="btn btn-secondary">取消</button>
+                    </div>
+                </div>
+                <div class="batch-search-config">
+                    <div class="form-group">
+                        <label>电影搜索适配器：</label>
+                        <div class="batch-search-adapter-options">
+                            <label class="batch-search-adapter-radio">
+                                <input type="radio" name="batch-search-adapter" value="tmdb" checked>
+                                <span>TMDB电影搜索</span>
+                            </label>
+                            <label class="batch-search-adapter-radio">
+                                <input type="radio" name="batch-search-adapter" value="r18">
+                                <span>R18电影搜索</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div id="batch-search-movies-list" class="batch-search-movies-list">
+                </div>
             </div>
         </div>
     </div>

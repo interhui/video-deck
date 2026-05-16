@@ -3033,3 +3033,165 @@ body {
     color: var(--text-secondary);
 }
 
+.batch-search-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.batch-search-progress {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.batch-search-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.batch-search-config {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.batch-search-adapter-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.batch-search-adapter-radio {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    transition: all 0.2s;
+}
+
+.batch-search-adapter-radio:hover {
+    background-color: var(--hover-bg);
+    border-color: var(--primary-color);
+}
+
+.batch-search-adapter-radio input[type="radio"] {
+    margin: 0;
+    cursor: pointer;
+}
+
+.batch-search-adapter-radio input[type="radio"]:checked + span {
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.batch-search-adapter-radio:has(input[type="radio"]:checked) {
+    background-color: var(--active-bg);
+    border-color: var(--primary-color);
+}
+
+.batch-search-movies-list {
+    width: 100%;
+    max-height: 430px;
+    overflow-y: auto;
+    font-size: 13px;
+}
+
+.batch-search-movies-list table {
+    display: table;
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.batch-search-movies-list thead tr {
+    background-color: var(--sidebar-bg);
+    height: 40px;
+}
+
+.batch-search-movies-list th {
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 2px solid var(--border-color);
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.batch-search-movies-list tbody tr {
+    height: 50px;
+    cursor: default;
+}
+
+.batch-search-movies-list tbody tr:hover {
+    background-color: var(--hover-bg);
+}
+
+.batch-search-movies-list td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.batch-search-movie-id {
+    width: 130px;
+}
+
+.batch-search-movie-name {
+    width: 180px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.batch-search-movie-actors {
+    width: 120px;
+    color: var(--text-secondary);
+}
+
+.batch-search-movie-publisher {
+    width: 100px;
+    color: var(--text-secondary);
+}
+
+.batch-search-movie-year {
+    width: 80px;
+    color: var(--text-secondary);
+}
+
+.batch-search-movie-poster {
+    width: 60px;
+    text-align: center;
+}
+
+.batch-search-movie-status {
+    width: 80px;
+    text-align: center;
+}
+
+.batch-search-status-pending {
+    color: var(--text-secondary);
+}
+
+.batch-search-status-searching {
+    color: var(--warning-color);
+}
+
+.batch-search-status-completed {
+    color: var(--success-color);
+}
+
+.batch-search-status-none {
+    color: var(--danger-color);
+}
+

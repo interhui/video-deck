@@ -7,7 +7,8 @@
   },
   "layout": {
     "sidebarWidth": 200,
-    "posterSize": "medium",
+    "posterSize": "large",
+    "posterStyle": "vertical",
     "columns": 6,
     "viewMode": "grid",
     "sortBy": "name-asc",
@@ -25,5 +26,20 @@
     "url": "api.themoviedb.org",
     "language": "zh-CN",
     "token": ""
+  },
+  "r18": {
+    "dbUrl": "postgresql://localhost:5432/public",
+    "dbUsername": "postgres",
+    "dbPassword": ""
+  },
+  "videoParsing": {
+    "ffmpegPath": "",
+    "ffprobePath": ""
+  },
+  "proxy": {
+    "enabled": false,
+    "address": "http://localhost:8080",
+    "username": "",
+    "password": ""
   }
 }

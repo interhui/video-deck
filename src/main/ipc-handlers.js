@@ -206,6 +206,7 @@ function setupIpcHandlers(services) {
         tmdbMovieAdapterService,
         r18AdapterService,
         playerService,
+        batchSearchService,
         getMainWindow,
         createMovieDetailWindow,
         createBoxWindow,
@@ -1714,6 +1715,55 @@ function setupIpcHandlers(services) {
             };
         } catch (error) {
             console.error('Error getting video info:', error);
+            return { error: error.message };
+        }
+    });
+
+    // ==================== 批量电影搜索 ====================
+
+    ipcMain.handle('batch-search-movies', async (event, { movies, adapterType }) => {
+        try {
+            const webContents = event.sender;
+            
+            const results = await batchSearchService.batchSearchMovies(movies, adapterType, (progress) => {
+                webContents.send('batch-search-progress', progress);
+            });
+            
+            return { success: true, results };
+        } catch (error) {
+            console.error('Error in batch search:', error);
+            return { error: error.message };
+        }
+    });
+
+    ipcMain.handle('batch-save-movies', async (event, { batchResults }) => {
+        try {
+            const webContents = event.sender;
+            const settings = settingsService.getSettings();
+            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            
+            const savedResults = await batchSearchService.batchSaveMovies(batchResults, (progress) => {
+                webContents.send('batch-save-progress', progress);
+            });
+            
+            const mainWindow = getMainWindow();
+            if (mainWindow) {
+                mainWindow.webContents.send('refresh-library');
+            }
+            
+            return { success: true, savedResults };
+        } catch (error) {
+            console.error('Error in batch save:', error);
+            return { error: error.message };
+        }
+    });
+
+    ipcMain.handle('cancel-batch-search', async () => {
+        try {
+            batchSearchService.cancel();
+            return { success: true };
+        } catch (error) {
+            console.error('Error cancelling batch search:', error);
             return { error: error.message };
         }
     });
