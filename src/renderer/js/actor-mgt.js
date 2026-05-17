@@ -154,11 +154,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     (a.nickname && a.nickname.toLowerCase().includes(filter.toLowerCase()));
                 if (!matchSearch) return false;
             }
-            // 无照片/无生日过滤
+            // 无照片过滤
             if (noPhotoFilter) {
                 const hasNoPhoto = !a.photo;
-                const hasNoBirthday = !a.birthday;
-                if (!hasNoPhoto && !hasNoBirthday) return false;
+                if (!hasNoPhoto) return false;
             }
             return true;
         });

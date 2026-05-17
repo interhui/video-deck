@@ -2035,6 +2035,9 @@ body {
 .toolbar-search {
     flex: 1;
     max-width: 400px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
 }
 
 .search-input-with-btn {
@@ -2052,7 +2055,7 @@ body {
     padding: 8px 16px;
     background: transparent;
     color: var(--text-color);
-    font-size: 12px;
+    font-size: 14px;
     outline: none;
 }
 
@@ -2081,7 +2084,7 @@ body {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--text-secondary);
     cursor: pointer;
     white-space: nowrap;
@@ -2130,13 +2133,13 @@ body {
 /* 演员卡片视图 */
 .actor-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(var(--poster-min-width), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(var(--photo-min-width), 1fr));
     gap: var(--poster-gap);
 }
 
 .actor-card {
     width: 100%;
-    max-width: var(--poster-max-width);
+    max-width: var(--photo-max-width);
     aspect-ratio: 2 / 3.3;
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
@@ -3136,9 +3139,6 @@ body {
 }
 
 .batch-actor-table thead {
-    position: sticky;
-    top: 0;
-    z-index: 1;
 }
 
 .batch-actor-table th,
