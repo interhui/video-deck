@@ -3223,8 +3223,8 @@ body {
 /* 批量演员搜索表格列宽固定 */
 .batch-actor-table th.col-name,
 .batch-actor-table td.col-name {
-    width: 120px;
-    min-width: 120px;
+    width: 180px;
+    min-width: 180px;
 }
 
 .batch-actor-table th.col-birthday,
@@ -3237,7 +3237,7 @@ body {
 .batch-actor-table td.col-memo {
     width: auto;
     min-width: 150px;
-    max-width: 400px;
+    max-width: 340px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
