@@ -231,7 +231,8 @@ const elements = {
     batchSearchStart: document.getElementById('batch-search-start'),
     batchSearchCancel: document.getElementById('batch-search-cancel'),
     batchSearchConfirm: document.getElementById('batch-search-confirm'),
-    batchSearchMoviesList: document.getElementById('batch-search-movies-list')
+    batchSearchMoviesList: document.getElementById('batch-search-movies-list'),
+    batchSearchConfig: document.querySelector('.batch-search-config')
 };
 
 /**
@@ -1281,6 +1282,7 @@ function bindCheckboxEvents(movies) {
                 state.selectedMovies.clear();
             }
             renderMovies(movies);
+
             updateBatchAddButtonVisibility();
             updateBatchDeleteButtonVisibility();
             updateBatchPlayButtonVisibility();
@@ -1396,6 +1398,25 @@ function updateBatchSearchButtonVisibility() {
     } else {
         elements.batchSearchBtn.style.display = 'none';
     }
+}
+
+/**
+ * 清除所有电影选中状态
+ */
+function clearSelectedMovies() {
+    state.selectedMovies.clear();
+    // 清除所有 movie-card 的复选框勾选状态
+    document.querySelectorAll('.movie-select-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    document.querySelectorAll('.movie-card.selected').forEach(card => {
+        card.classList.remove('selected');
+    });
+    // 更新批量操作按钮可见性
+    updateBatchAddButtonVisibility();
+    updateBatchDeleteButtonVisibility();
+    updateBatchPlayButtonVisibility();
+    updateBatchSearchButtonVisibility();
 }
 
 /**
@@ -2015,11 +2036,7 @@ function bindEvents() {
 
             elements.batchAddModal.style.display = 'none';
 
-            state.selectedMovies.clear();
-            updateBatchAddButtonVisibility();
-            updateBatchDeleteButtonVisibility();
-            updateBatchPlayButtonVisibility();
-            updateBatchSearchButtonVisibility();
+            clearSelectedMovies();
             await loadMovies();
         } catch (error) {
             console.error('Error batch adding to box:', error);
@@ -2030,17 +2047,20 @@ function bindEvents() {
     // 取消批量添加
     elements.cancelBatchAdd.addEventListener('click', () => {
         elements.batchAddModal.style.display = 'none';
+        clearSelectedMovies();
     });
 
     // 关闭批量添加模态框
     elements.closeBatchAdd.addEventListener('click', () => {
         elements.batchAddModal.style.display = 'none';
+        clearSelectedMovies();
     });
 
     // 点击模态框外部关闭
     elements.batchAddModal.addEventListener('click', (e) => {
         if (e.target === elements.batchAddModal) {
             elements.batchAddModal.style.display = 'none';
+            clearSelectedMovies();
         }
     });
 
@@ -2148,11 +2168,7 @@ category: movie.category,
             alert(`已删除 ${selectedCount} 部电影`);
 
             // 清空选择
-            state.selectedMovies.clear();
-            updateBatchAddButtonVisibility();
-            updateBatchDeleteButtonVisibility();
-            updateBatchPlayButtonVisibility();
-            updateBatchSearchButtonVisibility();
+            clearSelectedMovies();
 
             // 刷新电影库、分类列表和电影盒子
             await loadMovies();
@@ -4061,7 +4077,7 @@ function openBatchSearchModal() {
         searchResult: null
     }));
     
-    elements.batchSearchProgress.textContent = truncateText(`准备搜索 ${selectedMoviesData.length} 部电影`, 54);
+    elements.batchSearchProgress.textContent = `准备搜索 ${selectedMoviesData.length} 部电影`;
     elements.batchSearchStart.style.display = 'inline-block';
     elements.batchSearchCancel.style.display = 'inline-block';
     elements.batchSearchConfirm.style.display = 'none';
@@ -4082,6 +4098,7 @@ function closeBatchSearchModal() {
     }
     elements.batchSearchModal.style.display = 'none';
     state.batchSearchResults = [];
+    clearSelectedMovies();
 }
 
 function renderBatchSearchMoviesList() {
@@ -4168,6 +4185,10 @@ async function startBatchSearch() {
     state.batchSearchInProgress = true;
     elements.batchSearchStart.style.display = 'none';
 
+    // 禁用适配器选项Radio，防止在搜索过程中被修改
+    const adapterRadios = document.querySelectorAll('input[name="batch-search-adapter"]');
+    adapterRadios.forEach(radio => radio.disabled = true);
+
     elements.batchSearchConfirm.textContent = '保存';
     
     const movies = state.batchSearchResults.map(item => ({
@@ -4204,11 +4225,17 @@ async function startBatchSearch() {
         }
         
         state.batchSearchInProgress = false;
+        const adapterRadios = document.querySelectorAll('input[name="batch-search-adapter"]');
+        adapterRadios.forEach(radio => radio.disabled = false);
+        elements.batchSearchConfig.style.display = 'block';
     } catch (error) {
         console.error('Batch search error:', error);
         showToast('批量搜索失败: ' + error.message);
         state.batchSearchInProgress = false;
         elements.batchSearchStart.style.display = 'inline-block';
+        const adapterRadios = document.querySelectorAll('input[name="batch-search-adapter"]');
+        adapterRadios.forEach(radio => radio.disabled = false);
+        elements.batchSearchConfig.style.display = 'block';
     }
 }
 
@@ -4242,13 +4269,16 @@ async function confirmBatchSearch() {
     elements.batchSearchConfirm.disabled = true;
     elements.batchSearchConfirm.textContent = '保存中...';
     elements.batchSearchProgress.textContent = truncateText('正在保存...', 54);
-    
+
+    let saveSuccess = false;
+
     try {
         const result = await window.electronAPI.batchSaveMovies({ batchResults: completedItems });
-        
+
         if (result.error) {
             showToast('保存失败: ' + result.error);
         } else {
+            saveSuccess = true;
             elements.batchSearchProgress.textContent = truncateText('完成电影保存', 54);
             elements.batchSearchConfirm.style.display = 'none';
             showToast(`成功保存 ${completedItems.length} 部电影信息`);
@@ -4257,9 +4287,18 @@ async function confirmBatchSearch() {
         console.error('Batch save error:', error);
         showToast('保存失败: ' + error.message);
     }
-    
+
     state.batchSearchInProgress = false;
     elements.batchSearchConfirm.disabled = false;
+    const adapterRadios = document.querySelectorAll('input[name="batch-search-adapter"]');
+    adapterRadios.forEach(radio => radio.disabled = false);
+    elements.batchSearchConfig.style.display = 'block';
+
+    if (saveSuccess) {
+        clearSelectedMovies();
+
+        await loadMovies();
+    }
 }
 
 // 初始化应用

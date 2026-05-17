@@ -4,6 +4,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
     // 获取DOM元素
     const searchInput = document.getElementById('search-input');
+    const filterNoPhotoCheckbox = document.getElementById('filter-no-photo');
     const addActorBtn = document.getElementById('add-actor-btn');
     const viewCardBtn = document.getElementById('view-card-btn');
     const viewTableBtn = document.getElementById('view-table-btn');
@@ -145,12 +146,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 渲染演员列表
     function renderActors(filter = '') {
-        const filteredActors = filter
-            ? actors.filter(a =>
-                (a.name && a.name.toLowerCase().includes(filter.toLowerCase())) ||
-                (a.nickname && a.nickname.toLowerCase().includes(filter.toLowerCase()))
-            )
-            : actors;
+        const noPhotoFilter = filterNoPhotoCheckbox.checked;
+        const filteredActors = actors.filter(a => {
+            // 搜索过滤
+            if (filter) {
+                const matchSearch = (a.name && a.name.toLowerCase().includes(filter.toLowerCase())) ||
+                    (a.nickname && a.nickname.toLowerCase().includes(filter.toLowerCase()));
+                if (!matchSearch) return false;
+            }
+            // 无照片/无生日过滤
+            if (noPhotoFilter) {
+                const hasNoPhoto = !a.photo;
+                const hasNoBirthday = !a.birthday;
+                if (!hasNoPhoto && !hasNoBirthday) return false;
+            }
+            return true;
+        });
 
         if (currentView === 'card') {
             renderCardView(filteredActors);
@@ -299,6 +310,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 搜索
     searchInput.addEventListener('input', (e) => {
         renderActors(e.target.value);
+    });
+
+    // 无照片演员过滤
+    filterNoPhotoCheckbox.addEventListener('change', () => {
+        renderActors(searchInput.value);
     });
 
     // 新建演员

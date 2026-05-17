@@ -269,7 +269,7 @@ class R18AdapterService {
             title: movie.title || '',
             overview: movie.overview || '',
             tags: tags || '',
-            production_companies: movie.production_companies || '',
+            production_companies: movie.production_companies ? [movie.production_companies] : [],
             runtime: movie.runtime || 0,
             poster_url: posterAccessible ? posterUrl : null,
             actors: actors,

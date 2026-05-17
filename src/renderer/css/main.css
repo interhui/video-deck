@@ -831,6 +831,7 @@ body {
 
 .movies-grid.list-view .movie-name {
     width: 250px;
+    max-width: 250px;
     font-size: 14px;
     font-weight: 500;
     white-space: nowrap;
@@ -840,6 +841,7 @@ body {
 
 .movies-grid.list-view .movie-description {
     width: 200px;
+    max-width: 200px;
     font-size: 12px;
     color: var(--text-secondary);
     text-align: left;
@@ -963,6 +965,7 @@ body {
 /* 列表视图主演列 */
 .movies-grid.list-view .movie-actors-col {
     width: 150px;
+    max-width: 150px;
     font-size: 13px;
     color: var(--text-secondary);
     white-space: nowrap;
@@ -973,6 +976,7 @@ body {
 /* 列表视图发行商(Studio)列 */
 .movies-grid.list-view .movie-studio-col {
     width: 100px;
+    max-width: 100px;
     font-size: 13px;
     color: var(--text-secondary);
     white-space: nowrap;
@@ -2073,6 +2077,20 @@ body {
     color: var(--text-color);
 }
 
+.toolbar-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.toolbar-checkbox-label input[type="checkbox"] {
+    cursor: pointer;
+}
+
 /* 视图切换按钮 */
 .view-toggle {
     display: flex;
@@ -2244,12 +2262,12 @@ body {
     padding: 12px 16px;
     text-align: left;
     border-bottom: 1px solid var(--border-color);
-    font-size: 12px;
+    font-size: 13px;
 }
 
 .actor-table th {
     background: var(--bg-secondary);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--text-secondary);
     text-transform: uppercase;
