@@ -70,6 +70,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     const batchSearchActorBtn = document.getElementById('batch-search-actor-btn');
     const selectedCountSpan = document.getElementById('selected-count');
 
+    // 演员提取弹窗 DOM 元素
+    const extractActorModal = document.getElementById('extract-actor-modal');
+    const closeExtractActorBtn = document.getElementById('close-extract-actor');
+    const extractActorScanBtn = document.getElementById('extract-actor-scan-btn');
+    const extractActorSearchBtn = document.getElementById('extract-actor-search-btn');
+    const extractActorSaveBtn = document.getElementById('extract-actor-save-btn');
+    const extractActorCloseBtn = document.getElementById('extract-actor-close-btn');
+    const extractActorProgress = document.getElementById('extract-actor-progress');
+    const extractActorSummary = document.getElementById('extract-actor-summary');
+    const extractTotalCount = document.getElementById('extract-total-count');
+    const extractExistingCount = document.getElementById('extract-existing-count');
+    const extractNewCount = document.getElementById('extract-new-count');
+    const extractActorResultsBody = document.getElementById('extract-actor-results-body');
+
     // 演员搜索状态
     let actorSearchResultsList = [];
     let selectedActorSearchResult = null;
@@ -79,6 +93,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     let batchSearchResults = []; // 批量搜索结果
     let isBatchSearching = false;
     let isBatchSaving = false;
+
+    // 演员提取状态
+    let extractedActors = []; // 提取的演员列表（不在actor.json中的）
+    let extractSearchResults = []; // 提取演员的搜索结果
+    let isExtracting = false;
+    let isExtractSearching = false;
+    let isExtractSaving = false;
 
     // 常量
     const ACTOR_SEARCH_MAX_RESULTS = 10;
@@ -215,7 +236,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td>${escapeHtml(actor.name)}</td>
                 <td>${escapeHtml(actor.nickname || '')}</td>
                 <td>${escapeHtml(actor.birthday || '')}</td>
-                <td>${escapeHtml(actor.memo || '')}</td>
+                <td class="actor-table-memo" title="${escapeHtml(actor.memo || '')}">${truncateMemo(actor.memo)}</td>
                 <td class="actor-table-rating">${actor.rating ? '<span class="actor-rating-display-table">' + '★'.repeat(actor.rating) + '</span>' : ''}</td>
                 <td class="actor-table-favorite"><span class="actor-favorite-tag-table ${actor.favorites ? 'favorited' : ''}">${actor.favorites ? '❤' : '♡'}</span></td>
                 <td class="actor-table-actions">
@@ -258,6 +279,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     viewCardBtn.addEventListener('click', () => switchView('card'));
     viewTableBtn.addEventListener('click', () => switchView('table'));
+
+    // 全选复选框事件
+    const selectAllCheckbox = document.getElementById('select-all-actors');
+    selectAllCheckbox.addEventListener('change', (e) => {
+        const checked = e.target.checked;
+        actorTableBody.querySelectorAll('.actor-checkbox').forEach(checkbox => {
+            checkbox.checked = checked;
+            const actorName = checkbox.dataset.name;
+            if (checked) {
+                selectedActors.add(actorName);
+            } else {
+                selectedActors.delete(actorName);
+            }
+        });
+        updateBatchSearchButton();
+    });
 
     // 搜索
     searchInput.addEventListener('input', (e) => {
@@ -981,6 +1018,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     /**
+     * 截断备注文本（最多100字符）
+     */
+    function truncateMemo(memo) {
+        if (!memo) return '-';
+        if (memo.length <= 100) return escapeHtml(memo);
+        return escapeHtml(memo.substring(0, 100)) + '...';
+    }
+
+    /**
      * 渲染批量搜索结果表格
      */
     function renderBatchActorResults() {
@@ -1161,6 +1207,384 @@ document.addEventListener('DOMContentLoaded', async () => {
             isBatchSaving = false;
             batchActorCloseBtn.textContent = '关闭';
             console.error('Error in batch actor save:', error);
+            alert('批量保存失败: ' + error.message);
+        }
+    }
+
+    // ==================== 演员提取功能 ====================
+
+    // 演员提取按钮点击
+    const extractActorBtn = document.getElementById('extract-actor-btn');
+    extractActorBtn.addEventListener('click', () => {
+        openExtractActorModal();
+    });
+
+    // 关闭演员提取弹窗
+    extractActorCloseBtn.addEventListener('click', () => {
+        if (isExtracting || isExtractSearching || isExtractSaving) {
+            if (!confirm('操作正在进行中，确定要关闭吗？')) {
+                return;
+            }
+        }
+        closeExtractActorModal();
+    });
+
+    // 点击演员提取弹窗背景关闭
+    extractActorModal.addEventListener('click', (e) => {
+        if (e.target === extractActorModal) {
+            if (isExtracting || isExtractSearching || isExtractSaving) {
+                if (!confirm('操作正在进行中，确定要关闭吗？')) {
+                    return;
+                }
+            }
+            closeExtractActorModal();
+        }
+    });
+
+    // 关闭按钮
+    closeExtractActorBtn.addEventListener('click', () => {
+        if (isExtracting || isExtractSearching || isExtractSaving) {
+            if (!confirm('操作正在进行中，确定要关闭吗？')) {
+                return;
+            }
+        }
+        closeExtractActorModal();
+    });
+
+    // 执行扫描
+    extractActorScanBtn.addEventListener('click', () => {
+        startExtractActorScan();
+    });
+
+    // 执行搜索
+    extractActorSearchBtn.addEventListener('click', () => {
+        startExtractActorSearch();
+    });
+
+    // 执行保存
+    extractActorSaveBtn.addEventListener('click', () => {
+        startExtractActorSave();
+    });
+
+    /**
+     * 打开演员提取弹窗
+     */
+    function openExtractActorModal() {
+        resetExtractActorForm();
+        extractActorModal.style.display = 'flex';
+    }
+
+    /**
+     * 重置演员提取表单
+     */
+    function resetExtractActorForm() {
+        extractActorProgress.textContent = '准备就绪';
+        extractActorScanBtn.style.display = 'inline-block';
+        extractActorSearchBtn.style.display = 'none';
+        extractActorSaveBtn.style.display = 'none';
+        extractActorCloseBtn.textContent = '关闭';
+        extractActorScanBtn.disabled = false;
+        extractActorSearchBtn.disabled = false;
+        extractActorSaveBtn.disabled = false;
+        extractActorSummary.style.display = 'none';
+        isExtracting = false;
+        isExtractSearching = false;
+        isExtractSaving = false;
+        extractedActors = [];
+        extractSearchResults = [];
+    }
+
+    /**
+     * 关闭演员提取弹窗
+     */
+    function closeExtractActorModal() {
+        extractActorModal.style.display = 'none';
+        resetExtractActorForm();
+    }
+
+    /**
+     * 截断文本
+     */
+    function truncateText(text, maxLength = 40) {
+        if (!text) return '-';
+        if (text.length <= maxLength) return escapeHtml(text);
+        return escapeHtml(text.substring(0, maxLength)) + '...';
+    }
+
+    /**
+     * 渲染提取演员结果表格
+     */
+    function renderExtractActorResults() {
+        extractActorResultsBody.innerHTML = extractSearchResults.map((item, index) => {
+            let statusText = '';
+            let statusClass = '';
+            switch (item.status) {
+                case 'pending':
+                    statusText = '待处理';
+                    statusClass = 'status-pending';
+                    break;
+                case 'searching':
+                    statusText = '搜索中...';
+                    statusClass = 'status-searching';
+                    break;
+                case 'completed':
+                    statusText = '已完成';
+                    statusClass = 'status-completed';
+                    break;
+                case 'none':
+                    statusText = '未找到';
+                    statusClass = 'status-none';
+                    break;
+                case 'error':
+                    statusText = '错误';
+                    statusClass = 'status-error';
+                    break;
+                case 'saving':
+                    statusText = '保存中...';
+                    statusClass = 'status-saving';
+                    break;
+                case 'saved':
+                    statusText = '已保存';
+                    statusClass = 'status-saved';
+                    break;
+                default:
+                    statusText = item.status || '未知';
+                    statusClass = '';
+            }
+
+            return `
+                <tr data-index="${index}">
+                    <td class="col-name">${escapeHtml(item.actorName)}</td>
+                    <td class="col-birthday">${escapeHtml(item.result?.birthday || '-')}</td>
+                    <td class="col-memo" title="${escapeHtml(item.result?.memo || '')}">${truncateText(item.result?.memo || '-', 40)}</td>
+                    <td class="col-photo">${item.result?.profile_url ? '有' : '无'}</td>
+                    <td class="batch-actor-status ${statusClass}">${statusText}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    /**
+     * 更新提取结果统计
+     */
+    function updateExtractSummary() {
+        const total = extractSearchResults.length;
+        const existing = extractSearchResults.filter(r => r.isExisting).length;
+        const newCount = total - existing;
+
+        extractTotalCount.textContent = `共 ${total} 个演员`;
+        extractExistingCount.textContent = `，已存在 ${existing} 个`;
+        extractNewCount.textContent = `，新增 ${newCount} 个`;
+        extractActorSummary.style.display = 'flex';
+    }
+
+    /**
+     * 开始扫描电影提取演员
+     */
+    async function startExtractActorScan() {
+        extractActorScanBtn.disabled = false;
+        isExtracting = true;
+        extractActorProgress.textContent = '正在扫描电影...';
+        extractActorScanBtn.style.display = 'none';
+
+        try {
+            const result = await window.electronAPI.extractNewActorsFromMovies();
+
+            isExtracting = false;
+
+            if (result.error) {
+                alert('扫描失败: ' + result.error);
+                extractActorScanBtn.style.display = 'inline-block';
+                return;
+            }
+
+            // 初始化搜索结果
+            extractedActors = result.actors || [];
+            extractSearchResults = extractedActors.map(name => ({
+                actorName: name,
+                status: 'pending',
+                result: null,
+                isExisting: false
+            }));
+
+            if (extractSearchResults.length === 0) {
+                extractActorProgress.textContent = '没有找到新演员';
+                extractActorScanBtn.style.display = 'inline-block';
+                return;
+            }
+
+            // 显示统计信息
+            updateExtractSummary();
+            renderExtractActorResults();
+
+            // 显示搜索按钮（根据适配器选择决定是否显示）
+            const selectedAdapter = document.querySelector('input[name="extract-actor-adapter"]:checked')?.value || 'none';
+            if (selectedAdapter === 'none') {
+                // 不使用适配器，直接保存
+                extractActorProgress.textContent = '扫描完成，准备保存';
+                extractActorSaveBtn.style.display = 'inline-block';
+            } else {
+                // 需要先搜索
+                extractActorProgress.textContent = '扫描完成，准备搜索';
+                extractActorSearchBtn.style.display = 'inline-block';
+            }
+
+        } catch (error) {
+            isExtracting = false;
+            extractActorScanBtn.style.display = 'inline-block';
+            console.error('Error in extract actor scan:', error);
+            alert('扫描失败: ' + error.message);
+        }
+    }
+
+    /**
+     * 开始搜索提取的演员
+     */
+    async function startExtractActorSearch() {
+        const selectedAdapter = document.querySelector('input[name="extract-actor-adapter"]:checked')?.value || 'none';
+
+        if (selectedAdapter === 'none') {
+            alert('请选择搜索适配器');
+            return;
+        }
+
+        // 初始化搜索结果（标记为待处理）
+        extractSearchResults = extractSearchResults.map(item => ({
+            ...item,
+            status: 'pending',
+            result: null
+        }));
+        renderExtractActorResults();
+
+        // 更新UI状态
+        extractActorProgress.textContent = '正在搜索...';
+        extractActorSearchBtn.style.display = 'none';
+        extractActorSaveBtn.style.display = 'none';
+        extractActorCloseBtn.textContent = '取消';
+        isExtractSearching = true;
+
+        // 监听进度更新
+        window.electronAPI.onBatchActorSearchProgress((progress) => {
+            if (progress.status === 'searching') {
+                extractActorProgress.textContent = `正在搜索: ${progress.current}/${progress.total}（${progress.actorName}）`;
+
+                const item = extractSearchResults.find(r => r.actorName === progress.actorName);
+                if (item) {
+                    item.status = 'searching';
+                    renderExtractActorResults();
+                }
+            } else {
+                extractActorProgress.textContent = `搜索完成: ${progress.current}/${progress.total}`;
+
+                const item = extractSearchResults.find(r => r.actorName === progress.actorName);
+                if (item) {
+                    item.status = progress.status;
+                    item.result = progress.result;
+                    renderExtractActorResults();
+                }
+            }
+        });
+
+        try {
+            const result = await window.electronAPI.batchSearchActors({
+                actors: extractSearchResults.map(r => r.actorName),
+                adapterType: selectedAdapter
+            });
+
+            isExtractSearching = false;
+            extractActorCloseBtn.textContent = '关闭';
+
+            if (result.error) {
+                alert('批量搜索失败: ' + result.error);
+                extractActorSearchBtn.style.display = 'inline-block';
+                return;
+            }
+
+            // 显示保存按钮
+            extractActorSaveBtn.style.display = 'inline-block';
+            extractActorProgress.textContent = '搜索完成，准备保存';
+
+        } catch (error) {
+            isExtractSearching = false;
+            extractActorCloseBtn.textContent = '关闭';
+            console.error('Error in extract actor search:', error);
+            alert('批量搜索失败: ' + error.message);
+            extractActorSearchBtn.style.display = 'inline-block';
+        }
+    }
+
+    /**
+     * 开始保存提取的演员
+     */
+    async function startExtractActorSave() {
+        const selectedAdapter = document.querySelector('input[name="extract-actor-adapter"]:checked')?.value || 'none';
+
+        // 根据适配器决定哪些可以保存
+        let itemsToSave;
+        if (selectedAdapter === 'none') {
+            // 不使用适配器，所有演员直接保存
+            itemsToSave = extractSearchResults.map(item => ({
+                actorName: item.actorName,
+                status: 'completed',
+                result: item.result || {}
+            }));
+        } else {
+            // 使用适配器，只保存搜索成功的
+            itemsToSave = extractSearchResults
+                .filter(r => r.status === 'completed' && r.result)
+                .map(item => ({
+                    actorName: item.actorName,
+                    status: 'completed',
+                    result: item.result
+                }));
+        }
+
+        if (itemsToSave.length === 0) {
+            alert('没有可保存的演员');
+            return;
+        }
+
+        // 更新UI状态
+        extractActorSearchBtn.style.display = 'none';
+        extractActorSaveBtn.style.display = 'none';
+        extractActorCloseBtn.textContent = '取消';
+        isExtractSaving = true;
+        extractActorProgress.textContent = '正在保存...';
+
+        // 监听保存进度
+        window.electronAPI.onBatchActorSaveProgress((progress) => {
+            extractActorProgress.textContent = `正在保存: ${progress.current}/${progress.total}（${progress.actorName}）`;
+
+            const item = extractSearchResults.find(r => r.actorName === progress.actorName);
+            if (item) {
+                item.status = progress.status;
+                renderExtractActorResults();
+            }
+        });
+
+        try {
+            const result = await window.electronAPI.batchSaveActors({
+                batchResults: itemsToSave
+            });
+
+            isExtractSaving = false;
+            extractActorCloseBtn.textContent = '关闭';
+
+            if (result.error) {
+                alert('批量保存失败: ' + result.error);
+                return;
+            }
+
+            alert('保存完成！');
+            closeExtractActorModal();
+
+            // 刷新演员列表
+            await loadActors();
+
+        } catch (error) {
+            isExtractSaving = false;
+            extractActorCloseBtn.textContent = '关闭';
+            console.error('Error in extract actor save:', error);
             alert('批量保存失败: ' + error.message);
         }
     }

@@ -1814,6 +1814,51 @@ function setupIpcHandlers(services) {
         }
     });
 
+    // ==================== 演员提取 ====================
+
+    /**
+     * 从所有电影中提取新演员（不在actor.json中的）
+     * @returns {Promise<Object>} { actors: string[] }
+     */
+    ipcMain.handle('extract-new-actors-from-movies', async () => {
+        try {
+            const settings = settingsService.getSettings();
+            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+
+            // 获取所有电影
+            const allMovies = await movieService.getAllMovies(moviesDir);
+
+            // 获取已存在的演员列表
+            const existingActors = await actorService.loadActors();
+            const existingNames = new Set(existingActors.map(a => a.name));
+
+            // 收集所有电影中的演员并去重
+            const allActorNames = new Set();
+            for (const movie of allMovies) {
+                if (movie.actors && Array.isArray(movie.actors)) {
+                    for (const actorName of movie.actors) {
+                        if (actorName && typeof actorName === 'string' && actorName.trim()) {
+                            allActorNames.add(actorName.trim());
+                        }
+                    }
+                }
+            }
+
+            // 过滤出不在actor.json中的演员
+            const newActorNames = Array.from(allActorNames).filter(name => !existingNames.has(name));
+
+            // 按姓名排序
+            newActorNames.sort((a, b) => a.localeCompare(b, 'zh-CN'));
+
+            console.log(`Found ${newActorNames.length} new actors from ${allMovies.length} movies`);
+
+            return { actors: newActorNames };
+        } catch (error) {
+            console.error('Error extracting new actors from movies:', error);
+            return { error: error.message, actors: [] };
+        }
+    });
+
     console.log('IPC handlers setup complete');
 }
 
