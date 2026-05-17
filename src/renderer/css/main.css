@@ -2298,45 +2298,51 @@ body {
 }
 
 /* 演员表格列宽度调整 */
-.actor-table th:nth-child(1),  /* 照片 */
-.actor-table td:nth-child(1) {
+.actor-table th.actor-table-checkbox,
+.actor-table td.actor-table-checkbox {
+    width: 40px;
+    text-align: center;
+}
+
+.actor-table th:nth-child(2),  /* 照片 */
+.actor-table td:nth-child(2) {
     width: 60px;
 }
 
-.actor-table th:nth-child(2),  /* 姓名 */
-.actor-table td:nth-child(2) {
-    width: 120px;
-}
-
-.actor-table th:nth-child(3),  /* 昵称 */
+.actor-table th:nth-child(3),  /* 姓名 */
 .actor-table td:nth-child(3) {
     width: 120px;
 }
 
-.actor-table th:nth-child(4),  /* 生日 */
+.actor-table th:nth-child(4),  /* 昵称 */
 .actor-table td:nth-child(4) {
+    width: 120px;
+}
+
+.actor-table th:nth-child(5),  /* 生日 */
+.actor-table td:nth-child(5) {
     width: 100px;
 }
 
-.actor-table th:nth-child(5),  /* 备注 */
-.actor-table td:nth-child(5) {
+.actor-table th:nth-child(6),  /* 备注 */
+.actor-table td:nth-child(6) {
     width: 200px;
 }
 
-.actor-table th:nth-child(6),  /* 评分 */
-.actor-table td:nth-child(6) {
+.actor-table th:nth-child(7),  /* 评分 */
+.actor-table td:nth-child(7) {
     width: 80px;
     text-align: center;
 }
 
-.actor-table th:nth-child(7),  /* 收藏 */
-.actor-table td:nth-child(7) {
+.actor-table th:nth-child(8),  /* 收藏 */
+.actor-table td:nth-child(8) {
     width: 50px;
     text-align: center;
 }
 
-.actor-table th:nth-child(8),  /* 操作 */
-.actor-table td:nth-child(8) {
+.actor-table th:nth-child(9),  /* 操作 */
+.actor-table td:nth-child(9) {
     width: 80px;
 }
 
@@ -3099,8 +3105,8 @@ body {
     border-bottom: 1px solid var(--border-color);
 }
 
-.batch-actor-results-container {
-    max-height: 400px;
+.extract-actor-results-container {
+    max-height: 350px;
     overflow-y: auto;
     border: 1px solid var(--border-color);
     border-radius: 4px;
@@ -3109,6 +3115,12 @@ body {
 .batch-actor-table {
     width: 100%;
     border-collapse: collapse;
+}
+
+.batch-actor-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 1;
 }
 
 .batch-actor-table th,
@@ -3123,8 +3135,6 @@ body {
     background: var(--bg-secondary);
     font-weight: 600;
     color: var(--text-secondary);
-    position: sticky;
-    top: 0;
 }
 
 .batch-actor-table tr:last-child td {
@@ -3166,6 +3176,30 @@ body {
 
 .batch-actor-status.status-saved {
     color: var(--success-color);
+}
+
+/* 演员提取摘要样式 */
+.extract-summary {
+    display: flex;
+    gap: 16px;
+    padding: 12px 16px;
+    background-color: var(--bg-secondary);
+    border-radius: 4px;
+    margin-bottom: 12px;
+    font-size: 13px;
+}
+
+.extract-summary span {
+    color: var(--text-color);
+}
+
+.extract-summary #extract-total-count {
+    font-weight: 500;
+}
+
+.extract-summary #extract-new-count {
+    color: var(--success-color);
+    font-weight: 500;
 }
 
 /* 批量演员搜索表格列宽固定 */
@@ -3230,7 +3264,7 @@ body {
 }
 
 .batch-actor-results-container {
-    max-height: 400px;
+    max-height: 450px;
     overflow-y: auto;
     border: 1px solid var(--border-color);
     border-radius: 4px;

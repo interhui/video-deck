@@ -29,6 +29,9 @@
                 <button id="batch-search-actor-btn" class="btn btn-secondary" style="display: none;">
                     批量搜索 (<span id="selected-count">0</span>)
                 </button>
+                <button id="extract-actor-btn" class="btn btn-secondary">
+                    演员提取
+                </button>
                 <button id="add-actor-btn" class="btn btn-primary">新建演员</button>
                 <div class="view-toggle">
                     <button id="view-card-btn" class="btn btn-icon active" title="卡片视图">▦</button>
@@ -56,6 +59,9 @@
                 <table class="actor-table" id="actor-table">
                     <thead>
                         <tr>
+                            <th class="actor-table-checkbox">
+                                <input type="checkbox" id="select-all-actors">
+                            </th>
                             <th>照片</th>
                             <th>姓名</th>
                             <th>昵称</th>
@@ -276,6 +282,71 @@
                             </tr>
                         </thead>
                         <tbody id="batch-actor-results-body">
+                            <!-- 动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 演员提取模态窗 -->
+    <div id="extract-actor-modal" class="modal" style="display: none;">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>演员提取</h2>
+                <button class="close-btn" id="close-extract-actor">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- 提取工具栏 -->
+                <div class="batch-search-toolbar">
+                    <span id="extract-actor-progress">准备就绪</span>
+                    <div class="batch-search-actions">
+                        <button id="extract-actor-scan-btn" class="btn btn-primary">扫描</button>
+                        <button id="extract-actor-search-btn" class="btn btn-primary" style="display: none;">搜索</button>
+                        <button id="extract-actor-save-btn" class="btn btn-primary" style="display: none;">保存</button>
+                        <button id="extract-actor-close-btn" class="btn btn-secondary">关闭</button>
+                    </div>
+                </div>
+                <!-- 搜索配置区域 -->
+                <div class="batch-actor-config">
+                    <div class="form-group">
+                        <label>搜索适配器：</label>
+                        <div class="actor-adapter-options">
+                            <label class="actor-adapter-radio">
+                                <input type="radio" name="extract-actor-adapter" value="none" checked>
+                                <span>不使用适配器</span>
+                            </label>
+                            <label class="actor-adapter-radio">
+                                <input type="radio" name="extract-actor-adapter" value="tmdb">
+                                <span>TMDB演员搜索</span>
+                            </label>
+                            <label class="actor-adapter-radio">
+                                <input type="radio" name="extract-actor-adapter" value="r18">
+                                <span>R18演员搜索</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <!-- 提取结果统计 -->
+                <div id="extract-actor-summary" class="extract-summary" style="display: none;">
+                    <span id="extract-total-count">共 0 个演员</span>
+                    <span id="extract-existing-count">，已存在 0 个</span>
+                    <span id="extract-new-count">，新增 0 个</span>
+                </div>
+                <!-- 提取结果表格 -->
+                <div class="extract-actor-results-container">
+                    <table class="batch-actor-table">
+                        <thead>
+                            <tr>
+                                <th class="col-name">姓名</th>
+                                <th class="col-birthday">生日</th>
+                                <th class="col-memo">备注</th>
+                                <th class="col-photo">照片</th>
+                                <th class="col-status">状态</th>
+                            </tr>
+                        </thead>
+                        <tbody id="extract-actor-results-body">
                             <!-- 动态生成 -->
                         </tbody>
                     </table>

@@ -203,12 +203,16 @@ class BatchActorSearchService {
             // 如果演员已存在，保留原有的 rating 和 favorites
             const existingActors = await this.actorService.loadActors();
             const existingActor = existingActors.find(a => a.name === oldName);
+
             if (existingActor) {
                 newActor.rating = existingActor.rating || 0;
                 newActor.favorites = existingActor.favorites || false;
+                await this.actorService.updateActor(oldName, newActor);
+            } else {
+                // 演员不存在，使用原姓名作为新演员姓名
+                newActor.name = oldName;
+                await this.actorService.addActor(newActor);
             }
-
-            await this.actorService.updateActor(oldName, newActor);
 
             return {
                 success: true,

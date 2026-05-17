@@ -186,6 +186,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     batchSearchActors: (data) => ipcRenderer.invoke('batch-search-actors', data),
     batchSaveActors: (data) => ipcRenderer.invoke('batch-save-actors', data),
     cancelBatchActorSearch: () => ipcRenderer.invoke('cancel-batch-actor-search'),
+    extractNewActorsFromMovies: () => ipcRenderer.invoke('extract-new-actors-from-movies'),
 
     onBatchSearchProgress: (callback) => {
         ipcRenderer.on('batch-search-progress', (event, data) => callback(data));
