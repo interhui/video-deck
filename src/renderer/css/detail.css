@@ -1502,9 +1502,9 @@ body {
 }
 
 .screenshot-item {
-    width: 408px;
-    height: 228px;
-    border-radius: 8px;
+    width: 375px;
+    height: 209px;
+    border-radius: 6px;
     overflow: hidden;
     cursor: pointer;
     transition: all 0.2s;

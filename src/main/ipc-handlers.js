@@ -1851,8 +1851,6 @@ function setupIpcHandlers(services) {
             // 按姓名排序
             newActorNames.sort((a, b) => a.localeCompare(b, 'zh-CN'));
 
-            console.log(`Found ${newActorNames.length} new actors from ${allMovies.length} movies`);
-
             return { actors: newActorNames };
         } catch (error) {
             console.error('Error extracting new actors from movies:', error);
