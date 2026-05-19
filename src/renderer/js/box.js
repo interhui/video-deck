@@ -31,7 +31,8 @@ const elements = {
     searchInput: document.getElementById('search-input'),
     searchBtn: document.getElementById('search-btn'),
     clearSearchBtn: document.getElementById('clear-search-btn'),
-    viewToggle: document.getElementById('view-toggle'),
+    viewCardBtn: document.getElementById('view-card-btn'),
+    viewTableBtn: document.getElementById('view-table-btn'),
     batchRemoveBtn: document.getElementById('batch-remove-btn'),
     exportBtn: document.getElementById('export-btn'),
     playBtn: document.getElementById('play-btn'),
@@ -266,18 +267,27 @@ function bindEvents() {
         }
     }
 
-    // 视图切换
-    elements.viewToggle.addEventListener('click', () => {
-        state.viewMode = state.viewMode === 'grid' ? 'list' : 'grid';
-        elements.moviesGrid.classList.toggle('list-view');
-        // 视图切换时需要完整重新渲染
+    function switchView(view) {
+        state.viewMode = view;
+        if (view === 'grid') {
+            elements.moviesGrid.classList.remove('list-view');
+            elements.viewCardBtn.classList.add('active');
+            elements.viewTableBtn.classList.remove('active');
+        } else {
+            elements.moviesGrid.classList.add('list-view');
+            elements.viewCardBtn.classList.remove('active');
+            elements.viewTableBtn.classList.add('active');
+        }
         if (state.lazyLoader) {
             state.lazyLoader.destroy();
             state.lazyLoader = null;
         }
         renderMovies(state.movies, false);
         updateBatchButtonVisibility();
-    });
+    }
+
+    elements.viewCardBtn.addEventListener('click', () => switchView('grid'));
+    elements.viewTableBtn.addEventListener('click', () => switchView('list'));
 
     // 分类筛选下拉框
     elements.categoryFilter.addEventListener('change', (e) => {

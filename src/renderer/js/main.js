@@ -47,7 +47,8 @@ const elements = {
     searchInput: document.getElementById('search-input'),
     searchBtn: document.getElementById('search-btn'),
     clearSearchBtn: document.getElementById('clear-search-btn'),
-    viewToggle: document.getElementById('view-toggle'),
+    viewCardBtn: document.getElementById('view-card-btn'),
+    viewTableBtn: document.getElementById('view-table-btn'),
     refreshBtn: document.getElementById('refresh-btn'),
     settingsBtn: document.getElementById('settings-btn'),
     categoryList: document.getElementById('category-list'),
@@ -666,8 +667,12 @@ function applyLayoutSettings(layout) {
     if (layout.viewMode === 'list') {
         elements.moviesGrid.classList.add('list-view');
         elements.moviesGrid.classList.remove('horizontal-style');
+        elements.viewCardBtn.classList.remove('active');
+        elements.viewTableBtn.classList.add('active');
     } else {
         elements.moviesGrid.classList.remove('list-view');
+        elements.viewCardBtn.classList.add('active');
+        elements.viewTableBtn.classList.remove('active');
     }
 }
 
@@ -1611,12 +1616,22 @@ function bindEvents() {
     }
 
     // 视图切换
-    elements.viewToggle.addEventListener('click', () => {
-        state.viewMode = state.viewMode === 'grid' ? 'list' : 'grid';
-        elements.moviesGrid.classList.toggle('list-view');
-        // 视图切换时完整重新渲染，保留懒加载器以便继续加载
+    function switchView(view) {
+        state.viewMode = view;
+        if (view === 'grid') {
+            elements.moviesGrid.classList.remove('list-view');
+            elements.viewCardBtn.classList.add('active');
+            elements.viewTableBtn.classList.remove('active');
+        } else {
+            elements.moviesGrid.classList.add('list-view');
+            elements.viewCardBtn.classList.remove('active');
+            elements.viewTableBtn.classList.add('active');
+        }
         renderMovies(state.movies, false);
-    });
+    }
+
+    elements.viewCardBtn.addEventListener('click', () => switchView('grid'));
+    elements.viewTableBtn.addEventListener('click', () => switchView('list'));
 
     // 清除所有筛选条件
     function clearAllFilters() {

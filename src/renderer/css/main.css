@@ -2907,9 +2907,8 @@ body {
 .actor-adapter-radio {
     display: flex;
     align-items: center;
-    gap: 8px;
     cursor: pointer;
-    padding: 8px 12px;
+    padding: 8px 8px;
     border-radius: 4px;
     border: 1px solid var(--border-color);
     transition: all 0.2s;
@@ -2922,7 +2921,7 @@ body {
 
 .actor-adapter-radio input[type="radio"] {
     margin: 0;
-    width: 5%;
+    width: 3%;
 }
 
 .actor-adapter-radio input[type="radio"]:checked + span {
@@ -3127,18 +3126,15 @@ body {
 }
 
 .extract-actor-results-container {
+    width: 100%;
     max-height: 350px;
     overflow-y: auto;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
+    font-size: 13px;
 }
 
 .batch-actor-table {
     width: 100%;
     border-collapse: collapse;
-}
-
-.batch-actor-table thead {
 }
 
 .batch-actor-table th,
@@ -3337,6 +3333,7 @@ body {
 .batch-search-adapter-radio:has(input[type="radio"]:checked) {
     background-color: var(--active-bg);
     border-color: var(--primary-color);
+    display: flex;
 }
 
 .batch-search-movies-list {
