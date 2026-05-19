@@ -24,6 +24,10 @@
                     <input type="text" id="search-input" placeholder="搜索演员（姓名、昵称）...">
                     <button id="search-btn" class="icon-btn">🔍</button>
                 </div>
+                <label class="toolbar-checkbox-label">
+                    <input type="checkbox" id="filter-no-photo">
+                    无照片演员
+                </label>
             </div>
             <div class="toolbar-actions">
                 <button id="batch-search-actor-btn" class="btn btn-secondary" style="display: none;">
@@ -60,7 +64,7 @@
                     <thead>
                         <tr>
                             <th class="actor-table-checkbox">
-                                <input type="checkbox" id="select-all-actors">
+                                <input type="checkbox" class="actor-checkbox" id="select-all-actors">
                             </th>
                             <th>照片</th>
                             <th>姓名</th>
@@ -200,7 +204,7 @@
                 <!-- 搜索配置区域 -->
                 <div class="actor-search-config">
                     <div class="form-group">
-                        <label>搜索适配器：</label>
+                        <label>演员搜索适配器：</label>
                         <div class="actor-adapter-options">
                             <label class="actor-adapter-radio">
                                 <input type="radio" name="actor-adapter" value="tmdb" checked>
@@ -256,7 +260,7 @@
                 <!-- 搜索配置区域 -->
                 <div class="batch-actor-config">
                     <div class="form-group">
-                        <label>搜索适配器：</label>
+                        <label>演员搜索适配器：</label>
                         <div class="actor-adapter-options">
                             <label class="actor-adapter-radio">
                                 <input type="radio" name="batch-actor-adapter" value="tmdb" checked>
@@ -311,7 +315,7 @@
                 <!-- 搜索配置区域 -->
                 <div class="batch-actor-config">
                     <div class="form-group">
-                        <label>搜索适配器：</label>
+                        <label>演员搜索适配器：</label>
                         <div class="actor-adapter-options">
                             <label class="actor-adapter-radio">
                                 <input type="radio" name="extract-actor-adapter" value="none" checked>

@@ -831,6 +831,7 @@ body {
 
 .movies-grid.list-view .movie-name {
     width: 250px;
+    max-width: 250px;
     font-size: 14px;
     font-weight: 500;
     white-space: nowrap;
@@ -840,6 +841,7 @@ body {
 
 .movies-grid.list-view .movie-description {
     width: 200px;
+    max-width: 200px;
     font-size: 12px;
     color: var(--text-secondary);
     text-align: left;
@@ -963,6 +965,7 @@ body {
 /* 列表视图主演列 */
 .movies-grid.list-view .movie-actors-col {
     width: 150px;
+    max-width: 150px;
     font-size: 13px;
     color: var(--text-secondary);
     white-space: nowrap;
@@ -973,6 +976,7 @@ body {
 /* 列表视图发行商(Studio)列 */
 .movies-grid.list-view .movie-studio-col {
     width: 100px;
+    max-width: 100px;
     font-size: 13px;
     color: var(--text-secondary);
     white-space: nowrap;
@@ -2031,6 +2035,9 @@ body {
 .toolbar-search {
     flex: 1;
     max-width: 400px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
 }
 
 .search-input-with-btn {
@@ -2048,7 +2055,7 @@ body {
     padding: 8px 16px;
     background: transparent;
     color: var(--text-color);
-    font-size: 12px;
+    font-size: 14px;
     outline: none;
 }
 
@@ -2071,6 +2078,20 @@ body {
 
 .search-input-with-btn .icon-btn:hover {
     color: var(--text-color);
+}
+
+.toolbar-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.toolbar-checkbox-label input[type="checkbox"] {
+    cursor: pointer;
 }
 
 /* 视图切换按钮 */
@@ -2112,13 +2133,13 @@ body {
 /* 演员卡片视图 */
 .actor-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(var(--poster-min-width), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(var(--photo-min-width), 1fr));
     gap: var(--poster-gap);
 }
 
 .actor-card {
     width: 100%;
-    max-width: var(--poster-max-width);
+    max-width: var(--photo-max-width);
     aspect-ratio: 2 / 3.3;
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
@@ -2244,12 +2265,12 @@ body {
     padding: 12px 16px;
     text-align: left;
     border-bottom: 1px solid var(--border-color);
-    font-size: 12px;
+    font-size: 13px;
 }
 
 .actor-table th {
     background: var(--bg-secondary);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--text-secondary);
     text-transform: uppercase;
@@ -2886,9 +2907,8 @@ body {
 .actor-adapter-radio {
     display: flex;
     align-items: center;
-    gap: 8px;
     cursor: pointer;
-    padding: 8px 12px;
+    padding: 8px 8px;
     border-radius: 4px;
     border: 1px solid var(--border-color);
     transition: all 0.2s;
@@ -2901,7 +2921,7 @@ body {
 
 .actor-adapter-radio input[type="radio"] {
     margin: 0;
-    width: 5%;
+    width: 3%;
 }
 
 .actor-adapter-radio input[type="radio"]:checked + span {
@@ -3106,21 +3126,15 @@ body {
 }
 
 .extract-actor-results-container {
+    width: 100%;
     max-height: 350px;
     overflow-y: auto;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
+    font-size: 13px;
 }
 
 .batch-actor-table {
     width: 100%;
     border-collapse: collapse;
-}
-
-.batch-actor-table thead {
-    position: sticky;
-    top: 0;
-    z-index: 1;
 }
 
 .batch-actor-table th,
@@ -3205,8 +3219,8 @@ body {
 /* 批量演员搜索表格列宽固定 */
 .batch-actor-table th.col-name,
 .batch-actor-table td.col-name {
-    width: 120px;
-    min-width: 120px;
+    width: 180px;
+    min-width: 180px;
 }
 
 .batch-actor-table th.col-birthday,
@@ -3219,7 +3233,7 @@ body {
 .batch-actor-table td.col-memo {
     width: auto;
     min-width: 150px;
-    max-width: 400px;
+    max-width: 340px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -3319,6 +3333,7 @@ body {
 .batch-search-adapter-radio:has(input[type="radio"]:checked) {
     background-color: var(--active-bg);
     border-color: var(--primary-color);
+    display: flex;
 }
 
 .batch-search-movies-list {

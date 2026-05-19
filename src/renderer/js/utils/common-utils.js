@@ -242,4 +242,7 @@ function applyPosterSizeSettings(layout) {
         document.documentElement.style.setProperty('--poster-min-width', getPosterMinSize(posterSize, 'vertical'));
         document.documentElement.style.setProperty('--poster-max-width', getPosterMaxSize(posterSize, 'vertical'));
     }
+
+    document.documentElement.style.setProperty('--photo-min-width', getPosterMinSize(posterSize, 'vertical'));
+    document.documentElement.style.setProperty('--photo-max-width', getPosterMaxSize(posterSize, 'vertical'));
 }
