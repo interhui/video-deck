@@ -194,6 +194,12 @@
     overflow: hidden;
 }
 
+.box-movie-card .movie-poster-container .movie-poster-overlay {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
 .box-movie-card .movie-poster-container .movie-poster,
 .box-movie-card .movie-poster-container .movie-poster-placeholder {
     width: 100%;

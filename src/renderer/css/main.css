@@ -423,11 +423,6 @@ body {
     aspect-ratio: 3 / 2.5;
 }
 
-.movie-card.horizontal-poster .movie-poster,
-.movie-card.horizontal-poster .movie-poster-placeholder {
-    height: calc(100% - 50px);
-}
-
 .movies-grid.horizontal-style {
     grid-template-columns: repeat(auto-fill, minmax(var(--poster-min-width), 1fr));
 }
@@ -455,6 +450,59 @@ body {
     height: 18px;
     cursor: pointer;
     accent-color: var(--primary-color);
+}
+
+/* 海报悬停播放按钮 */
+.movie-poster-overlay {
+    position: relative;
+    width: 100%;
+    height: calc(100% - 50px);
+    overflow: hidden;
+}
+
+.movie-poster-overlay .movie-poster,
+.movie-poster-overlay .movie-poster-placeholder {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.movie-poster-overlay .movie-poster-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    background-color: var(--card-bg);
+    color: var(--text-secondary);
+}
+
+.movie-play-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    border: none;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.3s, background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-left: 4px;
+}
+
+.movie-card:hover .movie-play-btn {
+    opacity: 1;
+}
+
+.movie-play-btn:hover {
+    background-color: rgba(255, 0, 0, 0.8);
 }
 
 .movie-poster {

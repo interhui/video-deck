@@ -849,7 +849,7 @@ function renderMovies(movies, isAppend = false) {
         if (state.viewMode === 'list') {
             // 列表视图
             return `
-                <div class="box-movie-card movie-card ${isSelected ? 'selected' : ''}" data-movie-id="${movie.movieId}">
+                <div class="box-movie-card movie-card ${isSelected ? 'selected' : ''}" data-movie-id="${movie.movieId}" data-id="${movie.id}">
                     <div class="movie-checkbox">
                         <input type="checkbox" class="movie-select-checkbox" data-movie-id="${movie.movieId}" ${isSelected ? 'checked' : ''}>
                     </div>
@@ -869,15 +869,18 @@ function renderMovies(movies, isAppend = false) {
             const posterStyleClass = state.settings.layout?.posterStyle === 'horizontal' ? 'horizontal-poster' : '';
             // 网格视图
             return `
-                <div class="box-movie-card movie-card ${posterStyleClass}" data-movie-id="${movie.movieId}">
+                <div class="box-movie-card movie-card ${posterStyleClass}" data-movie-id="${movie.movieId}" data-id="${movie.id}">
                     <button class="remove-btn" data-movie-id="${movie.movieId}" title="从盒子中移除">✕</button>
                     <span class="box-status-tag ${movie.boxStatus || 'unwatched'}" data-movie-id="${movie.movieId}" data-category="${movie.category}">${getStatusText(movie.boxStatus)}</span>
                     <div class="movie-poster-container" style="width: 100%; height: calc(100% - 50px); position: relative;">
-                        ${movie.poster ?
-                            `<img class="movie-poster" src="${movie.poster}" alt="${movie.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                             <div class="movie-poster-placeholder" style="display:none;">🎬</div>` :
-                            `<div class="movie-poster-placeholder" style="display:flex;">🎬</div>`
-                        }
+                        <div class="movie-poster-overlay">
+                            ${movie.poster ?
+                                `<img class="movie-poster" src="${movie.poster}" alt="${movie.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                 <div class="movie-poster-placeholder" style="display:none;">🎬</div>` :
+                                `<div class="movie-poster-placeholder">🎬</div>`
+                            }
+                            <button class="movie-play-btn" title="播放电影">▶</button>
+                        </div>
                         ${movie.boxRating ? `<div class="movie-rating">${'⭐'.repeat(movie.boxRating)}</div>` : ''}
                     </div>
                     <div class="movie-info">
@@ -901,12 +904,30 @@ function renderMovies(movies, isAppend = false) {
     // 绑定点击事件
     document.querySelectorAll('.box-movie-card').forEach(card => {
         card.addEventListener('click', (e) => {
-            // 如果点击的是移除按钮，不打开详情
+            // 如果点击的是移除按钮、复选框或播放按钮，不打开详情
             if (e.target.classList.contains('remove-btn')) return;
             if (e.target.type === 'checkbox') return;
+            if (e.target.classList.contains('movie-play-btn')) {
+                e.stopPropagation();
+                const movieId = card.dataset.id;  // 使用真实的id而非movieId
+                playBoxMovie(movieId);
+                return;
+            }
 
-            const movieId = card.dataset.movieId;
+            const movieId = card.dataset.id;  // 使用真实的id而非movieId
             openMovieDetail(movieId);
+        });
+    });
+
+    // 绑定播放按钮事件（冒泡处理）
+    document.querySelectorAll('.box-movie-card .movie-play-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const card = btn.closest('.box-movie-card');
+            if (card) {
+                const movieId = card.dataset.id;  // 使用真实的id而非movieId
+                playBoxMovie(movieId);
+            }
         });
     });
 
@@ -1360,6 +1381,58 @@ async function playBoxMovies() {
         await window.electronAPI.openBatchPlayerWindow(playlist);
     } catch (error) {
         console.error('Error playing box movies:', error);
+        alert('播放失败: ' + error.message);
+    }
+}
+
+/**
+ * 播放单个电影（从box详情）
+ */
+async function playBoxMovie(movieId) {
+    try {
+        console.log('[playBoxMovie] movieId:', movieId);
+        const movieDetail = await window.electronAPI.getMovieDetail(movieId);
+        console.log('[playBoxMovie] getMovieDetail result:', movieDetail);
+        if (!movieDetail || movieDetail.error) {
+            alert('获取电影详情失败');
+            return;
+        }
+
+        // 构建播放列表
+        const playlist = [];
+
+        if (movieDetail.fileset && Array.isArray(movieDetail.fileset)) {
+            for (const file of movieDetail.fileset) {
+                const fileType = file.type || file.fileType;
+                if (fileType === 'Main' && file.fullpath) {
+                    playlist.push({
+                        path: file.fullpath,
+                        title: `${movieDetail.name} - ${file.filename || path.basename(file.fullpath)}`,
+                        codec: file.codec || file.videoCodec || '',
+                        resolution: file.resolution || (file.videoWidth ? `${file.videoWidth}x${file.videoHeight}` : '')
+                    });
+                }
+            }
+        }
+
+        // 如果没有从fileset找到视频，尝试使用original_filename
+        if (playlist.length === 0 && movieDetail.original_filename) {
+            playlist.push({
+                path: movieDetail.original_filename,
+                title: movieDetail.name || path.basename(movieDetail.original_filename),
+                codec: movieDetail.videoCodec || '',
+                resolution: movieDetail.videoWidth ? `${movieDetail.videoWidth}x${movieDetail.videoHeight}` : ''
+            });
+        }
+
+        if (playlist.length === 0) {
+            alert('没有可播放的视频文件');
+            return;
+        }
+
+        await window.electronAPI.openPlayerWindow(movieDetail);
+    } catch (error) {
+        console.error('Error playing box movie:', error);
         alert('播放失败: ' + error.message);
     }
 }

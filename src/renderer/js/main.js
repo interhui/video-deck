@@ -1178,11 +1178,14 @@ function renderMovies(movies, isAppend = false) {
                         <input type="checkbox" class="movie-select-checkbox" data-movie-id="${movie.id}" ${isSelected ? 'checked' : ''}>
                     </div>
                     ${showNewTag ? '<span class="new-movie-tag">新电影</span>' : ''}
-                    ${movie.poster ?
-                        `<img class="movie-poster" src="${movie.poster}" alt="${movie.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                         <div class="movie-poster-placeholder" style="display:none;">🎬</div>` :
-                        `<div class="movie-poster-placeholder">🎬</div>`
-                    }
+                    <div class="movie-poster-overlay">
+                        ${movie.poster ?
+                            `<img class="movie-poster" src="${movie.poster}" alt="${movie.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                             <div class="movie-poster-placeholder" style="display:none;">🎬</div>` :
+                            `<div class="movie-poster-placeholder">🎬</div>`
+                        }
+                        <button class="movie-play-btn" title="播放电影">▶</button>
+                    </div>
                     <div class="movie-info">
                         <div class="movie-name">${movie.name}</div>
                         <div class="movie-extra">${movie.actors || '-'}</div>
@@ -1201,13 +1204,31 @@ function renderMovies(movies, isAppend = false) {
         elements.moviesGrid.innerHTML = html;
     }
 
-    // 绑定电影卡片点击事件（排除复选框）
+    // 绑定电影卡片点击事件（排除复选框和播放按钮）
     document.querySelectorAll('.movie-card').forEach(card => {
         card.addEventListener('click', (e) => {
-            // 如果点击的是复选框，不打开详情
+            // 如果点击的是复选框或播放按钮，不打开详情
             if (e.target.type === 'checkbox') return;
+            if (e.target.classList.contains('movie-play-btn')) {
+                e.stopPropagation();
+                const movieId = card.dataset.movieId;
+                playMovie(movieId);
+                return;
+            }
             const movieId = card.dataset.movieId;
             openMovieDetail(movieId);
+        });
+    });
+
+    // 绑定播放按钮事件（冒泡处理）
+    document.querySelectorAll('.movie-play-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const card = btn.closest('.movie-card');
+            if (card) {
+                const movieId = card.dataset.movieId;
+                playMovie(movieId);
+            }
         });
     });
 
@@ -1448,6 +1469,21 @@ async function openMovieDetail(movieId) {
         }
     } catch (error) {
         console.error('Error opening movie detail:', error);
+    }
+}
+
+/**
+ * 播放电影
+ */
+async function playMovie(movieId) {
+    try {
+        const movie = await window.electronAPI.getMovieDetail(movieId);
+        if (movie && !movie.error) {
+            await window.electronAPI.openPlayerWindow(movie);
+        }
+    } catch (error) {
+        console.error('Error playing movie:', error);
+        alert('播放失败: ' + error.message);
     }
 }
 
