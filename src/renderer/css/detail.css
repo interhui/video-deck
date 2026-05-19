@@ -1468,3 +1468,115 @@ body {
     color: var(--text-secondary);
     font-size: 14px;
 }
+
+/* ==================== 剧照展示样式 ==================== */
+
+.screenshots-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.screenshots-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.screenshots-header h3 {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.screenshots-header #screenshots-count {
+    font-size: 12px;
+    font-weight: normal;
+    color: var(--text-secondary);
+}
+
+.screenshots-gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: flex-start;
+}
+
+.screenshot-item {
+    width: 375px;
+    height: 209px;
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid var(--border-color);
+    background-color: var(--card-bg);
+}
+
+.screenshot-item:hover {
+    border-color: var(--primary-color);
+    transform: scale(1.02);
+}
+
+.screenshot-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.screenshot-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.no-screenshots {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+/* 剧照全屏查看模态框 */
+.screenshot-viewer-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.screenshot-viewer-content {
+    max-width: 90%;
+    max-height: 90%;
+}
+
+.screenshot-viewer-content img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.screenshot-viewer-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 32px;
+    cursor: pointer;
+    z-index: 2001;
+}
+
+.screenshot-viewer-close:hover {
+    opacity: 0.8;
+}

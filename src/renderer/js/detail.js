@@ -26,10 +26,10 @@ let movieSearchResults = [];
 let selectedMovie = null;
 const MOVIE_SEARCH_MAX_RESULTS = 10;
 
-// 设置对象
+let screenshotsData = [];
+
 let detailSettings = {};
 
-// DOM 元素
 const elements = {
     closeBtn: document.getElementById('close-btn'),
     movieTitle: document.getElementById('movie-title'),
@@ -116,7 +116,9 @@ const elements = {
     confirmAddFile: document.getElementById('confirm-add-file'),
     cancelAddFile: document.getElementById('cancel-add-file'),
     closeAddFile: document.getElementById('close-add-file'),
-    // Movie search modal
+    tabMovieScreenshots: document.getElementById('tab-movie-screenshots'),
+    screenshotsCount: document.getElementById('screenshots-count'),
+    screenshotsGallery: document.getElementById('screenshots-gallery'),
     movieSearchBtn: document.getElementById('movie-search-btn'),
     movieSearchModal: document.getElementById('movie-search-modal'),
     movieSearchCategory: document.getElementById('movie-search-category'),
@@ -498,6 +500,7 @@ function switchTab(tab) {
 
     elements.tabMovieInfo.style.display = tab === 'movie-info' ? 'block' : 'none';
     elements.tabMovieFiles.style.display = tab === 'movie-files' ? 'block' : 'none';
+    elements.tabMovieScreenshots.style.display = tab === 'movie-screenshots' ? 'block' : 'none';
 
     if (tab === 'movie-files' && isEditMode) {
         elements.addFileBtn.style.display = 'block';
@@ -507,6 +510,10 @@ function switchTab(tab) {
 
     if (tab === 'movie-files' && !isEditMode) {
         elements.fileDetailsActions.style.display = 'none';
+    }
+
+    if (tab === 'movie-screenshots' && currentMovie) {
+        loadScreenshots();
     }
 }
 
@@ -633,15 +640,93 @@ function loadMovieDetail(movie) {
     }
 
     // 初始化时确保编辑模式按钮隐藏
-    elements.confirmEditBtn.style.display = 'none';
+elements.confirmEditBtn.style.display = 'none';
     elements.cancelEditBtn.style.display = 'none';
+
+    screenshotsData = [];
 
     switchTab('movie-info');
 }
 
-/**
- * 渲染标签
- */
+async function loadScreenshots() {
+    if (!currentMovie || !currentMovie.id) {
+        return;
+    }
+
+    try {
+        const movieFolderPath = currentMovie.basePath || currentMovie.path || null;
+        const result = await window.electronAPI.getScreenshots(currentMovie.id, movieFolderPath);
+        if (result && !result.error) {
+            screenshotsData = result;
+            renderScreenshots(result);
+        } else {
+            renderScreenshots([]);
+        }
+    } catch (error) {
+        console.error('Error loading screenshots:', error);
+        renderScreenshots([]);
+    }
+}
+
+function renderScreenshots(screenshots) {
+    if (!screenshots || screenshots.length === 0) {
+        elements.screenshotsCount.textContent = '(0)';
+        elements.screenshotsGallery.innerHTML = '<div class="no-screenshots">暂无剧照</div>';
+        return;
+    }
+
+    elements.screenshotsCount.textContent = `(${screenshots.length})`;
+
+    const html = screenshots.map(screenshot => {
+        return `
+            <div class="screenshot-item" data-path="${screenshot.path}">
+                <img src="file://${screenshot.path}?t=${Date.now()}" alt="剧照 ${screenshot.number}">
+            </div>
+        `;
+    }).join('');
+
+    elements.screenshotsGallery.innerHTML = html;
+
+    elements.screenshotsGallery.querySelectorAll('.screenshot-item').forEach(item => {
+        const img = item.querySelector('img');
+        img.onerror = () => {
+            item.innerHTML = '<div class="screenshot-placeholder">加载失败</div>';
+        };
+        item.onclick = () => {
+            showScreenshotViewer(item.dataset.path);
+        };
+    });
+}
+
+function showScreenshotViewer(imagePath) {
+    const existingViewer = document.getElementById('screenshot-viewer-modal');
+    if (existingViewer) {
+        existingViewer.remove();
+    }
+
+    const viewerHtml = `
+        <div id="screenshot-viewer-modal" class="screenshot-viewer-modal">
+            <button class="screenshot-viewer-close">&times;</button>
+            <div class="screenshot-viewer-content">
+                <img src="file://${imagePath}?t=${Date.now()}" alt="剧照">
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', viewerHtml);
+
+    const modal = document.getElementById('screenshot-viewer-modal');
+    modal.onclick = closeScreenshotViewer;
+    modal.querySelector('.screenshot-viewer-close').onclick = closeScreenshotViewer;
+}
+
+function closeScreenshotViewer() {
+    const viewer = document.getElementById('screenshot-viewer-modal');
+    if (viewer) {
+        viewer.remove();
+    }
+}
+
 function renderTags(tags) {
     if (!tags || tags.length === 0) {
         elements.movieTags.innerHTML = '<span class="tag">无</span>';

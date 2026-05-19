@@ -208,6 +208,7 @@ function setupIpcHandlers(services) {
         playerService,
         batchSearchService,
         batchActorSearchService,
+        screenshotService,
         getMainWindow,
         createMovieDetailWindow,
         createBoxWindow,
@@ -1850,12 +1851,125 @@ function setupIpcHandlers(services) {
             // 按姓名排序
             newActorNames.sort((a, b) => a.localeCompare(b, 'zh-CN'));
 
-            console.log(`Found ${newActorNames.length} new actors from ${allMovies.length} movies`);
-
             return { actors: newActorNames };
         } catch (error) {
             console.error('Error extracting new actors from movies:', error);
             return { error: error.message, actors: [] };
+        }
+    });
+
+    // ==================== 剧照管理 ====================
+
+    ipcMain.handle('get-screenshots', async (event, { movieId, movieFolderPath }) => {
+        try {
+            let targetFolderPath = movieFolderPath;
+
+            if (!targetFolderPath && movieId) {
+                const settings = settingsService.getSettings();
+                const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+                const movieDetail = await movieService.getMovieDetail(movieId, moviesDir);
+
+                if (movieDetail) {
+                    targetFolderPath = movieDetail.basePath || movieDetail.path || null;
+                }
+
+                if (!targetFolderPath) {
+                    const firstDashIndex = movieId.indexOf('-');
+                    if (firstDashIndex > 0) {
+                        const category = movieId.substring(0, firstDashIndex);
+                        const folderName = movieId.substring(firstDashIndex + 1);
+                        targetFolderPath = path.join(moviesDir, category, folderName);
+                    }
+                }
+            }
+
+            if (!targetFolderPath) {
+                return { error: 'Cannot determine movie folder path' };
+            }
+
+            const screenshots = await screenshotService.getScreenshots(targetFolderPath);
+
+            const screenshotsWithPaths = screenshots.map(s => ({
+                ...s,
+                path: s.path
+            }));
+
+            return screenshotsWithPaths;
+        } catch (error) {
+            console.error('Error getting screenshots:', error);
+            return { error: error.message };
+        }
+    });
+
+    ipcMain.handle('save-screenshot', async (event, { movieId, movieFolderPath, imageData }) => {
+        try {
+            let targetFolderPath = movieFolderPath;
+
+            if (!targetFolderPath && movieId) {
+                const settings = settingsService.getSettings();
+                const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+                const movieDetail = await movieService.getMovieDetail(movieId, moviesDir);
+
+                if (movieDetail) {
+                    targetFolderPath = movieDetail.basePath || movieDetail.path || null;
+                }
+
+                if (!targetFolderPath) {
+                    const firstDashIndex = movieId.indexOf('-');
+                    if (firstDashIndex > 0) {
+                        const category = movieId.substring(0, firstDashIndex);
+                        const folderName = movieId.substring(firstDashIndex + 1);
+                        targetFolderPath = path.join(moviesDir, category, folderName);
+                    }
+                }
+            }
+
+            if (!targetFolderPath) {
+                return { success: false, error: 'Cannot determine movie folder path' };
+            }
+
+            const nextNumber = await screenshotService.getNextScreenshotNumber(targetFolderPath);
+
+            const result = await screenshotService.saveScreenshot(targetFolderPath, imageData, nextNumber);
+            return result;
+        } catch (error) {
+            console.error('Error saving screenshot:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    ipcMain.handle('delete-screenshot', async (event, { movieId, movieFolderPath, number }) => {
+        try {
+            let targetFolderPath = movieFolderPath;
+
+            if (!targetFolderPath && movieId) {
+                const settings = settingsService.getSettings();
+                const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+                const movieDetail = await movieService.getMovieDetail(movieId, moviesDir);
+
+                if (movieDetail) {
+                    targetFolderPath = movieDetail.basePath || movieDetail.path || null;
+                }
+
+                if (!targetFolderPath) {
+                    const firstDashIndex = movieId.indexOf('-');
+                    if (firstDashIndex > 0) {
+                        const category = movieId.substring(0, firstDashIndex);
+                        const folderName = movieId.substring(firstDashIndex + 1);
+                        targetFolderPath = path.join(moviesDir, category, folderName);
+                    }
+                }
+            }
+
+            if (!targetFolderPath) {
+                return { success: false, error: 'Cannot determine movie folder path' };
+            }
+
+            const result = await screenshotService.deleteScreenshot(targetFolderPath, number);
+            return result;
+        } catch (error) {
+            console.error('Error deleting screenshot:', error);
+            return { success: false, error: error.message };
         }
     });
 

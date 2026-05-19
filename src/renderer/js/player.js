@@ -26,8 +26,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         playerTitle: document.getElementById('player-title'),
         minimizeBtn: document.getElementById('minimize-btn'),
         closeBtn: document.getElementById('close-btn'),
-        fullscreenBtn: document.getElementById('fullscreen-btn')
+        fullscreenBtn: document.getElementById('fullscreen-btn'),
+        screenshotBtn: document.getElementById('screenshot-btn')
     };
+
+    let currentMovieId = null;
+    let currentMovieFolderPath = null;
 
     // 状态
     let playlist = [];
@@ -274,13 +278,68 @@ document.addEventListener('DOMContentLoaded', async () => {
             case 'm':
                 elements.muteBtn.click();
                 break;
+            case 's':
+                takeScreenshot();
+                break;
         }
     });
 
-    // 从主进程接收播放列表数据
+    function takeScreenshot() {
+        if (!currentMovieId || !currentMovieFolderPath) {
+            showScreenshotToast('无法保存截图：缺少电影信息');
+            return;
+        }
+
+        const video = elements.videoPlayer;
+        if (!video || video.readyState < 2) {
+            showScreenshotToast('无法截图：视频未加载');
+            return;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        const base64Data = canvas.toDataURL('image/jpeg', 0.95);
+
+        window.electronAPI.saveScreenshot(currentMovieId, currentMovieFolderPath, base64Data).then(result => {
+            if (result.success) {
+                showScreenshotToast('截图已保存');
+            } else {
+                showScreenshotToast('截图保存失败：' + (result.error || '未知错误'));
+            }
+        }).catch(error => {
+            showScreenshotToast('截图保存失败：' + error.message);
+        });
+    }
+
+    function showScreenshotToast(message) {
+        const existingToast = document.querySelector('.screenshot-toast');
+        if (existingToast) {
+            existingToast.remove();
+        }
+
+        const toast = document.createElement('div');
+        toast.className = 'screenshot-toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.remove();
+            }
+        }, 2000);
+    }
+
+    elements.screenshotBtn.addEventListener('click', takeScreenshot);
+
     window.electronAPI.onLoadPlayerData((data) => {
         if (data) {
             elements.playerTitle.textContent = data.movieTitle || '电影播放';
+            currentMovieId = data.movieId || null;
+            currentMovieFolderPath = data.movieFolderPath || null;
             loadPlaylist(data.playlist || [], data.currentIndex || 0);
         }
     });

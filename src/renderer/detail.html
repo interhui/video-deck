@@ -21,6 +21,7 @@
                 <div class="tab-buttons">
                     <button class="tab-btn active" data-tab="movie-info">电影信息</button>
                     <button class="tab-btn" data-tab="movie-files">电影文件</button>
+                    <button class="tab-btn" data-tab="movie-screenshots">电影剧照</button>
                 </div>
                 <div class="action-buttons-right">
                     <button id="play-btn" class="btn btn-primary launch-hidden">播放</button>
@@ -109,6 +110,16 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Movie Screenshots Tab -->
+            <div id="tab-movie-screenshots" class="tab-content" style="display: none;">
+                <div class="screenshots-layout">
+                    <div class="screenshots-header">
+                        <h3>电影剧照 <span id="screenshots-count"></span></h3>
+                    </div>
+                    <div id="screenshots-gallery" class="screenshots-gallery"></div>
                 </div>
             </div>
 
