@@ -844,24 +844,24 @@ function renderMovies(movies, isAppend = false) {
     }
 
     html += filteredMovies.map(movie => {
-        const isSelected = state.selectedMovies.has(movie.movieId);
+        const isSelected = state.selectedMovies.has(movie.id);
 
         if (state.viewMode === 'list') {
             // 列表视图
             return `
-                <div class="box-movie-card movie-card ${isSelected ? 'selected' : ''}" data-movie-id="${movie.movieId}" data-id="${movie.id}">
+                <div class="box-movie-card movie-card ${isSelected ? 'selected' : ''}" data-movie-id="${movie.id}" data-id="${movie.id}">
                     <div class="movie-checkbox">
-                        <input type="checkbox" class="movie-select-checkbox" data-movie-id="${movie.movieId}" ${isSelected ? 'checked' : ''}>
+                        <input type="checkbox" class="movie-select-checkbox" data-movie-id="${movie.id}" ${isSelected ? 'checked' : ''}>
                     </div>
                     <div class="movie-action-col">
-                        <button class="remove-btn" data-movie-id="${movie.movieId}" title="从盒子中移除">✕</button>
+                        <button class="remove-btn" data-movie-id="${movie.id}" title="从盒子中移除">✕</button>
                     </div>
-                    <div class="movie-id-col">${movie.movieId || ''}</div>
+                    <div class="movie-id-col">${movie.id || ''}</div>
                     <div class="movie-name">${movie.name}</div>
                     <div class="movie-actors-col">${movie.actors || '-'}</div>
                     <div class="movie-publish-date">${movie.publishDate || '-'}</div>
                     <div class="movie-publisher-col">${movie.studio || '-'}</div>
-                    <div class="movie-status"><span class="box-list-status ${movie.boxStatus || 'unwatched'}" data-movie-id="${movie.movieId}" data-category="${movie.category}">${getStatusText(movie.boxStatus)}</span></div>
+                    <div class="movie-status"><span class="box-list-status ${movie.boxStatus || 'unwatched'}" data-movie-id="${movie.id}" data-category="${movie.category}">${getStatusText(movie.boxStatus)}</span></div>
                     <div class="movie-rating">${movie.boxRating ? '⭐'.repeat(movie.boxRating) : '-'}</div>
                 </div>
             `;
@@ -869,9 +869,9 @@ function renderMovies(movies, isAppend = false) {
             const posterStyleClass = state.settings.layout?.posterStyle === 'horizontal' ? 'horizontal-poster' : '';
             // 网格视图
             return `
-                <div class="box-movie-card movie-card ${posterStyleClass}" data-movie-id="${movie.movieId}" data-id="${movie.id}">
-                    <button class="remove-btn" data-movie-id="${movie.movieId}" title="从盒子中移除">✕</button>
-                    <span class="box-status-tag ${movie.boxStatus || 'unwatched'}" data-movie-id="${movie.movieId}" data-category="${movie.category}">${getStatusText(movie.boxStatus)}</span>
+                <div class="box-movie-card movie-card ${posterStyleClass}" data-movie-id="${movie.id}" data-id="${movie.id}">
+                    <button class="remove-btn" data-movie-id="${movie.id}" title="从盒子中移除">✕</button>
+                    <span class="box-status-tag ${movie.boxStatus || 'unwatched'}" data-movie-id="${movie.id}" data-category="${movie.category}">${getStatusText(movie.boxStatus)}</span>
                     <div class="movie-poster-container" style="width: 100%; height: calc(100% - 50px); position: relative;">
                         <div class="movie-poster-overlay">
                             ${movie.poster ?
@@ -955,7 +955,7 @@ function renderMovies(movies, isAppend = false) {
     if (selectAllCheckbox) {
         selectAllCheckbox.addEventListener('change', (e) => {
             if (e.target.checked) {
-                filteredMovies.forEach(movie => state.selectedMovies.add(movie.movieId));
+                filteredMovies.forEach(movie => state.selectedMovies.add(movie.id));
             } else {
                 state.selectedMovies.clear();
             }
