@@ -62,11 +62,16 @@ class PlayerService {
         this.currentPlaylist = playlist;
         this.currentIndex = 0;
 
+        const movieId = movieData && movieData.id ? movieData.id : null;
+        const movieFolderPath = movieData && (movieData.basePath || movieData.path) ? (movieData.basePath || movieData.path) : null;
+
         if (typeof createPlayerWindow === 'function') {
             createPlayerWindow({
                 playlist: playlist,
                 currentIndex: 0,
-                movieTitle: movieData.title || '电影播放'
+                movieTitle: movieData.title || '电影播放',
+                movieId: movieId,
+                movieFolderPath: movieFolderPath
             });
         }
     }

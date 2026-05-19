@@ -26,6 +26,7 @@ const R18AdapterService = require('./src/main/services/R18AdapterService');
 const PlayerService = require('./src/main/services/PlayerService');
 const BatchSearchService = require('./src/main/services/BatchSearchService');
 const BatchActorSearchService = require('./src/main/services/BatchActorSearchService');
+const ScreenshotService = require('./src/main/services/ScreenshotService');
 const { setupIpcHandlers } = require('./src/main/ipc-handlers');
 const { setGlobalProxy } = require('./src/main/utils/http-utils');
 
@@ -50,6 +51,7 @@ let r18AdapterService = null;
 let playerService = null;
 let batchSearchService = null;
 let batchActorSearchService = null;
+let screenshotService = null;
 
 /**
  * 初始化服务
@@ -98,6 +100,8 @@ async function initializeServices() {
     if (typeof movieService.setActorService === 'function') {
         movieService.setActorService(actorService);
     }
+
+    screenshotService = new ScreenshotService();
 
     log.info('Services initialized successfully');
 }
@@ -532,6 +536,7 @@ app.whenReady().then(async () => {
         playerService,
         batchSearchService,
         batchActorSearchService,
+        screenshotService,
         getMainWindow: () => mainWindow,
         createMovieDetailWindow,
         createBoxWindow,
