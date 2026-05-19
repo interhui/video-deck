@@ -4003,6 +4003,26 @@ function initScanDirEvents() {
         }
     });
 
+    // 仅查看新电影复选框事件
+    const showNewOnlyCheckbox = document.getElementById('show-new-only-checkbox');
+    if (showNewOnlyCheckbox) {
+        showNewOnlyCheckbox.addEventListener('change', () => {
+            const showNewOnly = showNewOnlyCheckbox.checked;
+            const rows = elements.scanMoviesList.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const statusCell = row.querySelector('.scan-movie-status span');
+                if (statusCell) {
+                    const isNew = statusCell.classList.contains('scan-status-new');
+                    if (showNewOnly) {
+                        row.style.display = isNew ? '' : 'none';
+                    } else {
+                        row.style.display = '';
+                    }
+                }
+            });
+        });
+    }
+
     // 电影编辑模态框事件
     elements.closeScanMovieEdit.addEventListener('click', closeScanMovieEditModal);
     elements.cancelScanMovieEdit.addEventListener('click', closeScanMovieEditModal);

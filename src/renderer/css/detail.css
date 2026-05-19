@@ -1510,6 +1510,7 @@ body {
     transition: all 0.2s;
     border: 1px solid var(--border-color);
     background-color: var(--card-bg);
+    position: relative;
 }
 
 .screenshot-item:hover {
@@ -1521,6 +1522,33 @@ body {
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+.screenshot-delete-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    font-size: 14px;
+    line-height: 24px;
+    text-align: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 1;
+}
+
+.screenshot-item:hover .screenshot-delete-btn {
+    opacity: 1;
+}
+
+.screenshot-delete-btn:hover {
+    background-color: #dc3545;
 }
 
 .screenshot-placeholder {
