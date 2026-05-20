@@ -2201,12 +2201,12 @@ function bindEvents() {
                 for (const box of boxes) {
                     const boxDetail = await window.electronAPI.getBoxDetail(box.name);
                     if (boxDetail && boxDetail.data && boxDetail.data[movie.category]) {
-                        const movieInBox = boxDetail.data[movie.category].find(m => m.id === movie.movieId);
+                        const movieInBox = boxDetail.data[movie.category].find(m => m.id === movie.id);
                         if (movieInBox) {
                             await window.electronAPI.removeMovieFromBox({
                                 boxName: box.name,
-category: movie.category,
-                                movieId: movie.movieId
+                                category: movie.category,
+                                movieId: movie.id
                             });
                         }
                     }

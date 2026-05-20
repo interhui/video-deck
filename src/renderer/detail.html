@@ -24,12 +24,19 @@
                     <button class="tab-btn" data-tab="movie-screenshots">电影剧照</button>
                 </div>
                 <div class="action-buttons-right">
-                    <button id="play-btn" class="btn btn-primary launch-hidden">播放</button>
-                    <button id="edit-btn" class="btn btn-secondary">编辑</button>
-                    <button id="delete-btn" class="btn btn-danger">删除</button>
-                    <button id="add-to-box-btn" class="btn btn-secondary">添加到盒子</button>
-                    <button id="confirm-edit-btn" class="btn btn-primary" style="display: none;">确定</button>
-                    <button id="cancel-edit-btn" class="btn btn-secondary" style="display: none;">取消</button>
+                    <div id="normal-actions" class="action-buttons">
+                        <button id="play-btn" class="btn btn-primary launch-hidden">播放</button>
+                        <button id="edit-btn" class="btn btn-secondary">编辑</button>
+                        <button id="delete-btn" class="btn btn-danger">删除</button>
+                        <button id="add-to-box-btn" class="btn btn-secondary">添加到盒子</button>
+                        <button id="confirm-edit-btn" class="btn btn-primary" style="display: none;">确定</button>
+                        <button id="cancel-edit-btn" class="btn btn-secondary" style="display: none;">取消</button>
+                    </div>
+                    <div id="box-actions" class="action-buttons" style="display: none;">
+                        <button id="play-btn-box" class="btn btn-primary launch-hidden">播放</button>
+                        <button id="edit-status-action-btn" class="btn btn-secondary">修改状态</button>
+                        <button id="remove-from-box-btn" class="btn btn-danger">移除</button>
+                    </div>
                 </div>
             </div>
 
@@ -172,11 +179,7 @@
 
             
 
-            <div id="box-actions" class="action-buttons" style="display: none;">
-                <button id="play-btn-box" class="btn btn-primary launch-hidden">播放</button>
-                <button id="edit-status-action-btn" class="btn btn-secondary">修改状态</button>
-                <button id="remove-from-box-btn" class="btn btn-danger">移除</button>
-            </div>
+
         </main>
 
         <!-- Add to Box Modal -->

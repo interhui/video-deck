@@ -139,7 +139,6 @@ async function init() {
     console.log('Detail page initialized');
 
     window.electronAPI.onLoadMovieDetail((movieData) => {
-        console.log('Loading movie detail:', movieData);
         movieDataLoaded = true;
         loadMovieDetail(movieData);
     });
@@ -186,10 +185,8 @@ async function init() {
 
     window.addEventListener('focus', () => {
         if (!movieDataLoaded) {
-            console.log('Window focused but movie data not loaded, requesting...');
             window.electronAPI.getPendingMovieDetail().then(movieData => {
                 if (movieData) {
-                    console.log('Got movie data on focus:', movieData);
                     movieDataLoaded = true;
                     loadMovieDetail(movieData);
                 }
@@ -623,20 +620,32 @@ function loadMovieDetail(movie) {
     }
 
     if (fromBox) {
-        elements.normalActions.style.display = 'none';
-        elements.boxActions.style.display = 'flex';
-        elements.boxInfoSection.style.display = 'block';
+        if (elements.normalActions) {
+            elements.normalActions.style.display = 'none';
+        }
+        if (elements.boxActions) {
+            elements.boxActions.style.display = 'flex';
+        }
+        if (elements.boxInfoSection) {
+            elements.boxInfoSection.style.display = 'block';
+        }
+        if (elements.addToBoxBtn) {
+            elements.addToBoxBtn.style.display = 'none';
+        }
 
         const status = movie.boxStatus || 'unwatched';
-        elements.boxStatus.textContent = getStatusText(status);
-        elements.boxStatus.className = `value box-status-tag-display ${status}`;
+        if (elements.boxStatus) {
+            elements.boxStatus.textContent = getStatusText(status);
+            elements.boxStatus.className = `value box-status-tag-display ${status}`;
+        }
 
         // 更新评分星星
         updateBoxRating(movie.boxRating || 0);
     } else {
         if (elements.normalActions) elements.normalActions.style.display = 'flex';
         if (elements.boxActions) elements.boxActions.style.display = 'none';
-        elements.boxInfoSection.style.display = 'none';
+        if (elements.boxInfoSection) elements.boxInfoSection.style.display = 'none';
+        if (elements.addToBoxBtn) elements.addToBoxBtn.style.display = 'inline-block';
     }
 
     // 初始化时确保编辑模式按钮隐藏
@@ -1127,7 +1136,7 @@ async function confirmStatusEdit() {
         const result = await window.electronAPI.updateMovieInBox({
             boxName: boxName,
             category: currentMovie.category,
-            movieId: currentMovie.movieId,
+            movieId: currentMovie.id,
             movieInfo: {
                 status: newStatus
             }
@@ -1383,7 +1392,12 @@ async function saveEdit() {
             // 保存成功后，重新获取电影数据以刷新缓存和显示
             const movieDetail = await window.electronAPI.getMovieDetail(currentMovie.id);
             if (movieDetail && !movieDetail.error) {
+                // 保留 fromBox 和 boxName 属性
+                const savedFromBox = fromBox;
+                const savedBoxName = boxName;
                 currentMovie = movieDetail;
+                currentMovie.fromBox = savedFromBox;
+                currentMovie.boxName = savedBoxName;
             } else {
                 currentMovie = updatedData;
             }
@@ -1710,7 +1724,7 @@ function bindEvents() {
                 boxName: selectedBoxName,
                 category: currentMovie.category,
                 movieInfo: {
-                    id: currentMovie.movieId,
+                    id: currentMovie.id,
                     status: 'unwatched',
                     rating: 0
                 }
@@ -1749,7 +1763,7 @@ function bindEvents() {
                 const result = await window.electronAPI.removeMovieFromBox({
                     boxName: boxName,
                     category: currentMovie.category,
-                    movieId: currentMovie.movieId
+                    movieId: currentMovie.id
                 });
 
                 if (!result.error) {
@@ -1804,7 +1818,7 @@ function bindEvents() {
             const result = await window.electronAPI.updateMovieInBox({
                 boxName: boxName,
                 category: currentMovie.category,
-                movieId: currentMovie.movieId,
+                movieId: currentMovie.id,
                 movieInfo: {
                     rating: newRating
                 }

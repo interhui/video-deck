@@ -493,8 +493,8 @@ async function loadMoviesFromBoxAll(boxMovieIds, boxMovieMap) {
         const validMovieIds = new Set();
 
         for (const movie of allMovies) {
-            // 检查电影是否在盒子中
-            const matchedBoxId = boxMovieIds.includes(movie.movieId) ? movie.movieId : (boxMovieIds.includes(movie.id) ? movie.id : null);
+            // 检查电影是否在盒子中（盒子存储的是 movie.id）
+            const matchedBoxId = boxMovieIds.includes(movie.id) ? movie.id : null;
             if (matchedBoxId) {
                 const boxInfo = boxMovieMap.get(matchedBoxId);
                 if (boxInfo) {
@@ -580,9 +580,9 @@ async function initBoxLazyLoader(boxMovieIds, boxMovieMap) {
                 const categoriesSet = new Set();
 
                 for (const movie of result.movies) {
-                    const boxInfo = boxMovieMap.get(movie.movieId) || boxMovieMap.get(movie.id);
-                    if (boxInfo && !addedMovieIds.has(movie.movieId || movie.id)) {
-                        addedMovieIds.add(movie.movieId || movie.id);
+                    const boxInfo = boxMovieMap.get(movie.id);
+                    if (boxInfo && !addedMovieIds.has(movie.id)) {
+                        addedMovieIds.add(movie.id);
                         filteredMovies.push({
                             ...movie,
                             boxStatus: boxInfo.boxStatus,
@@ -1035,8 +1035,7 @@ async function removeMovieFromBox(movieId) {
     if (!confirmed) return;
 
     try {
-        // 找到电影所在的分类
-        const movie = state.movies.find(m => m.movieId === movieId);
+        const movie = state.movies.find(m => m.id === movieId);
         if (!movie) return;
 
         const result = await window.electronAPI.removeMovieFromBox({
@@ -1208,12 +1207,11 @@ async function confirmStatusChange() {
  * 打开电影详情
  */
 async function openMovieDetail(movieId) {
-    // 检查详情窗口是否处于编辑模式，锁定状态下禁止点击
     if (state.detailEditModeLocked) {
         return;
     }
     try {
-        const movie = state.movies.find(m => m.movieId === movieId);
+        const movie = state.movies.find(m => m.id === movieId);
         if (movie) {
             await window.electronAPI.openMovieDetail({
                 ...movie,
@@ -1333,7 +1331,7 @@ async function playBoxMovies() {
         const allMovies = getFilteredMovies(state.movies);
 
         for (const movie of allMovies) {
-            const movieIdToUse = movie.movieId || movie.id;
+            const movieIdToUse = movie.id;
             const movieDetail = await window.electronAPI.getMovieDetail(movieIdToUse);
             
             let movieVideoAdded = false;
