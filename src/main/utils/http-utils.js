@@ -4,6 +4,7 @@
  */
 const https = require('https');
 const http = require('http');
+const zlib = require('zlib');
 const { HttpsProxyAgent } = require('https-proxy-agent');
 
 let globalProxyAgent = null;
@@ -70,13 +71,24 @@ function makeHttpRequest(url, options = {}) {
 
         const protocol = url.startsWith('http://') ? http : https;
         const req = protocol.request(requestOptions, (res) => {
-            let data = '';
+            const contentEncoding = res.headers['content-encoding'];
+            let stream = res;
+            
+            if (contentEncoding === 'gzip') {
+                stream = res.pipe(zlib.createGunzip());
+            } else if (contentEncoding === 'br') {
+                stream = res.pipe(zlib.createBrotliDecompress());
+            } else if (contentEncoding === 'deflate') {
+                stream = res.pipe(zlib.createInflate());
+            }
 
-            res.on('data', (chunk) => {
-                data += chunk;
+            const chunks = [];
+            stream.on('data', (chunk) => {
+                chunks.push(chunk);
             });
 
-            res.on('end', () => {
+            stream.on('end', () => {
+                const data = Buffer.concat(chunks).toString('utf-8');
                 if (res.statusCode >= 200 && res.statusCode < 300) {
                     try {
                         resolve(JSON.parse(data));
@@ -86,6 +98,10 @@ function makeHttpRequest(url, options = {}) {
                 } else {
                     reject(new Error(`HTTP ${res.statusCode}: ${data}`));
                 }
+            });
+
+            stream.on('error', (error) => {
+                reject(new Error(`Decompression error: ${error.message}`));
             });
         });
 

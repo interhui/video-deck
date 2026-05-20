@@ -64,7 +64,7 @@ body {
 
 .filter-group label {
     color: var(--text-secondary);
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .filter-select {
@@ -74,6 +74,7 @@ body {
     border: 1px solid var(--border-color);
     border-radius: 4px;
     cursor: pointer;
+    font-size: 13px;
 }
 
 .filter-select:focus {
@@ -1778,6 +1779,7 @@ body {
 .scan-result-options {
     display: flex;
     align-items: center;
+    gap: 16px;
 }
 
 .scan-result-options .checkbox-label {
@@ -1785,7 +1787,7 @@ body {
     align-items: center;
     gap: 6px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     color: var(--text-primary);
 }
 
@@ -2103,7 +2105,7 @@ body {
     padding: 8px 16px;
     background: transparent;
     color: var(--text-color);
-    font-size: 14px;
+    font-size: 13px;
     outline: none;
 }
 
@@ -2132,7 +2134,7 @@ body {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 14px;
+    font-size: 13px;
     color: var(--text-secondary);
     cursor: pointer;
     white-space: nowrap;
