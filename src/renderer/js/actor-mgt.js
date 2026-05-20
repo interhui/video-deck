@@ -237,6 +237,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td class="actor-table-checkbox">
                     <input type="checkbox" class="actor-checkbox" data-name="${escapeHtml(actor.name)}" ${selectedActors.has(actor.name) ? 'checked' : ''}>
                 </td>
+                <td class="actor-table-actions">
+                    <button class="actor-table-btn" onclick="editActor('${escapeHtml(actor.name)}')">✎</button>
+                    <button class="actor-table-btn" onclick="deleteActorConfirm('${escapeHtml(actor.name)}')">✖</button>
+                </td>
                 <td class="actor-table-photo">
                     ${actor.photo
                         ? `<img src="file://${actor.photo}" alt="${escapeHtml(actor.name)}">`
@@ -244,15 +248,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 </td>
                 <td>${escapeHtml(actor.name)}</td>
-                <td>${escapeHtml(actor.nickname || '')}</td>
                 <td>${escapeHtml(actor.birthday || '')}</td>
                 <td class="actor-table-memo" title="${escapeHtml(actor.memo || '')}">${truncateMemo(actor.memo)}</td>
                 <td class="actor-table-rating">${actor.rating ? '<span class="actor-rating-display-table">' + '★'.repeat(actor.rating) + '</span>' : ''}</td>
                 <td class="actor-table-favorite"><span class="actor-favorite-tag-table ${actor.favorites ? 'favorited' : ''}">${actor.favorites ? '❤' : '♡'}</span></td>
-                <td class="actor-table-actions">
-                    <button class="btn btn-small" onclick="editActor('${escapeHtml(actor.name)}')">编辑</button>
-                    <button class="btn btn-small btn-danger" onclick="deleteActorConfirm('${escapeHtml(actor.name)}')">删除</button>
-                </td>
+ 
             </tr>
         `).join('');
 

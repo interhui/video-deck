@@ -785,11 +785,6 @@ body {
     max-width: none;
 }
 
-.btn-small {
-    padding: 6px 12px;
-    font-size: 12px;
-}
-
 .modal-footer {
     display: flex;
     justify-content: flex-end;
@@ -891,7 +886,7 @@ body {
 .movies-grid.list-view .movie-description {
     width: 200px;
     max-width: 200px;
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-secondary);
     text-align: left;
     padding: 0 8px;
@@ -2334,6 +2329,28 @@ body {
     background: var(--hover-bg);
 }
 
+.actor-table-btn {
+    position: static;
+    width: 24px;
+    height: 24px;
+    opacity: 1;
+    background: transparent;
+    color: var(--text-secondary);
+    border-radius: 4px;
+    padding: 0;
+    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+}
+
+.actor-table-btn:hover {
+    background-color: #f44336;
+    color: white;
+}
+
 .actor-table-photo {
     width: 60px;
 }
@@ -2362,12 +2379,6 @@ body {
     white-space: nowrap;
 }
 
-.actor-table-actions .btn {
-    padding: 4px 12px;
-    font-size: 12px;
-    margin-right: 4px;
-}
-
 /* 演员表格列宽度调整 */
 .actor-table th.actor-table-checkbox,
 .actor-table td.actor-table-checkbox {
@@ -2375,17 +2386,17 @@ body {
     text-align: center;
 }
 
-.actor-table th:nth-child(2),  /* 照片 */
+.actor-table th:nth-child(2),  /* 操作 */
 .actor-table td:nth-child(2) {
+    width: 80px;
+}
+
+.actor-table th:nth-child(3),  /* 照片 */
+.actor-table td:nth-child(3) {
     width: 60px;
 }
 
-.actor-table th:nth-child(3),  /* 姓名 */
-.actor-table td:nth-child(3) {
-    width: 120px;
-}
-
-.actor-table th:nth-child(4),  /* 昵称 */
+.actor-table th:nth-child(4),  /* 姓名 */
 .actor-table td:nth-child(4) {
     width: 120px;
 }
@@ -2396,7 +2407,7 @@ body {
 }
 
 .actor-table th:nth-child(6),  /* 备注 */
-.actor-table td:nth-child(6) {
+.actor-table td:nth-child(7) {
     width: 450px;
 }
 
@@ -2412,10 +2423,7 @@ body {
     text-align: center;
 }
 
-.actor-table th:nth-child(9),  /* 操作 */
-.actor-table td:nth-child(9) {
-    width: 80px;
-}
+
 
 .actor-rating-display-table {
     color: #f5c518;

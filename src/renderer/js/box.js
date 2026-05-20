@@ -25,6 +25,7 @@ const state = {
 const elements = {
     backBtn: document.getElementById('back-btn'),
     boxTitle: document.getElementById('box-title'),
+    minimizeBtn: document.getElementById('minimize-btn'),
     closeBtn: document.getElementById('close-btn'),
     boxDescription: document.getElementById('box-description'),
     boxDescriptionText: document.getElementById('box-description-text'),
@@ -224,6 +225,11 @@ function bindEvents() {
     // 返回按钮
     elements.backBtn.addEventListener('click', () => {
         window.close();
+    });
+
+    // 最小化按钮
+    elements.minimizeBtn.addEventListener('click', () => {
+        window.electronAPI.minimizeWindow();
     });
 
     // 关闭按钮
