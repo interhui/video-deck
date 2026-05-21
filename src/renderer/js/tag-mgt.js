@@ -18,10 +18,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cancelBtn = document.getElementById('cancel-btn');
     const deleteBtn = document.getElementById('delete-btn');
 
+    const extractTagsBtn = document.getElementById('extract-tags-btn');
+    const extractModal = document.getElementById('extract-modal');
+    const extractModalClose = document.getElementById('extract-modal-close');
+    const extractLoading = document.getElementById('extract-loading');
+    const extractResult = document.getElementById('extract-result');
+    const extractTableBody = document.getElementById('extract-table-body');
+    const emptyExtract = document.getElementById('empty-extract');
+    const extractModalFooter = document.getElementById('extract-modal-footer');
+    const extractSaveBtn = document.getElementById('extract-save-btn');
+    const extractCancelBtn = document.getElementById('extract-cancel-btn');
+
     // 状态
     let tags = [];
     let selectedTag = null;
     let isCreating = false;
+    let extractedTags = [];
 
     // 关闭窗口
     closeBtn.addEventListener('click', () => {
@@ -68,7 +80,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         tagList.innerHTML = filteredTags.map(tag => `
             <li class="item-card ${selectedTag && selectedTag.id === tag.id ? 'selected' : ''}" data-id="${tag.id}">
                 <div class="item-name">${escapeHtml(tag.name)}</div>
-                <div class="item-info">${escapeHtml(tag.id)}</div>
             </li>
         `).join('');
 
@@ -203,6 +214,105 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.electronAPI.onTagsUpdated(() => {
         loadTags();
     });
+
+    // 标签提取功能
+    extractTagsBtn.addEventListener('click', async () => {
+        extractedTags = [];
+        showExtractModal();
+        startExtractTags();
+    });
+
+    function showExtractModal() {
+        extractModal.style.display = 'flex';
+        extractLoading.style.display = 'flex';
+        extractResult.style.display = 'none';
+        emptyExtract.style.display = 'none';
+        extractModalFooter.style.display = 'none';
+    }
+
+    async function startExtractTags() {
+        try {
+            const result = await window.electronAPI.extractTags();
+            
+            extractLoading.style.display = 'none';
+            extractResult.style.display = 'block';
+            
+            if (result.error) {
+                alert('提取标签失败: ' + result.error);
+                closeExtractModal();
+                return;
+            }
+            
+            extractedTags = result.newTags || [];
+            
+            if (extractedTags.length === 0) {
+                emptyExtract.style.display = 'block';
+                extractTableBody.innerHTML = '';
+            } else {
+                emptyExtract.style.display = 'none';
+                renderExtractTable();
+            }
+            
+            extractModalFooter.style.display = 'flex';
+        } catch (error) {
+            console.error('Error extracting tags:', error);
+            alert('提取标签失败: ' + error.message);
+            closeExtractModal();
+        }
+    }
+
+    function renderExtractTable() {
+        extractTableBody.innerHTML = extractedTags.map(tag => `
+            <tr>
+                <td>${escapeHtml(tag.name)}</td>
+                <td>${tag.count}</td>
+            </tr>
+        `).join('');
+    }
+
+    extractSaveBtn.addEventListener('click', async () => {
+        if (extractedTags.length === 0) {
+            closeExtractModal();
+            return;
+        }
+
+        try {
+            const tagsToSave = extractedTags.map(tag => ({
+                id: tag.name,
+                name: tag.name
+            }));
+
+            const result = await window.electronAPI.batchCreateTags(tagsToSave);
+            
+            if (result.error) {
+                alert('保存标签失败: ' + result.error);
+                return;
+            }
+
+            alert(`成功添加 ${result.addedCount} 个标签`);
+            closeExtractModal();
+        } catch (error) {
+            console.error('Error saving extracted tags:', error);
+            alert('保存标签失败: ' + error.message);
+        }
+    });
+
+    extractCancelBtn.addEventListener('click', () => {
+        if (confirm('是否关闭模态窗？')) {
+            closeExtractModal();
+        }
+    });
+
+    extractModalClose.addEventListener('click', () => {
+        if (confirm('是否关闭模态窗？')) {
+            closeExtractModal();
+        }
+    });
+
+    function closeExtractModal() {
+        extractModal.style.display = 'none';
+        extractedTags = [];
+    }
 
     // 初始加载
     loadTheme();

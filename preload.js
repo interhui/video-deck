@@ -148,6 +148,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     createTag: (data) => ipcRenderer.invoke('create-tag', data),
     updateTag: (data) => ipcRenderer.invoke('update-tag', data),
     deleteTag: (tagId) => ipcRenderer.invoke('delete-tag', tagId),
+    extractTags: () => ipcRenderer.invoke('extract-tags'),
+    batchCreateTags: (tags) => ipcRenderer.invoke('batch-create-tags', tags),
 
     // 分类管理
     createCategory: (data) => ipcRenderer.invoke('create-category', data),
