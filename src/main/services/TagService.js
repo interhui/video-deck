@@ -171,6 +171,38 @@ class TagService {
             throw error;
         }
     }
+
+    /**
+     * 根据标签ID获取关联的电影列表
+     * @param {Object} allIndexMovies - 所有分类的电影索引数据
+     * @param {string} tagId - 标签ID
+     * @returns {Array} 包含该标签的电影列表
+     */
+    getMoviesByTagId(allIndexMovies, tagId) {
+        const movies = [];
+        
+        Object.entries(allIndexMovies).forEach(([category, categoryMovies]) => {
+            categoryMovies.forEach(movie => {
+                if (movie.tags && Array.isArray(movie.tags) && movie.tags.includes(tagId)) {
+                    movies.push({
+                        id: movie.id,
+                        name: movie.name || movie.title,
+                        title: movie.title || movie.name,
+                        actors: movie.actors || [],
+                        description: movie.description || movie.outline || '',
+                        publishDate: movie.publishDate || movie.year || '',
+                        studio: movie.studio || '',
+                        category: category,
+                        director: movie.director || '',
+                        poster: movie.poster || null,
+                        year: movie.year || ''
+                    });
+                }
+            });
+        });
+        
+        return movies;
+    }
 }
 
 module.exports = TagService;

@@ -127,4 +127,202 @@ describe('TagService', () => {
             expect(service.tagsCache).toBeNull();
         });
     });
+
+    describe('extractAndCompareTags', () => {
+        test('SVC-TAG-018: 从电影数据中提取并比对标签', () => {
+            service.tagsCache = [{ id: 'action', name: '动作' }];
+            
+            const allIndexMovies = {
+                'movie': [
+                    { id: 'm1', name: 'Movie1', tags: ['科幻', '剧情'] },
+                    { id: 'm2', name: 'Movie2', tags: ['科幻', '爱情'] },
+                    { id: 'm3', name: 'Movie3', tags: ['剧情', '科幻'] },
+                    { id: 'm4', name: 'Movie4', tags: ['喜剧'] }
+                ]
+            };
+            
+            const result = service.extractAndCompareTags(allIndexMovies);
+            
+            expect(result).toHaveLength(2);
+            expect(result.find(t => t.name === '科幻')).toBeDefined();
+            expect(result.find(t => t.name === '科幻').count).toBe(3);
+            expect(result.find(t => t.name === '剧情')).toBeDefined();
+            expect(result.find(t => t.name === '剧情').count).toBe(2);
+            expect(result.find(t => t.name === '喜剧')).toBeUndefined();
+            expect(result.find(t => t.name === '爱情')).toBeUndefined();
+        });
+
+        test('SVC-TAG-019: 空电影数据返回空数组', () => {
+            service.tagsCache = [];
+            const result = service.extractAndCompareTags({});
+            expect(result).toEqual([]);
+        });
+
+        test('SVC-TAG-020: 标签使用次数<=1不返回', () => {
+            service.tagsCache = [];
+            
+            const allIndexMovies = {
+                'movie': [
+                    { id: 'm1', name: 'Movie1', tags: ['科幻'] },
+                    { id: 'm2', name: 'Movie2', tags: ['剧情'] }
+                ]
+            };
+            
+            const result = service.extractAndCompareTags(allIndexMovies);
+            expect(result).toEqual([]);
+        });
+
+        test('SVC-TAG-021: 已管理的标签不返回', () => {
+            service.tagsCache = [{ id: '科幻', name: '科幻' }];
+            
+            const allIndexMovies = {
+                'movie': [
+                    { id: 'm1', name: 'Movie1', tags: ['科幻'] },
+                    { id: 'm2', name: 'Movie2', tags: ['科幻'] }
+                ]
+            };
+            
+            const result = service.extractAndCompareTags(allIndexMovies);
+            expect(result).toEqual([]);
+        });
+
+        test('SVC-TAG-022: 按使用次数降序排列', () => {
+            service.tagsCache = [];
+            
+            const allIndexMovies = {
+                'movie': [
+                    { id: 'm1', name: 'Movie1', tags: ['科幻', '剧情'] },
+                    { id: 'm2', name: 'Movie2', tags: ['科幻', '爱情'] },
+                    { id: 'm3', name: 'Movie3', tags: ['剧情'] },
+                    { id: 'm4', name: 'Movie4', tags: ['爱情'] }
+                ]
+            };
+            
+            const result = service.extractAndCompareTags(allIndexMovies);
+            expect(result[0].name).toBe('科幻');
+            expect(result[0].count).toBe(2);
+            expect(result[1].name).toBe('剧情');
+            expect(result[1].count).toBe(2);
+            expect(result[2].name).toBe('爱情');
+            expect(result[2].count).toBe(2);
+        });
+    });
+
+    describe('batchAddTags', () => {
+        test('SVC-TAG-023: 批量添加新标签', async () => {
+            service.tagsCache = [{ id: 'action', name: '动作' }];
+            
+            const tagsToAdd = [
+                { id: 'scifi', name: '科幻' },
+                { id: 'drama', name: '剧情' }
+            ];
+            
+            const result = await service.batchAddTags(tagsToAdd);
+            
+            expect(result.success).toBe(true);
+            expect(result.addedCount).toBe(2);
+            
+            const tags = await service.loadTags();
+            expect(tags).toHaveLength(3);
+            expect(tags.find(t => t.id === 'scifi')).toBeDefined();
+            expect(tags.find(t => t.id === 'drama')).toBeDefined();
+        });
+
+        test('SVC-TAG-024: 添加已存在的标签不重复', async () => {
+            service.tagsCache = [{ id: 'action', name: '动作' }];
+            
+            const tagsToAdd = [
+                { id: 'action', name: '动作' },
+                { id: 'drama', name: '剧情' }
+            ];
+            
+            const result = await service.batchAddTags(tagsToAdd);
+            
+            expect(result.success).toBe(true);
+            expect(result.addedCount).toBe(1);
+            
+            const tags = await service.loadTags();
+            expect(tags).toHaveLength(2);
+        });
+
+        test('SVC-TAG-025: 空数组添加返回成功但计数为0', async () => {
+            service.tagsCache = [];
+            
+            const result = await service.batchAddTags([]);
+            
+            expect(result.success).toBe(true);
+            expect(result.addedCount).toBe(0);
+        });
+    });
+
+    describe('getMoviesByTagId', () => {
+        test('SVC-TAG-026: 根据标签ID获取电影列表', () => {
+            service.tagsCache = [{ id: '科幻', name: '科幻' }];
+            
+            const allIndexMovies = {
+                'movie': [
+                    { id: 'm1', name: 'Movie1', title: 'Movie1', tags: ['科幻', '剧情'], actors: ['Actor1'], description: 'Desc1', publishDate: '2020', studio: 'Studio1', director: 'Director1' },
+                    { id: 'm2', name: 'Movie2', title: 'Movie2', tags: ['剧情'] },
+                    { id: 'm3', name: 'Movie3', title: 'Movie3', tags: ['科幻'], actors: ['Actor2'], description: 'Desc3', year: '2021', studio: 'Studio3', director: 'Director3' }
+                ],
+                'anime': [
+                    { id: 'a1', name: 'Anime1', title: 'Anime1', tags: ['科幻'] }
+                ]
+            };
+            
+            const movies = service.getMoviesByTagId(allIndexMovies, '科幻');
+            
+            expect(movies).toHaveLength(3);
+            expect(movies.find(m => m.id === 'm1')).toBeDefined();
+            expect(movies.find(m => m.id === 'm1').category).toBe('movie');
+            expect(movies.find(m => m.id === 'm3')).toBeDefined();
+            expect(movies.find(m => m.id === 'a1')).toBeDefined();
+            expect(movies.find(m => m.id === 'a1').category).toBe('anime');
+        });
+
+        test('SVC-TAG-027: 标签不存在返回空数组', () => {
+            const allIndexMovies = {
+                'movie': [
+                    { id: 'm1', name: 'Movie1', tags: ['科幻'] }
+                ]
+            };
+            
+            const movies = service.getMoviesByTagId(allIndexMovies, '不存在');
+            expect(movies).toEqual([]);
+        });
+
+        test('SVC-TAG-028: 电影无标签字段返回空数组', () => {
+            const allIndexMovies = {
+                'movie': [
+                    { id: 'm1', name: 'Movie1' }
+                ]
+            };
+            
+            const movies = service.getMoviesByTagId(allIndexMovies, '科幻');
+            expect(movies).toEqual([]);
+        });
+
+        test('SVC-TAG-029: 返回的电影包含完整字段', () => {
+            const allIndexMovies = {
+                'movie': [
+                    { id: 'm1', name: 'Movie1', title: 'Movie One', tags: ['科幻'], actors: ['Actor1', 'Actor2'], description: 'A great movie', outline: 'Short desc', publishDate: '2020', year: '2020', studio: 'Studio A', director: 'Director X', poster: 'poster.jpg' }
+                ]
+            };
+            
+            const movies = service.getMoviesByTagId(allIndexMovies, '科幻');
+            
+            expect(movies).toHaveLength(1);
+            expect(movies[0].id).toBe('m1');
+            expect(movies[0].name).toBe('Movie1');
+            expect(movies[0].title).toBe('Movie One');
+            expect(movies[0].actors).toEqual(['Actor1', 'Actor2']);
+            expect(movies[0].description).toBe('A great movie');
+            expect(movies[0].publishDate).toBe('2020');
+            expect(movies[0].year).toBe('2020');
+            expect(movies[0].studio).toBe('Studio A');
+            expect(movies[0].director).toBe('Director X');
+            expect(movies[0].poster).toBe('poster.jpg');
+            expect(movies[0].category).toBe('movie');
+        });
+    });
 });

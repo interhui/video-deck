@@ -489,3 +489,97 @@ body {
     padding: 40px;
     color: var(--text-secondary);
 }
+
+/* 标签电影列表 */
+.movies-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0 12px 0;
+    border-top: 1px solid var(--border-color);
+    margin-top: 20px;
+}
+
+.movies-section-header h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.movies-grid-container {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.movies-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.list-view-header {
+    display: grid;
+    grid-template-columns: 80px 150px 120px auto 80px 120px 80px 120px;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--sidebar-bg);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.list-view-header > div {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.movie-card {
+    display: grid;
+    grid-template-columns: 80px 150px 120px auto 80px 120px 80px 120px;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.movie-card:hover {
+    background: var(--hover-bg);
+}
+
+.movie-card div {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    color: var(--text-color);
+}
+
+.movie-id-col {
+    color: var(--text-secondary);
+}
+
+.movie-name {
+    font-weight: 500;
+}
+
+.movie-actors-col,
+.movie-description,
+.movie-director-col {
+    color: var(--text-secondary);
+}
+
+.movie-publish-date,
+.movie-studio-col,
+.movie-category-info {
+    color: var(--text-secondary);
+}
+
+.empty-movies {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-secondary);
+}

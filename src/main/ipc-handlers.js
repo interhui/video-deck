@@ -1602,6 +1602,22 @@ function setupIpcHandlers(services) {
         }
     });
 
+    // 根据标签ID获取电影列表
+    ipcMain.handle('get-movies-by-tag', async (event, tagId) => {
+        try {
+            const settings = settingsService.getSettings();
+            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const allIndexMovies = await indexService.getAllCategoriesIndexMovies(moviesDir);
+            
+            const movies = tagService.getMoviesByTagId(allIndexMovies, tagId);
+            
+            return { success: true, movies };
+        } catch (error) {
+            console.error('Error getting movies by tag:', error);
+            return { error: error.message };
+        }
+    });
+
     // ==================== 分类管理 ====================
 
     // 广播分类更新

@@ -18,6 +18,7 @@
 
         <!-- 工具栏 -->
         <div class="management-toolbar">
+            <div></div>
             <div class="toolbar-actions">
                 <button id="add-tag-btn" class="btn btn-primary">新建标签</button>
                 <button id="extract-tags-btn" class="btn btn-secondary">标签提取</button>
@@ -94,7 +95,7 @@
 
                 <div id="tag-form" style="display: none;">
                     <div class="detail-header">
-                        <h2 id="form-title">编辑标签</h2>
+                        <h2 id="form-title">标签管理</h2>
                         <div class="detail-actions">
                             <button id="delete-btn" class="btn btn-danger">删除</button>
                         </div>
@@ -114,6 +115,19 @@
                             <button type="button" id="cancel-btn" class="btn btn-secondary">取消</button>
                         </div>
                     </form>
+
+                    <div id="tag-movies-section" style="display: none;">
+                        <div class="movies-section-header">
+                            <h3 id="tag-movie-count">关联电影</h3>
+                        </div>
+                        <div class="movies-grid-container">
+                            <div class="movies-grid" id="tag-movies-grid">
+                            </div>
+                            <div class="empty-movies" id="tag-empty-movies" style="display: none;">
+                                <p>该标签暂无关联电影</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
         </main>

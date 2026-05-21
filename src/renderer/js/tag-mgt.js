@@ -29,11 +29,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     const extractSaveBtn = document.getElementById('extract-save-btn');
     const extractCancelBtn = document.getElementById('extract-cancel-btn');
 
+    const tagMoviesSection = document.getElementById('tag-movies-section');
+    const tagMoviesGrid = document.getElementById('tag-movies-grid');
+    const tagMovieCount = document.getElementById('tag-movie-count');
+    const tagEmptyMovies = document.getElementById('tag-empty-movies');
+
     // 状态
     let tags = [];
     let selectedTag = null;
     let isCreating = false;
     let extractedTags = [];
+    let tagMovies = [];
 
     // 关闭窗口
     closeBtn.addEventListener('click', () => {
@@ -96,14 +102,101 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (selectedTag) {
             tagIdInput.value = selectedTag.id;
-            tagIdInput.disabled = true; // 编辑时不能修改ID
+            tagIdInput.disabled = true;
             tagNameInput.value = selectedTag.name;
             formTitle.textContent = '编辑标签';
             deleteBtn.style.display = 'block';
+            loadTagMovies(selectedTag.id);
         }
 
         renderTagList(searchInput.value);
         showForm();
+    }
+
+    async function loadTagMovies(tagId) {
+        try {
+            tagMoviesSection.style.display = 'none';
+            tagMoviesGrid.innerHTML = '';
+            
+            const result = await window.electronAPI.getMoviesByTag(tagId);
+            
+            if (result.error) {
+                console.error('Error loading tag movies:', result.error);
+                return;
+            }
+            
+            tagMovies = result.movies || [];
+            renderTagMovies();
+        } catch (error) {
+            console.error('Error loading tag movies:', error);
+        }
+    }
+
+    function renderTagMovies() {
+        if (tagMovies.length === 0) {
+            tagMoviesSection.style.display = 'block';
+            tagMoviesGrid.innerHTML = '';
+            tagEmptyMovies.style.display = 'block';
+            tagMovieCount.textContent = '关联电影：0';
+            return;
+        }
+
+        tagMoviesSection.style.display = 'block';
+        tagEmptyMovies.style.display = 'none';
+        tagMovieCount.textContent = `关联电影：${tagMovies.length}`;
+
+        const actorsStr = (actors) => {
+            if (!actors || !Array.isArray(actors)) return '-';
+            return actors.slice(0, 3).join(', ') + (actors.length > 3 ? '...' : '');
+        };
+
+        const descStr = (desc) => {
+            if (!desc) return '-';
+            return desc.length > 30 ? desc.substring(0, 30) + '...' : desc;
+        };
+
+        const headerHtml = `
+            <div class="list-view-header">
+                <div class="movie-id-col">电影ID</div>
+                <div class="movie-name">名称</div>
+                <div class="movie-actors-col">主演</div>
+                <div class="movie-description">描述</div>
+                <div class="movie-publish-date">上映时间</div>
+                <div class="movie-studio-col">发行商</div>
+                <div class="movie-category-info">分类</div>
+                <div class="movie-director-col">导演</div>
+            </div>
+        `;
+
+        const moviesHtml = tagMovies.map(movie => `
+            <div class="movie-card" data-movie-id="${movie.id}" data-category="${movie.category}">
+                <div class="movie-id-col">${movie.id || '-'}</div>
+                <div class="movie-name">${escapeHtml(movie.name || movie.title || '-')}</div>
+                <div class="movie-actors-col">${escapeHtml(actorsStr(movie.actors))}</div>
+                <div class="movie-description">${escapeHtml(descStr(movie.description))}</div>
+                <div class="movie-publish-date">${escapeHtml(movie.publishDate || '-')}</div>
+                <div class="movie-studio-col">${escapeHtml(movie.studio || '-')}</div>
+                <div class="movie-category-info">${escapeHtml(movie.category || '-')}</div>
+                <div class="movie-director-col">${escapeHtml(movie.director || '-')}</div>
+            </div>
+        `).join('');
+
+        tagMoviesGrid.innerHTML = headerHtml + moviesHtml;
+
+        tagMoviesGrid.querySelectorAll('.movie-card').forEach(card => {
+            card.addEventListener('click', () => openMovieDetail(card.dataset.movieId));
+        });
+    }
+
+    async function openMovieDetail(movieId) {
+        try {
+            const movie = tagMovies.find(m => m.id === movieId);
+            if (movie) {
+                await window.electronAPI.openMovieDetail(movie);
+            }
+        } catch (error) {
+            console.error('Error opening movie detail:', error);
+        }
     }
 
     // 显示表单
