@@ -49,9 +49,14 @@
                 </div>
             </div>
             <div class="toolbar-right">
-                <button id="batch-search-btn" class="btn btn-secondary" style="display: none;">批量搜索</button>
-                <button id="batch-add-btn" class="btn btn-secondary" style="display: none;">添加到盒子</button>
-                <button id="batch-delete-btn" class="btn btn-danger" style="display: none;">批量删除</button>
+                <div id="batch-operation" class="dropdown" style="display: none;">
+                    <button class="btn btn-secondary dropdown-toggle">批量操作 ▾</button>
+                    <div class="dropdown-menu">
+                        <button id="batch-search-btn" class="dropdown-item">批量搜索</button>
+                        <button id="batch-add-btn" class="dropdown-item">添加到盒子</button>
+                        <button id="batch-delete-btn" class="dropdown-item dropdown-item-danger">批量删除</button>
+                    </div>
+                </div>
                 <button id="batch-play-btn" class="btn btn-primary" style="display: none;">播放</button>
                 <button id="scan-dir-btn" class="btn btn-secondary">导入</button>
                 <div class="search-box">
@@ -64,7 +69,6 @@
                     <button id="view-table-btn" class="btn btn-icon" title="表格视图">☰</button>
                 </div>
                 <button id="refresh-btn" class="icon-btn" title="刷新电影库">⟳</button>
-                <button id="settings-btn" class="icon-btn" title="设置">⚙</button>
             </div>
         </header>
 

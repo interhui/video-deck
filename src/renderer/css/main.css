@@ -60,6 +60,7 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
+    max-width: 100px;
 }
 
 .filter-group label {
@@ -75,6 +76,7 @@ body {
     border-radius: 4px;
     cursor: pointer;
     font-size: 13px;
+    width: 100%;
 }
 
 .filter-select:focus {
@@ -827,6 +829,80 @@ body {
 
 .btn-danger:hover {
     background-color: #d32f2f;
+}
+
+.btn-icon {
+    padding: 8px 12px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    border-radius: 4px;
+}
+
+.btn-icon.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.btn-icon:hover:not(.active) {
+    background-color: var(--hover-bg);
+}
+
+/* 下拉菜单 */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    min-width: 160px;
+    background-color: var(--modal-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    box-shadow: 0 4px 12px var(--shadow-color);
+    z-index: 1001;
+    display: none;
+    padding: 4px 0;
+}
+
+.dropdown.open .dropdown-menu {
+    display: block;
+}
+
+.dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    font-size: 13px;
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+    background-color: var(--hover-bg);
+}
+
+.dropdown-item-danger {
+    color: var(--danger-color);
+}
+
+.dropdown-item-danger:hover {
+    background-color: rgba(244, 67, 54, 0.1);
+    color: var(--danger-color);
 }
 
 /* 列表视图 - 表格形式 */

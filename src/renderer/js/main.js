@@ -50,7 +50,6 @@ const elements = {
     viewCardBtn: document.getElementById('view-card-btn'),
     viewTableBtn: document.getElementById('view-table-btn'),
     refreshBtn: document.getElementById('refresh-btn'),
-    settingsBtn: document.getElementById('settings-btn'),
     categoryList: document.getElementById('category-list'),
     boxList: document.getElementById('box-list'),
     moviesGrid: document.getElementById('movies-grid'),
@@ -233,7 +232,8 @@ const elements = {
     batchSearchCancel: document.getElementById('batch-search-cancel'),
     batchSearchConfirm: document.getElementById('batch-search-confirm'),
     batchSearchMoviesList: document.getElementById('batch-search-movies-list'),
-    batchSearchConfig: document.querySelector('.batch-search-config')
+    batchSearchConfig: document.querySelector('.batch-search-config'),
+    batchOperation: document.getElementById('batch-operation')
 };
 
 /**
@@ -268,6 +268,9 @@ async function init() {
 
     // 初始化批量搜索事件
     initBatchSearchEvents();
+
+    // 初始化批量操作下拉菜单
+    initBatchOperationDropdown();
 
     // 初始化分隔线拖动
     initSplitter();
@@ -1385,27 +1388,52 @@ function bindCheckboxEvents(movies) {
 }
 
 /**
+ * 更新批量操作下拉菜单可见性
+ */
+function updateBatchButtonsVisibility() {
+    const hasSelected = state.selectedMovies.size > 0;
+    
+    if (hasSelected) {
+        elements.batchOperation.style.display = 'inline-block';
+        elements.batchSearchBtn.textContent = `批量搜索 (${state.selectedMovies.size})`;
+        elements.batchAddBtn.textContent = `批量添加 (${state.selectedMovies.size})`;
+        elements.batchDeleteBtn.textContent = `批量删除 (${state.selectedMovies.size})`;
+    } else {
+        elements.batchOperation.style.display = 'none';
+    }
+}
+
+/**
+ * 初始化批量操作下拉菜单
+ */
+function initBatchOperationDropdown() {
+    const dropdown = elements.batchOperation;
+    const toggle = dropdown.querySelector('.dropdown-toggle');
+    
+    toggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle('open');
+    });
+    
+    document.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target)) {
+            dropdown.classList.remove('open');
+        }
+    });
+}
+
+/**
  * 更新批量添加按钮可见性
  */
 function updateBatchAddButtonVisibility() {
-    if (state.selectedMovies.size > 0) {
-        elements.batchAddBtn.style.display = 'block';
-        elements.batchAddBtn.textContent = `批量添加 (${state.selectedMovies.size})`;
-    } else {
-        elements.batchAddBtn.style.display = 'none';
-    }
+    updateBatchButtonsVisibility();
 }
 
 /**
  * 更新批量删除按钮可见性
  */
 function updateBatchDeleteButtonVisibility() {
-    if (state.selectedMovies.size > 0) {
-        elements.batchDeleteBtn.style.display = 'block';
-        elements.batchDeleteBtn.textContent = `批量删除 (${state.selectedMovies.size})`;
-    } else {
-        elements.batchDeleteBtn.style.display = 'none';
-    }
+    updateBatchButtonsVisibility();
 }
 
 function updateBatchPlayButtonVisibility() {
@@ -1418,12 +1446,7 @@ function updateBatchPlayButtonVisibility() {
 }
 
 function updateBatchSearchButtonVisibility() {
-    if (state.selectedMovies.size > 0) {
-        elements.batchSearchBtn.style.display = 'block';
-        elements.batchSearchBtn.textContent = `批量搜索 (${state.selectedMovies.size})`;
-    } else {
-        elements.batchSearchBtn.style.display = 'none';
-    }
+    updateBatchButtonsVisibility();
 }
 
 /**
@@ -1728,11 +1751,6 @@ function bindEvents() {
     // 刷新电影库按钮
     elements.refreshBtn.addEventListener('click', () => {
         refreshLibraryWithProgress();
-    });
-
-    // 设置按钮
-    elements.settingsBtn.addEventListener('click', () => {
-        elements.settingsModal.style.display = 'flex';
     });
 
     // 关闭设置
