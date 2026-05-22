@@ -171,7 +171,7 @@ class BatchActorSearchService {
      * @param {Object} actorInfo - 新演员信息
      * @returns {Promise<Object>} 保存结果
      */
-    async saveActorInfo(oldName, actorInfo) {
+    async saveActorInfo(oldName, actorInfo, keepName = false) {
         try {
             let photoPath = '';
 
@@ -194,7 +194,7 @@ class BatchActorSearchService {
 
             // 更新演员信息
             const newActor = {
-                name: actorInfo.name || oldName,
+                name: keepName ? oldName : (actorInfo.name || oldName),
                 birthday: actorInfo.birthday || '',
                 memo: actorInfo.memo || '',
                 photo: photoPath
@@ -235,7 +235,7 @@ class BatchActorSearchService {
      * @param {Function} progressCallback - 进度回调
      * @returns {Promise<Array>} 保存结果列表
      */
-    async batchSaveActors(batchResults, progressCallback) {
+    async batchSaveActors(batchResults, progressCallback, keepName = false) {
         this.resetCancelled();
         const savedResults = [];
 
@@ -267,7 +267,7 @@ class BatchActorSearchService {
                 });
             }
 
-            const saveResult = await this.saveActorInfo(item.actorName, searchResult.result);
+            const saveResult = await this.saveActorInfo(item.actorName, searchResult.result, keepName);
 
             savedResults.push({
                 actorName: item.actorName,

@@ -3333,6 +3333,19 @@ body {
 .batch-search-actions {
     display: flex;
     gap: 8px;
+    align-items: center;
+}
+
+.batch-search-actions .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: var(--text-color);
+}
+
+.batch-search-actions .checkbox-label input[type="checkbox"] {
+    cursor: pointer;
 }
 
 .batch-actor-results-container {

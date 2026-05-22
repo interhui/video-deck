@@ -70,6 +70,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const batchActorResultsBody = document.getElementById('batch-actor-results-body');
     const batchSearchActorBtn = document.getElementById('batch-search-actor-btn');
     const selectedCountSpan = document.getElementById('selected-count');
+    const batchActorKeepNameCheckbox = document.getElementById('batch-actor-keep-name');
 
     // 演员提取弹窗 DOM 元素
     const extractActorModal = document.getElementById('extract-actor-modal');
@@ -1198,8 +1199,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         try {
+            const keepName = batchActorKeepNameCheckbox.checked;
             const result = await window.electronAPI.batchSaveActors({
-                batchResults: batchSearchResults.filter(r => r.status === 'completed' && r.result)
+                batchResults: batchSearchResults.filter(r => r.status === 'completed' && r.result),
+                keepName: keepName
             });
 
             isBatchSaving = false;
@@ -1579,7 +1582,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             const result = await window.electronAPI.batchSaveActors({
-                batchResults: itemsToSave
+                batchResults: itemsToSave,
+                keepName: false
             });
 
             isExtractSaving = false;

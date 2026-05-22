@@ -1831,13 +1831,13 @@ function setupIpcHandlers(services) {
         }
     });
 
-    ipcMain.handle('batch-save-actors', async (event, { batchResults }) => {
+    ipcMain.handle('batch-save-actors', async (event, { batchResults, keepName }) => {
         try {
             const webContents = event.sender;
 
             const savedResults = await batchActorSearchService.batchSaveActors(batchResults, (progress) => {
                 webContents.send('batch-actor-save-progress', progress);
-            });
+            }, keepName);
 
             // 广播演员更新
             broadcastActorsUpdated();
