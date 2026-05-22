@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 获取DOM元素
     const searchInput = document.getElementById('search-input');
     const filterNoPhotoCheckbox = document.getElementById('filter-no-photo');
+    const filterFavoritesCheckbox = document.getElementById('filter-favorites');
     const addActorBtn = document.getElementById('add-actor-btn');
     const viewCardBtn = document.getElementById('view-card-btn');
     const viewTableBtn = document.getElementById('view-table-btn');
@@ -148,6 +149,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 渲染演员列表
     function renderActors(filter = '') {
         const noPhotoFilter = filterNoPhotoCheckbox.checked;
+        const favoritesFilter = filterFavoritesCheckbox.checked;
         const filteredActors = actors.filter(a => {
             // 搜索过滤
             if (filter) {
@@ -159,6 +161,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (noPhotoFilter) {
                 const hasNoPhoto = !a.photo;
                 if (!hasNoPhoto) return false;
+            }
+            // 收藏过滤
+            if (favoritesFilter) {
+                if (!a.favorites) return false;
             }
             return true;
         });
@@ -314,6 +320,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 无照片演员过滤
     filterNoPhotoCheckbox.addEventListener('change', () => {
+        renderActors(searchInput.value);
+    });
+
+    // 收藏演员过滤
+    filterFavoritesCheckbox.addEventListener('change', () => {
         renderActors(searchInput.value);
     });
 
