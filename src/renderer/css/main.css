@@ -1802,17 +1802,36 @@ body {
     gap: 8px;
 }
 
-.radio-label {
+.movie-scan-radio {
     display: flex;
     align-items: center;
     gap: 8px;
     cursor: pointer;
-    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    transition: all 0.2s;
 }
 
-.radio-label input[type="radio"] {
-    width: 16px;
-    height: 16px;
+.movie-scan-radio:hover {
+    background-color: var(--hover-bg);
+    border-color: var(--primary-color);
+}
+
+.movie-scan-radio input[type="radio"] {
+    margin: 0;
+    cursor: pointer;
+}
+
+.movie-scan-radio input[type="radio"]:checked + span {
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.movie-scan-radio:has(input[type="radio"]:checked) {
+    background-color: var(--active-bg);
+    border-color: var(--primary-color);
+    display: flex;
 }
 
 .scan-path-group {
@@ -2037,7 +2056,7 @@ body {
     flex: 1;
 }
 
-/* 电影名称输入框 + IGDB搜索按钮 */
+/* 电影名称输入框 & 搜索按钮 */
 .movie-name-with-search {
     display: flex;
     gap: 8px;
@@ -2071,83 +2090,6 @@ body {
 .scan-movie-description {
     height: 60px;
     resize: vertical;
-}
-
-/* IGDB 搜索结果样式 */
-.scan-igdb-results {
-    max-height: 400px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.scan-igdb-results .igdb-result-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 8px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.scan-igdb-results .igdb-result-item:hover {
-    background-color: var(--hover-bg);
-}
-
-#scan-igdb-results .igdb-result-item.selected {
-    border-color: var(--primary-color) !important;
-    background-color: var(--hover-bg);
-    outline: 3px solid var(--primary-color);
-    outline-offset: -3px;
-}
-
-.scan-igdb-results .igdb-result-item.selected .igdb-result-date {
-    color: rgba(255, 255, 255, 0.8);
-}
-
-.scan-igdb-results .igdb-result-cover {
-    width: 50px;
-    height: 50px;
-    object-fit: cover;
-    border-radius: 4px;
-    flex-shrink: 0;
-}
-
-.scan-igdb-results .igdb-result-cover-placeholder {
-    width: 50px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--bg-secondary);
-    border-radius: 4px;
-    font-size: 24px;
-    flex-shrink: 0;
-}
-
-.scan-igdb-results .igdb-result-info {
-    flex: 1;
-}
-
-.scan-igdb-results .igdb-result-name {
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.scan-igdb-results .igdb-result-date {
-    font-size: 12px;
-    color: var(--text-secondary);
-}
-
-.scan-igdb-results .loading,
-.scan-igdb-results .no-results,
-.scan-igdb-results .error {
-    padding: 20px;
-    text-align: center;
-    color: var(--text-secondary);
 }
 
 /* ==================== 演员管理页面样式 ==================== */

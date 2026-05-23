@@ -644,13 +644,6 @@
 | SVC-SETTINGS-017 | 返回默认语言 | 直接调用 | 无 | zh-CN |
 | SVC-SETTINGS-018 | 设置语言成功 | 直接调用 | en-US | 更新成功 |
 
-#### 6.10 getIgdbConfig / setIgdbConfig - IGDB配置
-
-| 用例ID | 用例名称 | 测试方法 | 前置条件 | 预期结果 |
-|--------|----------|----------|----------|----------|
-| SVC-SETTINGS-019 | 返回IGDB配置 | 直接调用 | 无 | clientId/secret |
-| SVC-SETTINGS-020 | 设置IGDB配置 | 直接调用 | 新配置 | 更新成功 |
-
 #### 6.11 getDefaultSettings - 获取默认设置
 
 | 用例ID | 用例名称 | 测试方法 | 前置条件 | 预期结果 |

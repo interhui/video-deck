@@ -227,18 +227,6 @@ getActorPhotoDir() {
         this.saveSettings(this.settings);
     }
 
-    /**
-     * 获取 IGDB 配置
-     * @returns {object} IGDB 配置
-     */
-    getIgdbConfig() {
-        return this.settings.igdb || { clientId: '', clientSecret: '' };
-    }
-
-    setIgdbConfig(config) {
-        this.settings.igdb = { ...this.settings.igdb, ...config };
-        this.saveSettings(this.settings);
-    }
 
     getTmdbConfig() {
         return this.settings.tmdb || { url: 'api.themoviedb.org', token: '', language: 'zh-CN' };
