@@ -177,6 +177,7 @@
     align-items: center;
     gap: 12px;
     margin-bottom: 16px;
+    max-width: 750px;
 }
 
 /* 盒子电影网格 */

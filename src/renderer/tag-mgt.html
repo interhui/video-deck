@@ -18,8 +18,48 @@
 
         <!-- 工具栏 -->
         <div class="management-toolbar">
+            <div></div>
             <div class="toolbar-actions">
                 <button id="add-tag-btn" class="btn btn-primary">新建标签</button>
+                <button id="extract-tags-btn" class="btn btn-secondary">标签提取</button>
+            </div>
+        </div>
+
+        <!-- 标签提取模态窗 -->
+        <div id="extract-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>标签提取</h3>
+                    <button class="modal-close-btn" id="extract-modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="extract-loading" id="extract-loading" style="display: none;">
+                        <div class="spinner"></div>
+                        <p>正在提取标签...</p>
+                    </div>
+                    <div id="extract-result" style="display: none;">
+                        <p class="extract-info">以下标签未在 tags.json 中管理且使用次数大于1次：</p>
+                        <div class="extract-table-container">
+                            <table class="extract-table" id="extract-table">
+                                <thead>
+                                    <tr>
+                                        <th>标签名称</th>
+                                        <th>使用次数</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="extract-table-body">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="empty-extract" id="empty-extract" style="display: none;">
+                            <p>没有需要添加的新标签</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" id="extract-modal-footer" style="display: none;">
+                    <button id="extract-save-btn" class="btn btn-primary">保存</button>
+                    <button id="extract-cancel-btn" class="btn btn-secondary">取消</button>
+                </div>
             </div>
         </div>
 
@@ -55,7 +95,7 @@
 
                 <div id="tag-form" style="display: none;">
                     <div class="detail-header">
-                        <h2 id="form-title">编辑标签</h2>
+                        <h2 id="form-title">标签管理</h2>
                         <div class="detail-actions">
                             <button id="delete-btn" class="btn btn-danger">删除</button>
                         </div>
@@ -75,6 +115,19 @@
                             <button type="button" id="cancel-btn" class="btn btn-secondary">取消</button>
                         </div>
                     </form>
+
+                    <div id="tag-movies-section" style="display: none;">
+                        <div class="movies-section-header">
+                            <h3 id="tag-movie-count">关联电影</h3>
+                        </div>
+                        <div class="movies-grid-container">
+                            <div class="movies-grid" id="tag-movies-grid">
+                            </div>
+                            <div class="empty-movies" id="tag-empty-movies" style="display: none;">
+                                <p>该标签暂无关联电影</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
         </main>

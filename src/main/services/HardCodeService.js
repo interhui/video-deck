@@ -43,13 +43,15 @@ class HardCodeService {
             tmdb: {
                 url: 'api.themoviedb.org',
                 token: '',
-                language: 'zh-CN'
+                language: 'zh-CN',
+                posterUrl: 'https://image.tmdb.org/t/p'
             },
 
             r18: {
                 dbUrl: '',
                 dbUsername: '',
-                dbPassword: ''
+                dbPassword: '',
+                posterUrl: 'https://pics.dmm.co.jp'
             },
 
             videoParsing: {
@@ -72,16 +74,11 @@ class HardCodeService {
      */
     getDefaultTags() {
         return [
-            { id: 'action', name: '动作' },
-            { id: 'adventure', name: '冒险' },
-            { id: 'rpg', name: '角色扮演' },
-            { id: 'strategy', name: '策略' },
-            { id: 'simulation', name: '模拟' },
-            { id: 'sports', name: '体育' },
-            { id: 'racing', name: '竞速' },
-            { id: 'puzzle', name: '解谜' },
-            { id: 'horror', name: '恐怖' },
-            { id: 'multiplayer', name: '多人' }
+            { id: '动作', name: '动作' },
+            { id: '剧情', name: '剧情' },
+            { id: '动画', name: '动画' },
+            { id: '爱情', name: '爱情' },
+            { id: '战争', name: '战争' }
         ];
     }
 

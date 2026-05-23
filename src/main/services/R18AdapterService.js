@@ -104,7 +104,8 @@ class R18AdapterService {
         if (path.endsWith('ps')) {
             finalPath = path.slice(0, -2) + 'pl';
         }
-        return `https://pics.dmm.co.jp/${finalPath}.jpg`;
+        const posterBaseUrl = this.settingsService.getSettings().r18?.posterUrl || 'https://pics.dmm.co.jp';
+        return `${posterBaseUrl}/${finalPath}.jpg`;
     }
 
     /**

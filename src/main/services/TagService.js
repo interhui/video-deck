@@ -114,6 +114,95 @@ class TagService {
     clearCache() {
         this.tagsCache = null;
     }
+
+    /**
+     * 从 index.json 提取标签并进行比对
+     * @param {Object} allIndexMovies - 所有分类的电影索引数据
+     * @returns {Array} 未管理且使用次数 > 1 的标签列表
+     */
+    extractAndCompareTags(allIndexMovies) {
+        const tagCount = {};
+        
+        Object.values(allIndexMovies).forEach(movies => {
+            movies.forEach(movie => {
+                if (movie.tags && Array.isArray(movie.tags)) {
+                    movie.tags.forEach(tag => {
+                        if (tag && tag.trim()) {
+                            const normalizedTag = tag.trim();
+                            tagCount[normalizedTag] = (tagCount[normalizedTag] || 0) + 1;
+                        }
+                    });
+                }
+            });
+        });
+
+        const managedTags = this.getTags();
+        const managedTagSet = new Set(managedTags.map(t => t.id));
+
+        const newTags = Object.entries(tagCount)
+            .filter(([tagName, count]) => count > 1 && !managedTagSet.has(tagName))
+            .map(([tagName, count]) => ({ name: tagName, count }))
+            .sort((a, b) => b.count - a.count);
+
+        return newTags;
+    }
+
+    /**
+     * 批量添加标签
+     * @param {Array} tagsToAdd - 要添加的标签数组 [{ id, name }]
+     * @returns {Promise<Object>} 添加结果
+     */
+    async batchAddTags(tagsToAdd) {
+        try {
+            const existingTags = await this.loadTags();
+            const addedTags = [];
+            
+            for (const tag of tagsToAdd) {
+                if (!existingTags.find(t => t.id === tag.id)) {
+                    existingTags.push({ id: tag.id, name: tag.name });
+                    addedTags.push(tag);
+                }
+            }
+            
+            await this.saveTags(existingTags);
+            return { success: true, addedCount: addedTags.length };
+        } catch (error) {
+            console.error('Error batch adding tags:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * 根据标签ID获取关联的电影列表
+     * @param {Object} allIndexMovies - 所有分类的电影索引数据
+     * @param {string} tagId - 标签ID
+     * @returns {Array} 包含该标签的电影列表
+     */
+    getMoviesByTagId(allIndexMovies, tagId) {
+        const movies = [];
+        
+        Object.entries(allIndexMovies).forEach(([category, categoryMovies]) => {
+            categoryMovies.forEach(movie => {
+                if (movie.tags && Array.isArray(movie.tags) && movie.tags.includes(tagId)) {
+                    movies.push({
+                        id: movie.id,
+                        name: movie.name || movie.title,
+                        title: movie.title || movie.name,
+                        actors: movie.actors || [],
+                        description: movie.description || movie.outline || '',
+                        publishDate: movie.publishDate || movie.year || '',
+                        studio: movie.studio || '',
+                        category: category,
+                        director: movie.director || '',
+                        poster: movie.poster || null,
+                        year: movie.year || ''
+                    });
+                }
+            });
+        });
+        
+        return movies;
+    }
 }
 
 module.exports = TagService;

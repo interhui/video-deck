@@ -50,7 +50,6 @@ const elements = {
     viewCardBtn: document.getElementById('view-card-btn'),
     viewTableBtn: document.getElementById('view-table-btn'),
     refreshBtn: document.getElementById('refresh-btn'),
-    settingsBtn: document.getElementById('settings-btn'),
     categoryList: document.getElementById('category-list'),
     boxList: document.getElementById('box-list'),
     moviesGrid: document.getElementById('movies-grid'),
@@ -79,10 +78,12 @@ const elements = {
     tmdbUrlInput: document.getElementById('tmdb-url-input'),
     tmdbLanguageSelect: document.getElementById('tmdb-language-select'),
     tmdbTokenInput: document.getElementById('tmdb-token-input'),
+    tmdbPosterUrlInput: document.getElementById('tmdb-poster-url-input'),
     // R18 设置
     r18DbUrlInput: document.getElementById('r18-db-url-input'),
     r18DbUsernameInput: document.getElementById('r18-db-username-input'),
     r18DbPasswordInput: document.getElementById('r18-db-password-input'),
+    r18PosterUrlInput: document.getElementById('r18-poster-url-input'),
     // 视频解析设置
     ffmpegPathInput: document.getElementById('ffmpeg-path-input'),
     ffprobePathInput: document.getElementById('ffprobe-path-input'),
@@ -233,7 +234,8 @@ const elements = {
     batchSearchCancel: document.getElementById('batch-search-cancel'),
     batchSearchConfirm: document.getElementById('batch-search-confirm'),
     batchSearchMoviesList: document.getElementById('batch-search-movies-list'),
-    batchSearchConfig: document.querySelector('.batch-search-config')
+    batchSearchConfig: document.querySelector('.batch-search-config'),
+    batchOperation: document.getElementById('batch-operation')
 };
 
 /**
@@ -268,6 +270,9 @@ async function init() {
 
     // 初始化批量搜索事件
     initBatchSearchEvents();
+
+    // 初始化批量操作下拉菜单
+    initBatchOperationDropdown();
 
     // 初始化分隔线拖动
     initSplitter();
@@ -598,11 +603,13 @@ async function loadSettings() {
         if (elements.tmdbUrlInput) elements.tmdbUrlInput.value = state.settings.tmdb?.url || 'api.themoviedb.org';
         if (elements.tmdbLanguageSelect) elements.tmdbLanguageSelect.value = state.settings.tmdb?.language || 'zh-CN';
         if (elements.tmdbTokenInput) elements.tmdbTokenInput.value = state.settings.tmdb?.token || '';
+        if (elements.tmdbPosterUrlInput) elements.tmdbPosterUrlInput.value = state.settings.tmdb?.posterUrl || '';
 
         // 加载 R18 设置
         if (elements.r18DbUrlInput) elements.r18DbUrlInput.value = state.settings.r18?.dbUrl || '';
         if (elements.r18DbUsernameInput) elements.r18DbUsernameInput.value = state.settings.r18?.dbUsername || '';
         if (elements.r18DbPasswordInput) elements.r18DbPasswordInput.value = state.settings.r18?.dbPassword || '';
+        if (elements.r18PosterUrlInput) elements.r18PosterUrlInput.value = state.settings.r18?.posterUrl || '';
 
         // 加载视频解析设置
         if (elements.ffmpegPathInput) elements.ffmpegPathInput.value = state.settings.videoParsing?.ffmpegPath || '';
@@ -1385,27 +1392,52 @@ function bindCheckboxEvents(movies) {
 }
 
 /**
+ * 更新批量操作下拉菜单可见性
+ */
+function updateBatchButtonsVisibility() {
+    const hasSelected = state.selectedMovies.size > 0;
+    
+    if (hasSelected) {
+        elements.batchOperation.style.display = 'inline-block';
+        elements.batchSearchBtn.textContent = `批量搜索 (${state.selectedMovies.size})`;
+        elements.batchAddBtn.textContent = `批量添加 (${state.selectedMovies.size})`;
+        elements.batchDeleteBtn.textContent = `批量删除 (${state.selectedMovies.size})`;
+    } else {
+        elements.batchOperation.style.display = 'none';
+    }
+}
+
+/**
+ * 初始化批量操作下拉菜单
+ */
+function initBatchOperationDropdown() {
+    const dropdown = elements.batchOperation;
+    const toggle = dropdown.querySelector('.dropdown-toggle');
+    
+    toggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle('open');
+    });
+    
+    document.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target)) {
+            dropdown.classList.remove('open');
+        }
+    });
+}
+
+/**
  * 更新批量添加按钮可见性
  */
 function updateBatchAddButtonVisibility() {
-    if (state.selectedMovies.size > 0) {
-        elements.batchAddBtn.style.display = 'block';
-        elements.batchAddBtn.textContent = `批量添加 (${state.selectedMovies.size})`;
-    } else {
-        elements.batchAddBtn.style.display = 'none';
-    }
+    updateBatchButtonsVisibility();
 }
 
 /**
  * 更新批量删除按钮可见性
  */
 function updateBatchDeleteButtonVisibility() {
-    if (state.selectedMovies.size > 0) {
-        elements.batchDeleteBtn.style.display = 'block';
-        elements.batchDeleteBtn.textContent = `批量删除 (${state.selectedMovies.size})`;
-    } else {
-        elements.batchDeleteBtn.style.display = 'none';
-    }
+    updateBatchButtonsVisibility();
 }
 
 function updateBatchPlayButtonVisibility() {
@@ -1418,12 +1450,7 @@ function updateBatchPlayButtonVisibility() {
 }
 
 function updateBatchSearchButtonVisibility() {
-    if (state.selectedMovies.size > 0) {
-        elements.batchSearchBtn.style.display = 'block';
-        elements.batchSearchBtn.textContent = `批量搜索 (${state.selectedMovies.size})`;
-    } else {
-        elements.batchSearchBtn.style.display = 'none';
-    }
+    updateBatchButtonsVisibility();
 }
 
 /**
@@ -1728,11 +1755,6 @@ function bindEvents() {
     // 刷新电影库按钮
     elements.refreshBtn.addEventListener('click', () => {
         refreshLibraryWithProgress();
-    });
-
-    // 设置按钮
-    elements.settingsBtn.addEventListener('click', () => {
-        elements.settingsModal.style.display = 'flex';
     });
 
     // 关闭设置
@@ -3148,12 +3170,14 @@ async function saveSettingsHandler() {
             tmdb: {
                 url: elements.tmdbUrlInput?.value || 'api.themoviedb.org',
                 language: elements.tmdbLanguageSelect?.value || 'zh-CN',
-                token: elements.tmdbTokenInput?.value || ''
+                token: elements.tmdbTokenInput?.value || '',
+                posterUrl: elements.tmdbPosterUrlInput?.value || 'https://image.tmdb.org/t/p'
             },
             r18: {
                 dbUrl: elements.r18DbUrlInput?.value || '',
                 dbUsername: elements.r18DbUsernameInput?.value || '',
-                dbPassword: elements.r18DbPasswordInput?.value || ''
+                dbPassword: elements.r18DbPasswordInput?.value || '',
+                posterUrl: elements.r18PosterUrlInput?.value || 'https://pics.dmm.co.jp'
             },
             videoParsing: {
                 ffmpegPath: elements.ffmpegPathInput?.value || '',

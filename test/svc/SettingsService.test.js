@@ -160,23 +160,6 @@ describe('SettingsService', () => {
         });
     });
 
-    describe('getIgdbConfig / setIgdbConfig', () => {
-        test('SVC-SETTINGS-019: 返回IGDB配置', async () => {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            const config = service.getIgdbConfig();
-            expect(config.clientId).toBe('');
-            expect(config.clientSecret).toBe('');
-        });
-
-        test('SVC-SETTINGS-020: 设置IGDB配置', async () => {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            service.setIgdbConfig({ clientId: 'test-id', clientSecret: 'test-secret' });
-            const config = service.getIgdbConfig();
-            expect(config.clientId).toBe('test-id');
-            expect(config.clientSecret).toBe('test-secret');
-        });
-    });
-
     describe('mergeDeep', () => {
         test('SVC-SETTINGS-022: 深度合并对象', async () => {
             await new Promise(resolve => setTimeout(resolve, 100));

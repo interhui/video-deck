@@ -49,9 +49,14 @@
                 </div>
             </div>
             <div class="toolbar-right">
-                <button id="batch-search-btn" class="btn btn-secondary" style="display: none;">批量搜索</button>
-                <button id="batch-add-btn" class="btn btn-secondary" style="display: none;">添加到盒子</button>
-                <button id="batch-delete-btn" class="btn btn-danger" style="display: none;">批量删除</button>
+                <div id="batch-operation" class="dropdown" style="display: none;">
+                    <button class="btn btn-secondary dropdown-toggle">批量操作 ▾</button>
+                    <div class="dropdown-menu">
+                        <button id="batch-search-btn" class="dropdown-item">批量搜索</button>
+                        <button id="batch-add-btn" class="dropdown-item">添加到盒子</button>
+                        <button id="batch-delete-btn" class="dropdown-item dropdown-item-danger">批量删除</button>
+                    </div>
+                </div>
                 <button id="batch-play-btn" class="btn btn-primary" style="display: none;">播放</button>
                 <button id="scan-dir-btn" class="btn btn-secondary">导入</button>
                 <div class="search-box">
@@ -64,7 +69,6 @@
                     <button id="view-table-btn" class="btn btn-icon" title="表格视图">☰</button>
                 </div>
                 <button id="refresh-btn" class="icon-btn" title="刷新电影库">⟳</button>
-                <button id="settings-btn" class="icon-btn" title="设置">⚙</button>
             </div>
         </header>
 
@@ -315,7 +319,7 @@
                     </div>
                     <!-- TMDB 设置 -->
                     <div class="settings-section">
-                        <h3 class="settings-section-title">TMDB</h3>
+                        <h3 class="settings-section-title">TMDB设置</h3>
                         <div class="settings-item">
                             <label>域名：</label>
                             <input type="text" id="tmdb-url-input" value="api.themoviedb.org" placeholder="api.themoviedb.org">
@@ -332,10 +336,14 @@
                             <label>凭据（Token）：</label>
                             <input type="password" id="tmdb-token-input" placeholder="请输入TMDB API Token">
                         </div>
+                        <div class="settings-item">
+                            <label>海报下载地址：</label>
+                            <input type="text" id="tmdb-poster-url-input" placeholder="https://image.tmdb.org/t/p">
+                        </div>
                     </div>
                     <!-- R18 设置 -->
                     <div class="settings-section">
-                        <h3 class="settings-section-title">R18数据库</h3>
+                        <h3 class="settings-section-title">R18设置</h3>
                         <div class="settings-item">
                             <label>数据库连接串：</label>
                             <input type="text" id="r18-db-url-input" placeholder="postgresql://host:port/database">
@@ -347,6 +355,10 @@
                         <div class="settings-item">
                             <label>密码：</label>
                             <input type="password" id="r18-db-password-input" placeholder="请输入数据库密码">
+                        </div>
+                        <div class="settings-item">
+                            <label>海报下载地址：</label>
+                            <input type="text" id="r18-poster-url-input" placeholder="https://pics.dmm.co.jp">
                         </div>
                     </div>
                 </div>
@@ -629,15 +641,15 @@
                 <div class="form-group">
                     <label>导入方式：</label>
                     <div class="scan-type-group">
-                        <label class="radio-label">
+                        <label class="movie-scan-radio">
                             <input type="radio" name="scan-type" value="directory" checked>
                             目录导入（子文件夹作为电影）
                         </label>
-                        <label class="radio-label">
+                        <label class="movie-scan-radio">
                             <input type="radio" name="scan-type" value="file">
                             文件导入（每行作为一部电影）
                         </label>
-                        <label class="radio-label">
+                        <label class="movie-scan-radio">
                             <input type="radio" name="scan-type" value="video">
                             视频导入（视频文件作为电影）
                         </label>
@@ -659,7 +671,7 @@
                 <div id="video-dir-naming-group" class="form-group" style="display: none;">
                     <label>目录创建：</label>
                     <div class="scan-type-group">
-                        <label class="radio-label">
+                        <label class="movie-scan-radio">
                             <input type="radio" name="dir-naming" value="movieId" checked>
                             电影ID为目录名
                         </label>
@@ -668,11 +680,11 @@
                 <div id="normal-dir-naming-group" class="form-group">
                     <label>目录创建：</label>
                     <div class="scan-type-group">
-                        <label class="radio-label">
+                        <label class="movie-scan-radio">
                             <input type="radio" name="dir-naming" value="movieId" checked>
                             电影ID为目录名
                         </label>
-                        <label class="radio-label">
+                        <label class="movie-scan-radio">
                             <input type="radio" name="dir-naming" value="movieName">
                             电影名称/年份为目录名
                         </label>

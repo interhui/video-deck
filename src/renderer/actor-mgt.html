@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: file: https://images.igdb.com https://image.tmdb.org;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: file: https://image.tmdb.org;">
     <title>演员管理</title>
     <link rel="stylesheet" href="css/themes/dark.css">
     <link rel="stylesheet" href="css/management.css">
@@ -27,6 +27,10 @@
                 <label class="toolbar-checkbox-label">
                     <input type="checkbox" id="filter-no-photo">
                     无照片演员
+                </label>
+                <label class="toolbar-checkbox-label">
+                    <input type="checkbox" id="filter-favorites">
+                    仅显示收藏
                 </label>
             </div>
             <div class="toolbar-actions">
@@ -250,6 +254,12 @@
                 <!-- 批量搜索工具栏 -->
                 <div class="batch-search-toolbar">
                     <span id="batch-actor-progress">准备就绪</span>
+                    <div class="scan-result-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="batch-actor-keep-name">
+                            <span>不修改姓名</span>
+                        </label>
+                    </div>
                     <div class="batch-search-actions">
                         <button id="batch-actor-search-btn" class="btn btn-primary">搜索</button>
                         <button id="batch-actor-save-btn" class="btn btn-primary" style="display: none;">保存</button>

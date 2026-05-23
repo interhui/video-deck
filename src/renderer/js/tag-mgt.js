@@ -18,10 +18,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cancelBtn = document.getElementById('cancel-btn');
     const deleteBtn = document.getElementById('delete-btn');
 
+    const extractTagsBtn = document.getElementById('extract-tags-btn');
+    const extractModal = document.getElementById('extract-modal');
+    const extractModalClose = document.getElementById('extract-modal-close');
+    const extractLoading = document.getElementById('extract-loading');
+    const extractResult = document.getElementById('extract-result');
+    const extractTableBody = document.getElementById('extract-table-body');
+    const emptyExtract = document.getElementById('empty-extract');
+    const extractModalFooter = document.getElementById('extract-modal-footer');
+    const extractSaveBtn = document.getElementById('extract-save-btn');
+    const extractCancelBtn = document.getElementById('extract-cancel-btn');
+
+    const tagMoviesSection = document.getElementById('tag-movies-section');
+    const tagMoviesGrid = document.getElementById('tag-movies-grid');
+    const tagMovieCount = document.getElementById('tag-movie-count');
+    const tagEmptyMovies = document.getElementById('tag-empty-movies');
+
     // 状态
     let tags = [];
     let selectedTag = null;
     let isCreating = false;
+    let extractedTags = [];
+    let tagMovies = [];
 
     // 关闭窗口
     closeBtn.addEventListener('click', () => {
@@ -68,7 +86,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         tagList.innerHTML = filteredTags.map(tag => `
             <li class="item-card ${selectedTag && selectedTag.id === tag.id ? 'selected' : ''}" data-id="${tag.id}">
                 <div class="item-name">${escapeHtml(tag.name)}</div>
-                <div class="item-info">${escapeHtml(tag.id)}</div>
             </li>
         `).join('');
 
@@ -85,14 +102,101 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (selectedTag) {
             tagIdInput.value = selectedTag.id;
-            tagIdInput.disabled = true; // 编辑时不能修改ID
+            tagIdInput.disabled = true;
             tagNameInput.value = selectedTag.name;
             formTitle.textContent = '编辑标签';
             deleteBtn.style.display = 'block';
+            loadTagMovies(selectedTag.id);
         }
 
         renderTagList(searchInput.value);
         showForm();
+    }
+
+    async function loadTagMovies(tagId) {
+        try {
+            tagMoviesSection.style.display = 'none';
+            tagMoviesGrid.innerHTML = '';
+            
+            const result = await window.electronAPI.getMoviesByTag(tagId);
+            
+            if (result.error) {
+                console.error('Error loading tag movies:', result.error);
+                return;
+            }
+            
+            tagMovies = result.movies || [];
+            renderTagMovies();
+        } catch (error) {
+            console.error('Error loading tag movies:', error);
+        }
+    }
+
+    function renderTagMovies() {
+        if (tagMovies.length === 0) {
+            tagMoviesSection.style.display = 'block';
+            tagMoviesGrid.innerHTML = '';
+            tagEmptyMovies.style.display = 'block';
+            tagMovieCount.textContent = '关联电影：0';
+            return;
+        }
+
+        tagMoviesSection.style.display = 'block';
+        tagEmptyMovies.style.display = 'none';
+        tagMovieCount.textContent = `关联电影：${tagMovies.length}`;
+
+        const actorsStr = (actors) => {
+            if (!actors || !Array.isArray(actors)) return '-';
+            return actors.slice(0, 3).join(', ') + (actors.length > 3 ? '...' : '');
+        };
+
+        const descStr = (desc) => {
+            if (!desc) return '-';
+            return desc.length > 30 ? desc.substring(0, 30) + '...' : desc;
+        };
+
+        const headerHtml = `
+            <div class="list-view-header">
+                <div class="movie-id-col">电影ID</div>
+                <div class="movie-name">名称</div>
+                <div class="movie-actors-col">主演</div>
+                <div class="movie-description">描述</div>
+                <div class="movie-publish-date">上映时间</div>
+                <div class="movie-studio-col">发行商</div>
+                <div class="movie-category-info">分类</div>
+                <div class="movie-director-col">导演</div>
+            </div>
+        `;
+
+        const moviesHtml = tagMovies.map(movie => `
+            <div class="movie-card" data-movie-id="${movie.id}" data-category="${movie.category}">
+                <div class="movie-id-col">${movie.id || '-'}</div>
+                <div class="movie-name">${escapeHtml(movie.name || movie.title || '-')}</div>
+                <div class="movie-actors-col">${escapeHtml(actorsStr(movie.actors))}</div>
+                <div class="movie-description">${escapeHtml(descStr(movie.description))}</div>
+                <div class="movie-publish-date">${escapeHtml(movie.publishDate || '-')}</div>
+                <div class="movie-studio-col">${escapeHtml(movie.studio || '-')}</div>
+                <div class="movie-category-info">${escapeHtml(movie.category || '-')}</div>
+                <div class="movie-director-col">${escapeHtml(movie.director || '-')}</div>
+            </div>
+        `).join('');
+
+        tagMoviesGrid.innerHTML = headerHtml + moviesHtml;
+
+        tagMoviesGrid.querySelectorAll('.movie-card').forEach(card => {
+            card.addEventListener('click', () => openMovieDetail(card.dataset.movieId));
+        });
+    }
+
+    async function openMovieDetail(movieId) {
+        try {
+            const movie = tagMovies.find(m => m.id === movieId);
+            if (movie) {
+                await window.electronAPI.openMovieDetail(movie);
+            }
+        } catch (error) {
+            console.error('Error opening movie detail:', error);
+        }
     }
 
     // 显示表单
@@ -203,6 +307,105 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.electronAPI.onTagsUpdated(() => {
         loadTags();
     });
+
+    // 标签提取功能
+    extractTagsBtn.addEventListener('click', async () => {
+        extractedTags = [];
+        showExtractModal();
+        startExtractTags();
+    });
+
+    function showExtractModal() {
+        extractModal.style.display = 'flex';
+        extractLoading.style.display = 'flex';
+        extractResult.style.display = 'none';
+        emptyExtract.style.display = 'none';
+        extractModalFooter.style.display = 'none';
+    }
+
+    async function startExtractTags() {
+        try {
+            const result = await window.electronAPI.extractTags();
+            
+            extractLoading.style.display = 'none';
+            extractResult.style.display = 'block';
+            
+            if (result.error) {
+                alert('提取标签失败: ' + result.error);
+                closeExtractModal();
+                return;
+            }
+            
+            extractedTags = result.newTags || [];
+            
+            if (extractedTags.length === 0) {
+                emptyExtract.style.display = 'block';
+                extractTableBody.innerHTML = '';
+            } else {
+                emptyExtract.style.display = 'none';
+                renderExtractTable();
+            }
+            
+            extractModalFooter.style.display = 'flex';
+        } catch (error) {
+            console.error('Error extracting tags:', error);
+            alert('提取标签失败: ' + error.message);
+            closeExtractModal();
+        }
+    }
+
+    function renderExtractTable() {
+        extractTableBody.innerHTML = extractedTags.map(tag => `
+            <tr>
+                <td>${escapeHtml(tag.name)}</td>
+                <td>${tag.count}</td>
+            </tr>
+        `).join('');
+    }
+
+    extractSaveBtn.addEventListener('click', async () => {
+        if (extractedTags.length === 0) {
+            closeExtractModal();
+            return;
+        }
+
+        try {
+            const tagsToSave = extractedTags.map(tag => ({
+                id: tag.name,
+                name: tag.name
+            }));
+
+            const result = await window.electronAPI.batchCreateTags(tagsToSave);
+            
+            if (result.error) {
+                alert('保存标签失败: ' + result.error);
+                return;
+            }
+
+            alert(`成功添加 ${result.addedCount} 个标签`);
+            closeExtractModal();
+        } catch (error) {
+            console.error('Error saving extracted tags:', error);
+            alert('保存标签失败: ' + error.message);
+        }
+    });
+
+    extractCancelBtn.addEventListener('click', () => {
+        if (confirm('是否关闭模态窗？')) {
+            closeExtractModal();
+        }
+    });
+
+    extractModalClose.addEventListener('click', () => {
+        if (confirm('是否关闭模态窗？')) {
+            closeExtractModal();
+        }
+    });
+
+    function closeExtractModal() {
+        extractModal.style.display = 'none';
+        extractedTags = [];
+    }
 
     // 初始加载
     loadTheme();

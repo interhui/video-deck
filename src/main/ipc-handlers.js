@@ -1574,6 +1574,50 @@ function setupIpcHandlers(services) {
         }
     });
 
+    // 提取标签
+    ipcMain.handle('extract-tags', async () => {
+        try {
+            const settings = settingsService.getSettings();
+            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const allIndexMovies = await indexService.getAllCategoriesIndexMovies(moviesDir);
+            
+            const newTags = tagService.extractAndCompareTags(allIndexMovies);
+            
+            return { success: true, newTags };
+        } catch (error) {
+            console.error('Error extracting tags:', error);
+            return { error: error.message };
+        }
+    });
+
+    // 批量创建标签
+    ipcMain.handle('batch-create-tags', async (event, tags) => {
+        try {
+            const result = await tagService.batchAddTags(tags);
+            broadcastTagsUpdated();
+            return result;
+        } catch (error) {
+            console.error('Error batch creating tags:', error);
+            return { error: error.message };
+        }
+    });
+
+    // 根据标签ID获取电影列表
+    ipcMain.handle('get-movies-by-tag', async (event, tagId) => {
+        try {
+            const settings = settingsService.getSettings();
+            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const allIndexMovies = await indexService.getAllCategoriesIndexMovies(moviesDir);
+            
+            const movies = tagService.getMoviesByTagId(allIndexMovies, tagId);
+            
+            return { success: true, movies };
+        } catch (error) {
+            console.error('Error getting movies by tag:', error);
+            return { error: error.message };
+        }
+    });
+
     // ==================== 分类管理 ====================
 
     // 广播分类更新
@@ -1787,13 +1831,13 @@ function setupIpcHandlers(services) {
         }
     });
 
-    ipcMain.handle('batch-save-actors', async (event, { batchResults }) => {
+    ipcMain.handle('batch-save-actors', async (event, { batchResults, keepName }) => {
         try {
             const webContents = event.sender;
 
             const savedResults = await batchActorSearchService.batchSaveActors(batchResults, (progress) => {
                 webContents.send('batch-actor-save-progress', progress);
-            });
+            }, keepName);
 
             // 广播演员更新
             broadcastActorsUpdated();
