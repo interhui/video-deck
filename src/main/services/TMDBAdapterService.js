@@ -20,7 +20,8 @@ class TMDBMovieAdapterService {
 
     buildImageUrl(path, size = 'original') {
         if (!path) return null;
-        return `https://image.tmdb.org/t/p/${size}${path}`;
+        const posterBaseUrl = this.settingsService.getSettings().tmdb?.posterUrl || 'https://image.tmdb.org/t/p';
+        return `${posterBaseUrl}/${size}${path}`;
     }
 
     async makeRequest(url, token) {

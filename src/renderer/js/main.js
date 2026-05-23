@@ -78,10 +78,12 @@ const elements = {
     tmdbUrlInput: document.getElementById('tmdb-url-input'),
     tmdbLanguageSelect: document.getElementById('tmdb-language-select'),
     tmdbTokenInput: document.getElementById('tmdb-token-input'),
+    tmdbPosterUrlInput: document.getElementById('tmdb-poster-url-input'),
     // R18 设置
     r18DbUrlInput: document.getElementById('r18-db-url-input'),
     r18DbUsernameInput: document.getElementById('r18-db-username-input'),
     r18DbPasswordInput: document.getElementById('r18-db-password-input'),
+    r18PosterUrlInput: document.getElementById('r18-poster-url-input'),
     // 视频解析设置
     ffmpegPathInput: document.getElementById('ffmpeg-path-input'),
     ffprobePathInput: document.getElementById('ffprobe-path-input'),
@@ -601,11 +603,13 @@ async function loadSettings() {
         if (elements.tmdbUrlInput) elements.tmdbUrlInput.value = state.settings.tmdb?.url || 'api.themoviedb.org';
         if (elements.tmdbLanguageSelect) elements.tmdbLanguageSelect.value = state.settings.tmdb?.language || 'zh-CN';
         if (elements.tmdbTokenInput) elements.tmdbTokenInput.value = state.settings.tmdb?.token || '';
+        if (elements.tmdbPosterUrlInput) elements.tmdbPosterUrlInput.value = state.settings.tmdb?.posterUrl || '';
 
         // 加载 R18 设置
         if (elements.r18DbUrlInput) elements.r18DbUrlInput.value = state.settings.r18?.dbUrl || '';
         if (elements.r18DbUsernameInput) elements.r18DbUsernameInput.value = state.settings.r18?.dbUsername || '';
         if (elements.r18DbPasswordInput) elements.r18DbPasswordInput.value = state.settings.r18?.dbPassword || '';
+        if (elements.r18PosterUrlInput) elements.r18PosterUrlInput.value = state.settings.r18?.posterUrl || '';
 
         // 加载视频解析设置
         if (elements.ffmpegPathInput) elements.ffmpegPathInput.value = state.settings.videoParsing?.ffmpegPath || '';
@@ -3166,12 +3170,14 @@ async function saveSettingsHandler() {
             tmdb: {
                 url: elements.tmdbUrlInput?.value || 'api.themoviedb.org',
                 language: elements.tmdbLanguageSelect?.value || 'zh-CN',
-                token: elements.tmdbTokenInput?.value || ''
+                token: elements.tmdbTokenInput?.value || '',
+                posterUrl: elements.tmdbPosterUrlInput?.value || 'https://image.tmdb.org/t/p'
             },
             r18: {
                 dbUrl: elements.r18DbUrlInput?.value || '',
                 dbUsername: elements.r18DbUsernameInput?.value || '',
-                dbPassword: elements.r18DbPasswordInput?.value || ''
+                dbPassword: elements.r18DbPasswordInput?.value || '',
+                posterUrl: elements.r18PosterUrlInput?.value || 'https://pics.dmm.co.jp'
             },
             videoParsing: {
                 ffmpegPath: elements.ffmpegPathInput?.value || '',
