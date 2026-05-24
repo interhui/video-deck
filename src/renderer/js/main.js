@@ -36,7 +36,12 @@ const state = {
     onlyNewMovies: false,
     newMovieHours: 72,
     batchSearchResults: [],
-    batchSearchInProgress: false
+    batchSearchInProgress: false,
+    isScanning: false,
+    scanAbortController: null,
+    scanCancelledByUser: false,
+    isImporting: false,
+    importAbortController: null
 };
 
 // DOM 元素
@@ -195,6 +200,7 @@ const elements = {
     scanCategorySelect: document.getElementById('scan-category-select'),
     confirmScanDir: document.getElementById('confirm-scan-dir'),
     cancelScanDir: document.getElementById('cancel-scan-dir'),
+    movieScaningProgress: document.getElementById('movie-scaning-progress'),
     scanResultModal: document.getElementById('scan-result-modal'),
     closeScanResult: document.getElementById('close-scan-result'),
     scanResultInfo: document.getElementById('scan-result-info'),
@@ -224,6 +230,8 @@ const elements = {
     refreshProgressModal: document.getElementById('refresh-progress-modal'),
     refreshProgressText: document.getElementById('refresh-progress-text'),
     refreshProgressBar: document.getElementById('refresh-progress-bar'),
+    movieLoadingModal: document.getElementById('movie-loading-modal'),
+    movieLoadingProgress: document.getElementById('movie-loading-progress'),
     confirmScanMovieEdit: document.getElementById('confirm-scan-movie-edit'),
     cancelScanMovieEdit: document.getElementById('cancel-scan-movie-edit'),
     batchSearchBtn: document.getElementById('batch-search-btn'),
@@ -244,6 +252,10 @@ const elements = {
 async function init() {
     console.log('Initializing app...');
 
+    
+    // 显示电影加载进度弹窗（禁止关闭）
+    elements.movieLoadingModal.style.display = 'flex';
+
     // 加载设置
     await loadSettings();
 
@@ -259,8 +271,12 @@ async function init() {
     // 加载盒子列表
     await loadBoxes();
 
-    // 加载电影
+
+    // 使用LazyLoader加载电影，第一页加载完成后自动关闭弹窗
     await loadMovies();
+
+    // 关闭加载进度弹窗
+    elements.movieLoadingModal.style.display = 'none';
 
     // 绑定事件
     bindEvents();
@@ -3292,6 +3308,19 @@ function updateScanConfirmButton() {
 }
 
 /**
+ * 更新扫描进度显示
+ * @param {number} current - 当前已扫描的电影数量
+ * @param {number} total - 总共要扫描的电影数量
+ */
+function updateScanProgress(current, total) {
+    if (total > 0) {
+        elements.movieScaningProgress.textContent = `正在扫描：${current}/${total}`;
+    } else {
+        elements.movieScaningProgress.textContent = `已经扫描 ${current} 部电影`;
+    }
+}
+
+/**
  * 开始扫描目录
  */
 async function startScanDirectory() {
@@ -3308,8 +3337,19 @@ async function startScanDirectory() {
     }
 
     try {
+        // 进入扫描状态
+        state.isScanning = true;
+        state.scanAbortController = new AbortController();
+
         elements.confirmScanDir.disabled = true;
         elements.confirmScanDir.textContent = '扫描中...';
+        elements.cancelScanDir.textContent = '停止';
+        elements.movieScaningProgress.textContent = '正在扫描...';
+
+        // 监听实际扫描进度
+        window.electronAPI.onScanProgress((progress) => {
+            updateScanProgress(progress.current, progress.total);
+        });
 
         const result = await window.electronAPI.scanMovieDirectory({
             scanPath: scanPath,
@@ -3327,6 +3367,9 @@ async function startScanDirectory() {
         state.scanTempDir = result.tempDir;
         state.scanMovies = result.movies;
 
+        // 更新最终进度
+        updateScanProgress(result.movies.length, result.movies.length);
+
         // 关闭扫描设置模态框
         closeScanDirModal();
 
@@ -3334,11 +3377,56 @@ async function startScanDirectory() {
         showScanResults(result.movies, category);
 
     } catch (error) {
-        console.error('Error scanning directory:', error);
-        alert('扫描失败: ' + error.message);
+        // 如果是用户主动中断，不显示错误提示
+        if (state.scanCancelledByUser) {
+            console.log('Scan cancelled by user');
+        } else {
+            console.error('Error scanning directory:', error);
+            alert('扫描失败: ' + error.message);
+        }
     } finally {
-        elements.confirmScanDir.disabled = false;
-        elements.confirmScanDir.textContent = '开始扫描';
+        // 只有非用户中断的情况下才重置UI状态
+        if (!state.scanCancelledByUser) {
+            state.isScanning = false;
+            state.scanAbortController = null;
+            elements.confirmScanDir.disabled = false;
+            elements.confirmScanDir.textContent = '开始扫描';
+            elements.cancelScanDir.textContent = '取消';
+            elements.movieScaningProgress.textContent = '';
+        }
+        // 重置用户中断标记
+        state.scanCancelledByUser = false;
+    }
+}
+
+/**
+ * 处理扫描取消按钮点击
+ * 如果正在扫描，显示确认对话框；如果不在扫描状态，直接关闭模态框
+ */
+function handleScanCancel() {
+    if (state.isScanning) {
+        const confirmed = confirm('正在执行扫描，是否强制中断？');
+        if (confirmed) {
+            // 中断扫描任务
+            if (state.scanAbortController) {
+                state.scanAbortController.abort();
+            }
+            // 标记为用户主动中断，避免 finally 重复处理
+            state.scanCancelledByUser = true;
+            // 退出扫描状态
+            state.isScanning = false;
+            state.scanAbortController = null;
+            // 关闭模态框
+            closeScanDirModal();
+            // 重置按钮状态
+            elements.confirmScanDir.disabled = false;
+            elements.confirmScanDir.textContent = '开始扫描';
+            elements.cancelScanDir.textContent = '取消';
+            elements.movieScaningProgress.textContent = '';
+        }
+        // 点击"取消"则继续执行扫描，不做任何操作
+    } else {
+        closeScanDirModal();
     }
 }
 
@@ -3908,8 +3996,13 @@ async function importAllScannedMovies() {
     }
 
     try {
+        // 设置导入状态
+        state.isImporting = true;
+        state.importAbortController = new AbortController();
+
         elements.scanResultImport.disabled = true;
         elements.scanResultImport.textContent = '导入中...';
+        elements.scanResultCancel.textContent = '停止';
 
         // 获取是否导入演员的选项
         const importActorsCheckbox = document.getElementById('import-actors-checkbox');
@@ -3935,6 +4028,11 @@ async function importAllScannedMovies() {
             }
         });
 
+        // 监听导入进度
+        window.electronAPI.onImportProgress(({ current, total }) => {
+            elements.scanResultInfo.textContent = `正在保存 ${current}/${total}`;
+        });
+
         const result = await window.electronAPI.importScannedMovies(state.scanTempDir, excludeIds, importActors);
 
         if (result.error) {
@@ -3956,8 +4054,8 @@ async function importAllScannedMovies() {
         if (importActors && result.actorsSkipped > 0) {
             message += `，跳过演员: ${result.actorsSkipped} 个`;
         }
-        if (result.errors && result.errors.length > 0) {
-            message += `\n错误: ${result.errors.join('; ')}`;
+        if (result.errorCount > 0) {
+            message += `，错误: ${result.errorCount} 个，详见 ${result.errorLogPath}`;
         }
 
         alert(message);
@@ -3974,8 +4072,39 @@ async function importAllScannedMovies() {
         console.error('Error importing scanned movies:', error);
         alert('导入失败: ' + error.message);
     } finally {
+        state.isImporting = false;
+        state.importAbortController = null;
         elements.scanResultImport.disabled = false;
         elements.scanResultImport.textContent = '导入全部';
+        elements.scanResultCancel.textContent = '取消';
+    }
+}
+
+/**
+ * 处理扫描结果取消按钮点击
+ * 如果正在导入，显示确认对话框；如果不在导入状态，直接关闭模态框
+ */
+function handleScanResultCancel() {
+    if (state.isImporting) {
+        const confirmed = confirm('正在执行导入，是否强制中断？');
+        if (confirmed) {
+            // 中断导入任务
+            if (state.importAbortController) {
+                state.importAbortController.abort();
+            }
+            // 重置导入状态
+            state.isImporting = false;
+            state.importAbortController = null;
+            // 关闭模态框
+            closeScanResultModal();
+            // 重置按钮状态
+            elements.scanResultImport.disabled = false;
+            elements.scanResultImport.textContent = '导入全部';
+            elements.scanResultCancel.textContent = '取消';
+        }
+        // 点击"取消"则继续执行导入，不做任何操作
+    } else {
+        cancelScan();
     }
 }
 
@@ -4004,17 +4133,19 @@ function closeScanResultModal() {
     elements.scanResultModal.style.display = 'none';
     state.scanTempDir = '';
     state.scanMovies = [];
+    state.isImporting = false;
+    state.importAbortController = null;
 }
 
 /**
  * 初始化目录扫描相关事件
  */
 function initScanDirEvents() {
-    // 扫描目录模态框事件
-    elements.closeScanDir.addEventListener('click', closeScanDirModal);
-    elements.cancelScanDir.addEventListener('click', closeScanDirModal);
+    // 扫描目录模态框事件 - 使用 handleScanCancel 处理扫描中断确认
+    elements.closeScanDir.addEventListener('click', handleScanCancel);
+    elements.cancelScanDir.addEventListener('click', handleScanCancel);
     elements.scanDirModal.addEventListener('click', (e) => {
-        if (e.target === elements.scanDirModal) {
+        if (e.target === elements.scanDirModal && !state.isScanning) {
             closeScanDirModal();
         }
     });
@@ -4053,13 +4184,13 @@ function initScanDirEvents() {
     // 开始扫描
     elements.confirmScanDir.addEventListener('click', startScanDirectory);
 
-    // 扫描结果模态框事件
-    elements.closeScanResult.addEventListener('click', closeScanResultModal);
-    elements.scanResultCancel.addEventListener('click', cancelScan);
+    // 扫描结果模态框事件 - 使用 handleScanResultCancel 处理导入中断确认
+    elements.closeScanResult.addEventListener('click', handleScanResultCancel);
+    elements.scanResultCancel.addEventListener('click', handleScanResultCancel);
     elements.scanResultImport.addEventListener('click', importAllScannedMovies);
     elements.scanResultModal.addEventListener('click', (e) => {
         if (e.target === elements.scanResultModal) {
-            closeScanResultModal();
+            handleScanResultCancel();
         }
     });
 

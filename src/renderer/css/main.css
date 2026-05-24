@@ -365,7 +365,20 @@ body {
     display: flex;
     gap: 12px;
     justify-content: flex-end;
+    align-items: center;
     padding-top: 16px;
+}
+
+/* 扫描进度文本 - 左对齐 */
+.scan-progress-text {
+    flex: 1;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.modal-footer-right {
+    display: flex;
+    gap: 12px;
 }
 
 .category-name {

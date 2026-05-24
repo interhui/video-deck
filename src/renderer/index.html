@@ -692,8 +692,11 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button id="confirm-scan-dir" class="btn btn-primary" disabled>开始扫描</button>
-                <button id="cancel-scan-dir" class="btn btn-secondary">取消</button>
+                <span id="movie-scaning-progress" class="scan-progress-text"></span>
+                <div class="modal-footer-right">
+                    <button id="confirm-scan-dir" class="btn btn-primary" disabled>开始扫描</button>
+                    <button id="cancel-scan-dir" class="btn btn-secondary">取消</button>
+                </div>
             </div>
         </div>
     </div>
@@ -837,6 +840,15 @@
                 <div id="refresh-progress-bar-container" style="background: #e0e0e0; border-radius: 4px; height: 8px; overflow: hidden;">
                     <div id="refresh-progress-bar" style="background: #4CAF50; height: 100%; width: 0%; transition: width 0.2s;"></div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 电影应用启动提示 -->
+    <div id="movie-loading-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-body" style="text-align: center;">
+                <p id="movie-loading-progress" style="font-size: 16px; font-weight: bold;">你的电影正在加载中，请稍后...</p>
             </div>
         </div>
     </div>

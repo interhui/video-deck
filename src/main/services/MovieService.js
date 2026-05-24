@@ -8,6 +8,10 @@ const MovieCacheService = require('./MovieCacheService');
 const IndexService = require('./IndexService');
 const VideoInfoService = require('./VideoInfoService');
 const path = require('path');
+const fs = require('fs');
+
+// 程序根目录
+const APP_ROOT = path.join(__dirname, '..', '..', '..');
 
 class MovieService {
     constructor(categoryService = null) {
@@ -820,16 +824,17 @@ class MovieService {
             await this.fileService.ensureDir(tempDir);
 
             let scannedMovies = [];
+            const progressCallback = options.progressCallback;
 
             if (scanType === 'directory') {
                 // 目录扫描模式：递归扫描所有子文件夹，提取movie.nfo和海报
-                scannedMovies = await this.scanDirectoryMode(scanPath, tempDir, category, dirNaming);
+                scannedMovies = await this.scanDirectoryMode(scanPath, tempDir, category, dirNaming, progressCallback);
             } else if (scanType === 'file') {
                 // 文件扫描模式（CSV）：解析CSV文件
-                scannedMovies = await this.scanCsvMode(scanPath, tempDir, category, dirNaming);
+                scannedMovies = await this.scanCsvMode(scanPath, tempDir, category, dirNaming, progressCallback);
             } else if (scanType === 'video') {
                 // 视频扫描模式：以视频文件作为电影来源
-                scannedMovies = await this.scanVideoMode(scanPath, tempDir, category, dirNaming, options);
+                scannedMovies = await this.scanVideoMode(scanPath, tempDir, category, dirNaming, options, progressCallback);
             }
 
             // 写入总览文件
@@ -866,15 +871,18 @@ class MovieService {
      * @param {string} tempDir - 临时目录
      * @param {string} category - 分类
      * @param {string} dirNaming - 目录命名方式：'movieId'（电影ID）或 'movieName'（电影名称/年份）
+     * @param {function} progressCallback - 进度回调函数
      * @returns {Promise<object[]>} 扫描结果
      */
-    async scanDirectoryMode(scanPath, tempDir, category, dirNaming) {
+    async scanDirectoryMode(scanPath, tempDir, category, dirNaming, progressCallback) {
         const scannedMovies = [];
 
         // 递归扫描目录，查找包含movie.nfo的文件夹
         const movieFolders = await this.fileService.scanDirectoryRecursively(scanPath);
+        const totalFolders = movieFolders.length;
 
-        for (const folderInfo of movieFolders) {
+        for (let i = 0; i < movieFolders.length; i++) {
+            const folderInfo = movieFolders[i];
             try {
                 const movieData = await this.fileService.readMovieNfo(folderInfo.nfoPath, false);
 
@@ -938,6 +946,16 @@ class MovieService {
                     posterPath: posterDestPath,
                     movieData: completeMovieData
                 });
+
+                // 发送进度更新
+                if (progressCallback) {
+                    progressCallback({
+                        current: scannedMovies.length,
+                        total: totalFolders,
+                        currentName: completeMovieData.title,
+                        status: 'scanning'
+                    });
+                }
             } catch (error) {
                 console.error(`Error processing movie folder ${folderInfo.folderPath}:`, error);
             }
@@ -952,15 +970,18 @@ class MovieService {
      * @param {string} tempDir - 临时目录
      * @param {string} category - 分类
      * @param {string} dirNaming - 目录命名方式：'movieId'（电影ID）或 'movieName'（电影名称/年份）
+     * @param {function} progressCallback - 进度回调函数
      * @returns {Promise<object[]>} 扫描结果
      */
-    async scanCsvMode(csvPath, tempDir, category, dirNaming) {
+    async scanCsvMode(csvPath, tempDir, category, dirNaming, progressCallback) {
         const scannedMovies = [];
 
         // 解析CSV文件
         const csvMovies = await this.fileService.parseCsvFile(csvPath);
+        const totalMovies = csvMovies.length;
 
-        for (const movieInfo of csvMovies) {
+        for (let i = 0; i < csvMovies.length; i++) {
+            const movieInfo = csvMovies[i];
             try {
                 // 使用CSV中的movieId或生成新ID
                 const movieId = movieInfo.movieId || this.generateMovieId(category, movieInfo.title);
@@ -1004,6 +1025,16 @@ class MovieService {
                     posterPath: null,
                     movieData: completeMovieData
                 });
+
+                // 发送进度更新
+                if (progressCallback) {
+                    progressCallback({
+                        current: scannedMovies.length,
+                        total: totalMovies,
+                        currentName: completeMovieData.title,
+                        status: 'scanning'
+                    });
+                }
             } catch (error) {
                 console.error(`Error processing CSV movie ${movieInfo.title}:`, error);
             }
@@ -1024,9 +1055,10 @@ class MovieService {
      * @param {object} options - 可选配置参数
      * @param {string} options.ffmpegPath - ffmpeg路径
      * @param {string} options.ffprobePath - ffprobe路径
+     * @param {function} progressCallback - 进度回调函数
      * @returns {Promise<object[]>} 扫描结果
      */
-    async scanVideoMode(scanPath, tempDir, category, dirNaming = 'movieId', options = {}) {
+    async scanVideoMode(scanPath, tempDir, category, dirNaming = 'movieId', options = {}, progressCallback) {
         const scannedMovies = [];
         const { ffmpegPath, ffprobePath } = options || {};
 
@@ -1037,8 +1069,10 @@ class MovieService {
 
         // 扫描目录下所有视频文件
         const videoFiles = await this.fileService.scanDirectoryForVideoFiles(scanPath);
+        const totalVideos = videoFiles.length;
 
-        for (const videoFile of videoFiles) {
+        for (let i = 0; i < videoFiles.length; i++) {
+            const videoFile = videoFiles[i];
             try {
                 // 视频文件名（不含扩展名）作为电影ID和电影名
                 const movieId = videoFile.fileNameWithoutExt;
@@ -1106,6 +1140,16 @@ class MovieService {
                     posterPath: null,
                     movieData: completeMovieData
                 });
+
+                // 发送进度更新
+                if (progressCallback) {
+                    progressCallback({
+                        current: scannedMovies.length,
+                        total: totalVideos,
+                        currentName: completeMovieData.title,
+                        status: 'scanning'
+                    });
+                }
             } catch (error) {
                 console.error(`Error processing video file ${videoFile.fileName}:`, error);
             }
@@ -1216,9 +1260,10 @@ class MovieService {
      * @param {string} moviesDir - 电影目录
      * @param {Array} excludeIds - 排除的电影ID列表
      * @param {boolean} importActors - 是否导入演员
+     * @param {Function} progressCallback - 进度回调函数(current, total, movieName)
      * @returns {Promise<object>} 导入结果
      */
-    async importScannedMovies(tempDir, moviesDir, excludeIds = [], importActors = false) {
+    async importScannedMovies(tempDir, moviesDir, excludeIds = [], importActors = false, progressCallback = null) {
         try {
             // 验证 moviesDir 参数
             if (!moviesDir) {
@@ -1295,6 +1340,12 @@ class MovieService {
                     await this.indexService.updateMovieIndex(movie, overview.category, moviesDir);
 
                     results.success++;
+
+                    // 调用进度回调
+                    if (progressCallback) {
+                        const totalToImport = overview.movies.length;
+                        progressCallback(results.success, totalToImport, movieInfo.name);
+                    }
                 } catch (err) {
                     results.failed++;
                     results.errors.push(`电影 "${movieInfo.name}" 导入失败: ${err.message}`);
@@ -1316,13 +1367,32 @@ class MovieService {
                 console.warn('ActorService not initialized, cannot import actors');
             }
 
+            // 写入错误日志
+            let errorLogPath = null;
+            if (results.errors.length > 0) {
+                const logsDir = path.join(APP_ROOT, 'logs');
+                await this.fileService.ensureDir(logsDir);
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                errorLogPath = path.join(logsDir, `error_${timestamp}.log`);
+                const logContent = results.errors.join('\n');
+                await this.fileService.writeFile(errorLogPath, logContent);
+            }
+
             // 删除临时目录
             await this.fileService.deleteDir(tempDir);
 
             // 重建分类的index.json（确保索引完整）
             await this.indexService.buildCategoryIndex(overview.category, moviesDir);
 
-            return results;
+            return {
+                success: results.success,
+                failed: results.failed,
+                skipped: results.skipped,
+                errorCount: results.errors.length,
+                errorLogPath: errorLogPath,
+                actorsImported: results.actorsImported,
+                actorsSkipped: results.actorsSkipped
+            };
         } catch (error) {
             console.error('Error importing scanned movies:', error);
             throw error;
