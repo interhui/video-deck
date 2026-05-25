@@ -723,14 +723,16 @@ function updateTagFilterDisplay() {
     if (!state.currentTagFilter) {
         elements.tagFilter.value = '';
     } else {
-        const selectedTag = state.tags.find(t => t.id === state.currentTagFilter);
-        if (selectedTag) {
+        // 检查当前选中的标签是否已在下拉框中
+        const existingOption = elements.tagFilter.querySelector(`option[value="${state.currentTagFilter}"]`);
+        if (existingOption) {
             elements.tagFilter.value = state.currentTagFilter;
         } else {
+            // 标签不在下拉框中，需要重建innerHTML
             elements.tagFilter.innerHTML = `
                 <option value="">全部标签</option>
                 <option value="select">选择标签</option>
-                <option value="${state.currentTagFilter}" selected>${selectedTag ? selectedTag.name : state.currentTagFilter}</option>
+                <option value="${state.currentTagFilter}" selected>${state.currentTagFilter}</option>
             `;
             state.tags.slice(0, 10).forEach(tag => {
                 if (tag.id !== state.currentTagFilter) {
