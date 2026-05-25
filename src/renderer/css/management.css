@@ -183,6 +183,8 @@ body {
     padding: 24px;
     overflow-y: auto;
     background: var(--bg-color);
+    display: flex;
+    flex-direction: column;
 }
 
 .detail-header {
@@ -506,9 +508,40 @@ body {
     color: var(--text-color);
 }
 
+.collapse-toggle {
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    margin-right: 8px;
+    transition: transform 0.2s;
+    display: inline-block;
+}
+
+.collapse-toggle.collapsed {
+    transform: rotate(-90deg);
+}
+
+.collapsible-header {
+    cursor: pointer;
+}
+
 .movies-grid-container {
-    max-height: 500px;
+    flex: 1;
     overflow-y: auto;
+    min-height: 200px;
+}
+
+#tag-form {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+#tag-movies-section {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
 }
 
 .movies-grid {
@@ -519,7 +552,7 @@ body {
 
 .list-view-header {
     display: grid;
-    grid-template-columns: 80px 150px 120px auto 80px 120px 80px 120px;
+    grid-template-columns: 80px 200px 120px auto 80px 120px 80px 120px;
     gap: 8px;
     padding: 10px 12px;
     background: var(--sidebar-bg);
@@ -537,7 +570,7 @@ body {
 
 .movie-card {
     display: grid;
-    grid-template-columns: 80px 150px 120px auto 80px 120px 80px 120px;
+    grid-template-columns: 80px 200px 120px auto 80px 120px 80px 120px;
     gap: 8px;
     padding: 10px 12px;
     background: var(--card-bg);

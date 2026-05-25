@@ -33,6 +33,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tagMoviesGrid = document.getElementById('tag-movies-grid');
     const tagMovieCount = document.getElementById('tag-movie-count');
     const tagEmptyMovies = document.getElementById('tag-empty-movies');
+    const moviesCollapseToggle = document.getElementById('movies-collapse-toggle');
+    const moviesGridContainer = document.getElementById('movies-grid-container');
 
     // 状态
     let tags = [];
@@ -40,6 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let isCreating = false;
     let extractedTags = [];
     let tagMovies = [];
+    let moviesCollapsed = false;
 
     // 关闭窗口
     closeBtn.addEventListener('click', () => {
@@ -133,6 +136,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function renderTagMovies() {
+        moviesCollapsed = false;
+        moviesGridContainer.style.display = 'grid';
+        moviesCollapseToggle.classList.remove('collapsed');
+
         if (tagMovies.length === 0) {
             tagMoviesSection.style.display = 'block';
             tagMoviesGrid.innerHTML = '';
@@ -305,6 +312,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     searchInput.addEventListener('input', (e) => {
         renderTagList(e.target.value);
     });
+
+    // 折叠/展开电影列表
+    function toggleMoviesCollapse() {
+        moviesCollapsed = !moviesCollapsed;
+        if (moviesCollapsed) {
+            moviesGridContainer.style.display = 'none';
+            moviesCollapseToggle.classList.add('collapsed');
+        } else {
+            moviesGridContainer.style.display = 'grid';
+            moviesCollapseToggle.classList.remove('collapsed');
+        }
+    }
+
+    moviesCollapseToggle.addEventListener('click', toggleMoviesCollapse);
+    tagMovieCount.addEventListener('click', toggleMoviesCollapse);
 
     // 监听标签更新事件
     window.electronAPI.onTagsUpdated(() => {
