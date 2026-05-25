@@ -192,7 +192,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const movie = tagMovies.find(m => m.id === movieId);
             if (movie) {
-                await window.electronAPI.openMovieDetail(movie);
+                const fullMovie = await window.electronAPI.getMovieDetail(movieId);
+                if (fullMovie) {
+                    await window.electronAPI.openMovieDetail({ ...fullMovie, category: movie.category });
+                }
             }
         } catch (error) {
             console.error('Error opening movie detail:', error);
