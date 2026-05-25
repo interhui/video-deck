@@ -546,13 +546,13 @@ class MovieService {
      * @returns {object} 完整电影数据
      */
     generateMovieData(movieData, folderName, category, folderPath) {
-        // 确保 folderName 有值
         const safeFolderName = folderName || 'unknown';
 
-        // 生成 movieId：格式为 "分类-电影名称"，小写字母
         const movieId = movieData.movieId || this.generateMovieId(category, movieData.title || safeFolderName);
 
         const fileCount = (movieData.fileset && Array.isArray(movieData.fileset)) ? movieData.fileset.length + (movieData.original_filename ? 1 : 0) : (movieData.original_filename ? 1 : 0);
+
+        const tagArray = movieData.tag || movieData.tags || [];
 
         return {
             id: movieData.id || `${category}-${safeFolderName}`,
@@ -568,7 +568,6 @@ class MovieService {
             studio: movieData.studio || '',
             director: movieData.director || '',
             actors: movieData.actors || [],
-            tag: movieData.tag || [],
             fileinfo: movieData.fileinfo || '',
             original_filename: movieData.original_filename || '',
             videoCodec: movieData.videoCodec || '',
@@ -578,7 +577,7 @@ class MovieService {
             category: category,
             userRating: movieData.userRating || 0,
             userComment: movieData.userComment || '',
-            tags: movieData.tags || [],
+            tags: tagArray,
             customTags: movieData.customTags || [],
             notes: movieData.notes || '',
             path: folderPath,

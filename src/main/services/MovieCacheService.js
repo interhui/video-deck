@@ -263,7 +263,6 @@ class MovieCacheService {
 
         let results = [...this.cache.movies];
 
-        // 关键字搜索
         if (keyword) {
             const lowerKeyword = keyword.toLowerCase();
             results = results.filter(movie =>
@@ -275,19 +274,16 @@ class MovieCacheService {
             );
         }
 
-        // 分类筛选
         if (filters.category) {
             results = results.filter(movie => movie.category === filters.category);
         }
 
-        // 标签筛选
         if (filters.tagId) {
             results = results.filter(movie =>
                 movie.tags && movie.tags.includes(filters.tagId)
             );
         }
 
-        // 评分筛选
         if (filters.rating !== undefined && filters.rating !== null && filters.rating !== '') {
             const rating = parseInt(filters.rating, 10);
             if (!isNaN(rating)) {
@@ -297,7 +293,6 @@ class MovieCacheService {
             }
         }
 
-        // 演员筛选（多选）- OR逻辑：电影包含任一指定的演员即返回
         if (filters.actors && Array.isArray(filters.actors) && filters.actors.length > 0) {
             results = results.filter(movie =>
                 movie.actors && movie.actors.some(actorName =>
@@ -306,7 +301,6 @@ class MovieCacheService {
             );
         }
 
-        // 排序
         results = this.sortMovies(results, filters.sortBy, filters.sortOrder);
 
         return results;

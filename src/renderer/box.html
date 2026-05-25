@@ -161,6 +161,36 @@
         </div>
     </div>
 
+    <!-- 标签过滤模态窗 -->
+    <div id="tag-filter-modal" class="modal" style="display: none;">
+        <div class="modal-content tag-filter-modal-content">
+            <div class="modal-header">
+                <h2>标签筛选选择</h2>
+                <button class="close-btn" id="close-tag-filter">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- 工具条 -->
+                <div class="tag-filter-toolbar">
+                    <div class="tag-filter-right">
+                        <div class="search-box tag-filter-search">
+                            <input type="text" id="tag-filter-search-input" placeholder="搜索标签（ID、名称）...">
+                            <button id="tag-filter-search-btn" class="icon-btn">🔍</button>
+                            <button id="tag-filter-clear-btn" class="icon-btn clear-search-btn" style="display: none;">✕</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- 标签列表 -->
+                <div class="tag-filter-list" id="tag-filter-list">
+                    <!-- 动态生成 -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="confirm-tag-filter" class="btn btn-primary">确定</button>
+                <button id="cancel-tag-filter" class="btn btn-secondary">取消</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 导出电影弹窗 -->
     <div id="export-modal" class="modal" style="display: none;">
         <div class="modal-content export-modal-content">
