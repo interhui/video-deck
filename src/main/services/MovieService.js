@@ -1355,7 +1355,6 @@ class MovieService {
             // 导入演员
             if (importActors && allActorNames.length > 0 && this.actorService) {
                 try {
-                    console.log('Importing actors:', allActorNames.length, 'actors');
                     const actorResult = await this.actorService.importActors(allActorNames);
                     results.actorsImported = actorResult.added;
                     results.actorsSkipped = actorResult.skipped;

@@ -252,7 +252,6 @@ const elements = {
 async function init() {
     console.log('Initializing app...');
 
-    
     // 显示电影加载进度弹窗（禁止关闭）
     elements.movieLoadingModal.style.display = 'flex';
 
@@ -923,14 +922,11 @@ async function openBoxView(boxName) {
  */
 async function loadMovies() {
     try {
-        console.log('loadMovies: searchKeyword:', state.searchKeyword, 'currentTag:', state.currentTag, 'currentActorFilter.length:', state.currentActorFilter.length, 'currentCategory:', state.currentCategory, 'onlyNewMovies:', state.onlyNewMovies);
-
         if (state.searchKeyword || state.currentTag || state.currentActorFilter.length > 0 || state.onlyNewMovies) {
             if (state.lazyLoader) {
                 state.lazyLoader.destroy();
                 state.lazyLoader = null;
             }
-            console.log('loadMovies: calling loadMoviesAll');
             await loadMoviesAll();
             return;
         }
@@ -939,7 +935,7 @@ async function loadMovies() {
             renderSidebar(state.categories);
             state.sidebarSearchActive = false;
         }
-        console.log('loadMovies: calling initLazyLoader');
+
         await initLazyLoader();
         state.lazyLoader.loadFirstPage();
     } catch (error) {
@@ -959,7 +955,6 @@ async function loadMoviesAll() {
         };
 
         if (state.searchKeyword) {
-            console.log('loadMoviesAll: search path, actors:', filterOptions.actors);
             movies = await window.electronAPI.searchMovies({
                 keyword: state.searchKeyword,
                 filters: {
@@ -971,7 +966,6 @@ async function loadMoviesAll() {
                 }
             });
         } else if (state.currentCategory) {
-            console.log('loadMoviesAll: category path, actors:', filterOptions.actors);
             movies = await window.electronAPI.getMoviesByCategory({
                 category: state.currentCategory,
                 sortBy: filterOptions.sortBy,
@@ -981,7 +975,6 @@ async function loadMoviesAll() {
                 actors: filterOptions.actors
             });
         } else {
-            console.log('loadMoviesAll: all movies path, actors:', filterOptions.actors);
             movies = await window.electronAPI.getAllMovies({
                 sortBy: filterOptions.sortBy,
                 sortOrder: filterOptions.sortOrder,
@@ -1033,7 +1026,6 @@ async function initLazyLoader() {
 
     // 获取滚动容器（.movie-wall）
     const scrollContainer = document.getElementById('movie-wall');
-    console.log('initLazyLoader: scrollContainer =', scrollContainer);
 
     // 创建懒加载管理器
     state.lazyLoader = new LazyLoader({
@@ -3377,10 +3369,8 @@ async function startScanDirectory() {
         showScanResults(result.movies, category);
 
     } catch (error) {
-        // 如果是用户主动中断，不显示错误提示
-        if (state.scanCancelledByUser) {
-            console.log('Scan cancelled by user');
-        } else {
+        // 如果是非用户主动中断显示错误提示
+        if (!state.scanCancelledByUser) {
             console.error('Error scanning directory:', error);
             alert('扫描失败: ' + error.message);
         }
@@ -3769,7 +3759,6 @@ async function handleScanCoverChange(e) {
  * 渲染扫描电影编辑的标签
  */
 function renderScanEditTags() {
-    console.log('renderScanEditTags called with scanEditTags:', state.scanEditTags);
     
     let html = '';
 
@@ -3785,11 +3774,8 @@ function renderScanEditTags() {
         }
     });
 
-    console.log('About to add add-tag-btn button');
     html += `<button class="tag-add-btn" id="scan-tag-add-btn">+</button>`;
-
     elements.scanMovieTags.innerHTML = html;
-    console.log('renderScanEditTags completed');
     
     // 绑定 add tag 按钮的事件
     const addButton = document.getElementById('scan-tag-add-btn');
@@ -3800,21 +3786,13 @@ function renderScanEditTags() {
         
         // 使用新的方法绑定事件
         newButton.addEventListener('click', function(e) {
-            console.log('Add tag button clicked via event listener');
             e.preventDefault();
             e.stopPropagation();
             e.stopImmediatePropagation();
             
-            // 检查当前模态框状态
-            console.log('Current scan movie edit modal state:', {
-                display: elements.scanMovieEditModal.style.display,
-                isMovieEditModalOpen: elements.scanMovieEditModal.style.display === 'flex'
-            });
             
             openScanTagSelector();
         });
-        
-        console.log('Add tag button event listener bound successfully');
     }
 }
 
@@ -3833,18 +3811,14 @@ function removeScanEditTag(tagId) {
  * 打开扫描电影标签选择弹窗
  */
 function openScanTagSelector() {
-    console.log('openScanTagSelector called');
-    console.log('Current scanEditTags:', state.scanEditTags);
 
     // 确保当前的扫描电影编辑模态框仍然打开
     if (elements.scanMovieEditModal.style.display !== 'flex') {
-        console.error('Scan movie edit modal is not open! Current display:', elements.scanMovieEditModal.style.display);
         return;
     }
     
     const modal = elements.scanTagSelectorModal;
     if (!modal) {
-        console.error('Tag selector modal not found');
         return;
     }
 
@@ -3860,24 +3834,19 @@ function openScanTagSelector() {
         `;
     });
     container.innerHTML = html;
-    console.log('Tag selector modal content prepared');
 
     modal.style.display = 'flex';
-    console.log('Tag selector modal displayed');
     
     // 使用 setTimeout 确保模态框显示后再添加事件监听
     setTimeout(() => {
         // 确保主编辑模态框仍然是打开的
         if (elements.scanMovieEditModal.style.display !== 'flex') {
-            console.warn('Main modal was closed while opening tag selector!');
             return;
         }
         
         // 为标签选择器绑定专门的事件处理
         modal.addEventListener('click', function handleModalClick(e) {
             if (e.target === modal) {
-                // 只有点击背景时才关闭
-                console.log('Closing tag selector modal - clicked on background');
                 closeScanTagSelector();
             }
         }, { once: true }); // 只绑定一次
@@ -4224,20 +4193,9 @@ function initScanDirEvents() {
         const isInsideContent = target.closest('.modal-content') !== null;
         const isAddTagBtn = target.matches('.tag-add-btn') || target.closest('.tag-add-btn');
         
-        console.log('Scan movie edit modal clicked:', {
-            target: target,
-            targetClass: target.className,
-            targetId: target.id,
-            tagName: target.tagName,
-            isBackground: isBackground,
-            isInsideContent: isInsideContent,
-            isAddTagBtn: isAddTagBtn
-        });
-        
         // 只有关闭按钮在 modal-content 内，所以我们需要特别处理
         // 如果点击的是背景遮罩（不是内容区域），则关闭
         if (isBackground) {
-            console.log('Closing modal - clicked on background overlay');
             closeScanMovieEditModal();
         }
     });

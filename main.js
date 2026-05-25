@@ -78,7 +78,8 @@ async function initializeServices() {
     const proxyUrl = settingsService.getProxyAgentUrl();
     if (proxyUrl) {
         setGlobalProxy(proxyUrl);
-        console.debug('[main.js] Proxy initialized:', proxyUrl);
+        const proxyConfig = settingsService.getProxyConfig();
+        console.debug('Proxy initialized', proxyConfig.address);
     }
     
     r18AdapterService = new R18AdapterService(settingsService, tmdbMovieAdapterService);

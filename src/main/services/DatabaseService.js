@@ -32,7 +32,7 @@ class DatabaseService {
 
             // 加载或创建数据文件
             this.loadData();
-            console.log('Database initialized successfully');
+            console.log('Movie Database(NFO Files) initialized successfully');
         } catch (error) {
             console.error('Error initializing database:', error);
             throw error;
@@ -383,7 +383,7 @@ class DatabaseService {
      */
     close() {
         this.saveData();
-        console.log('Database connection closed');
+        console.log('Movie Database(NFO Files) connection closed');
     }
 }
 
