@@ -50,7 +50,7 @@ describe('TagService', () => {
 
         test('SVC-TAG-004: 无缓存无文件用默认保存', async () => {
             const result = await service.loadTags();
-            expect(result).toHaveLength(10);
+            expect(result).toHaveLength(5);
             expect(fs.existsSync(path.join(testDataDir, 'tags.json'))).toBe(true);
         });
     });
@@ -58,7 +58,7 @@ describe('TagService', () => {
     describe('getTags (同步)', () => {
         test('SVC-TAG-005: 无缓存无文件返回默认', () => {
             const tags = service.getTags();
-            expect(tags).toHaveLength(10);
+            expect(tags).toHaveLength(5);
         });
 
         test('SVC-TAG-006: 有缓存直接返回', () => {
@@ -323,6 +323,100 @@ describe('TagService', () => {
             expect(movies[0].director).toBe('Director X');
             expect(movies[0].poster).toBe('poster.jpg');
             expect(movies[0].category).toBe('movie');
+        });
+    });
+
+    describe('searchTags', () => {
+        test('SVC-TAG-030: 无关键字返回全部标签', () => {
+            service.tagsCache = [
+                { id: 'action', name: '动作' },
+                { id: 'scifi', name: '科幻' },
+                { id: 'drama', name: '剧情' }
+            ];
+            
+            const result = service.searchTags('');
+            expect(result).toHaveLength(3);
+            expect(result).toEqual(service.tagsCache);
+        });
+
+        test('SVC-TAG-031: 关键字匹配标签ID', () => {
+            service.tagsCache = [
+                { id: 'action', name: '动作' },
+                { id: 'scifi', name: '科幻' },
+                { id: 'drama', name: '剧情' }
+            ];
+            
+            const result = service.searchTags('act');
+            expect(result).toHaveLength(1);
+            expect(result[0].id).toBe('action');
+        });
+
+        test('SVC-TAG-032: 关键字匹配标签名称', () => {
+            service.tagsCache = [
+                { id: 'action', name: '动作' },
+                { id: 'scifi', name: '科幻' },
+                { id: 'drama', name: '剧情' }
+            ];
+            
+            const result = service.searchTags('科');
+            expect(result).toHaveLength(1);
+            expect(result[0].name).toBe('科幻');
+        });
+
+        test('SVC-TAG-033: 关键字匹配多个标签', () => {
+            service.tagsCache = [
+                { id: 'action', name: '动作' },
+                { id: 'scifi', name: '科幻电影' },
+                { id: 'drama', name: '剧情电影' }
+            ];
+            
+            const result = service.searchTags('电影');
+            expect(result).toHaveLength(2);
+            expect(result.find(t => t.id === 'scifi')).toBeDefined();
+            expect(result.find(t => t.id === 'drama')).toBeDefined();
+        });
+
+        test('SVC-TAG-034: 关键字不匹配返回空数组', () => {
+            service.tagsCache = [
+                { id: 'action', name: '动作' },
+                { id: 'scifi', name: '科幻' }
+            ];
+            
+            const result = service.searchTags('xyz');
+            expect(result).toEqual([]);
+        });
+
+        test('SVC-TAG-035: 关键字大小写不敏感', () => {
+            service.tagsCache = [
+                { id: 'Action', name: '动作' },
+                { id: 'SciFi', name: '科幻' }
+            ];
+            
+            const result = service.searchTags('ACTION');
+            expect(result).toHaveLength(1);
+            expect(result[0].id).toBe('Action');
+        });
+
+        test('SVC-TAG-036: null关键字返回全部标签', () => {
+            service.tagsCache = [
+                { id: 'action', name: '动作' },
+                { id: 'scifi', name: '科幻' }
+            ];
+            
+            const result = service.searchTags(null);
+            expect(result).toHaveLength(2);
+        });
+
+        test('SVC-TAG-037: 标签无ID或name字段时过滤', () => {
+            service.tagsCache = [
+                { id: 'action', name: '动作' },
+                { id: null, name: '科幻' },
+                { id: 'drama', name: null }
+            ];
+            
+            const result = service.searchTags('科幻');
+            expect(result).toHaveLength(1);
+            expect(result[0].name).toBe('科幻');
         });
     });
 });

@@ -1353,10 +1353,17 @@ function setupIpcHandlers(services) {
             const settings = settingsService.getSettings();
             const moviesDir = getMoviesDirPath(settings.library.moviesDir);
             const videoParsingConfig = settings.videoParsing || {};
+            const webContents = event.sender;
 
             const result = await movieService.scanMovieDirectory(
                 scanPath, scanType, category, moviesDir, dirNaming,
-                { ffmpegPath: videoParsingConfig.ffmpegPath, ffprobePath: videoParsingConfig.ffprobePath }
+                {
+                    ffmpegPath: videoParsingConfig.ffmpegPath,
+                    ffprobePath: videoParsingConfig.ffprobePath,
+                    progressCallback: (progress) => {
+                        webContents.send('scan-progress', progress);
+                    }
+                }
             );
             return result;
         } catch (error) {
@@ -1420,7 +1427,10 @@ function setupIpcHandlers(services) {
             }
             const moviesDir = getMoviesDirPath(settings.library.moviesDir);
 
-            const result = await movieService.importScannedMovies(tempDir, moviesDir, excludeIds, importActors);
+            const webContents = event.sender;
+            const result = await movieService.importScannedMovies(tempDir, moviesDir, excludeIds, importActors, (current, total, movieName) => {
+                webContents.send('import-progress', { current, total, movieName });
+            });
 
             // 通知主窗口刷新
             const mainWindow = getMainWindow();

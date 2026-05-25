@@ -692,8 +692,11 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button id="confirm-scan-dir" class="btn btn-primary" disabled>开始扫描</button>
-                <button id="cancel-scan-dir" class="btn btn-secondary">取消</button>
+                <span id="movie-scaning-progress" class="scan-progress-text"></span>
+                <div class="modal-footer-right">
+                    <button id="confirm-scan-dir" class="btn btn-primary" disabled>开始扫描</button>
+                    <button id="cancel-scan-dir" class="btn btn-secondary">取消</button>
+                </div>
             </div>
         </div>
     </div>
@@ -841,6 +844,15 @@
         </div>
     </div>
 
+    <!-- 电影应用启动提示 -->
+    <div id="movie-loading-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-body" style="text-align: center;">
+                <p id="movie-loading-progress" style="font-size: 16px; font-weight: bold;">电影正在加载中，请稍后...</p>
+            </div>
+        </div>
+    </div>
+
     <!-- 演员过滤模态窗 -->
     <div id="actor-filter-modal" class="modal" style="display: none;">
         <div class="modal-content actor-filter-modal-content">
@@ -885,6 +897,36 @@
             <div class="modal-footer">
                 <button id="confirm-actor-filter" class="btn btn-primary">确定</button>
                 <button id="cancel-actor-filter" class="btn btn-secondary">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 标签过滤模态窗 -->
+    <div id="tag-filter-modal" class="modal" style="display: none;">
+        <div class="modal-content tag-filter-modal-content">
+            <div class="modal-header">
+                <h2>标签筛选选择</h2>
+                <button class="close-btn" id="close-tag-filter">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- 工具条 -->
+                <div class="tag-filter-toolbar">
+                    <div class="tag-filter-right">
+                        <div class="search-box tag-filter-search">
+                            <input type="text" id="tag-filter-search-input" placeholder="搜索标签（ID、名称）...">
+                            <button id="tag-filter-search-btn" class="icon-btn">🔍</button>
+                            <button id="tag-filter-clear-btn" class="icon-btn clear-search-btn" style="display: none;">✕</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- 标签列表 -->
+                <div class="tag-filter-list" id="tag-filter-list">
+                    <!-- 动态生成 -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="confirm-tag-filter" class="btn btn-primary">确定</button>
+                <button id="cancel-tag-filter" class="btn btn-secondary">取消</button>
             </div>
         </div>
     </div>

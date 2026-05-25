@@ -224,13 +224,11 @@ class FileService {
     _extractTags(movieNode) {
         const tags = [];
 
-        // 处理tag字段（可能是字符串、字符串数组或对象）
         const tagField = movieNode.tag;
         if (tagField === undefined || tagField === null) {
             return tags;
         }
 
-        // 如果是数组，直接收集所有标签
         if (Array.isArray(tagField)) {
             for (const tagItem of tagField) {
                 const tagValue = this._extractTextValue(tagItem);
@@ -239,7 +237,6 @@ class FileService {
                 }
             }
         } else {
-            // 单个标签
             const tagValue = this._extractTextValue(tagField);
             if (tagValue) {
                 tags.push(tagValue);

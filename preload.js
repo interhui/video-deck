@@ -99,6 +99,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onRefreshLibraryProgress: (callback) => {
         ipcRenderer.on('refresh-library-progress', (event, data) => callback(data));
     },
+    onImportProgress: (callback) => {
+        ipcRenderer.on('import-progress', (event, data) => callback(data));
+    },
+    onScanProgress: (callback) => {
+        ipcRenderer.on('scan-progress', (event, data) => callback(data));
+    },
     onBoxUpdated: (callback) => {
         ipcRenderer.on('box-updated', callback);
     },

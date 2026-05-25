@@ -78,7 +78,8 @@ async function initializeServices() {
     const proxyUrl = settingsService.getProxyAgentUrl();
     if (proxyUrl) {
         setGlobalProxy(proxyUrl);
-        console.debug('[main.js] Proxy initialized:', proxyUrl);
+        const proxyConfig = settingsService.getProxyConfig();
+        console.debug('Proxy initialized', proxyConfig.address);
     }
     
     r18AdapterService = new R18AdapterService(settingsService, tmdbMovieAdapterService);
@@ -334,7 +335,6 @@ function createBoxWindow(boxName) {
         minHeight: 600,
         title: `电影盒子 - ${boxName}`,
         frame: false,
-        thickFrame: false,
         autoHideMenuBar: true,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
@@ -374,7 +374,6 @@ function createTagManagementWindow() {
         minHeight: 500,
         title: '标签管理',
         frame: false,
-        thickFrame: false,
         autoHideMenuBar: true,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
@@ -407,7 +406,6 @@ function createCategoryManagementWindow() {
         minHeight: 500,
         title: '分类管理',
         frame: false,
-        thickFrame: false,
         autoHideMenuBar: true,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
@@ -440,7 +438,6 @@ function createActorManagementWindow() {
         minHeight: 600,
         title: '演员管理',
         frame: false,
-        thickFrame: false,
         autoHideMenuBar: true,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),

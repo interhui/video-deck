@@ -203,6 +203,27 @@ class TagService {
         
         return movies;
     }
+
+    /**
+     * 搜索标签（支持关键字搜索）
+     * @param {string} keyword - 搜索关键字（可选）
+     * @returns {Array} 匹配的标签列表
+     */
+    searchTags(keyword) {
+        const tags = this.getTags();
+        
+        if (!keyword || keyword.trim() === '') {
+            return tags;
+        }
+        
+        const normalizedKeyword = keyword.trim().toLowerCase();
+        
+        return tags.filter(tag => {
+            const idMatch = tag.id && tag.id.toLowerCase().includes(normalizedKeyword);
+            const nameMatch = tag.name && tag.name.toLowerCase().includes(normalizedKeyword);
+            return idMatch || nameMatch;
+        });
+    }
 }
 
 module.exports = TagService;

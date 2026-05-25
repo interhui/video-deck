@@ -36,7 +36,16 @@ const state = {
     onlyNewMovies: false,
     newMovieHours: 72,
     batchSearchResults: [],
-    batchSearchInProgress: false
+    batchSearchInProgress: false,
+    isScanning: false,
+    scanAbortController: null,
+    scanCancelledByUser: false,
+    isImporting: false,
+    importAbortController: null,
+    currentTagFilter: '',
+    tagFilterModalVisible: false,
+    tagFilterSearchKeyword: '',
+    tempSelectedTag: null
 };
 
 // DOM 元素
@@ -166,6 +175,14 @@ const elements = {
     actorFilterClearBtn: document.getElementById('actor-filter-clear-btn'),
     confirmActorFilter: document.getElementById('confirm-actor-filter'),
     cancelActorFilter: document.getElementById('cancel-actor-filter'),
+    tagFilterModal: document.getElementById('tag-filter-modal'),
+    closeTagFilter: document.getElementById('close-tag-filter'),
+    tagFilterList: document.getElementById('tag-filter-list'),
+    tagFilterSearchInput: document.getElementById('tag-filter-search-input'),
+    tagFilterSearchBtn: document.getElementById('tag-filter-search-btn'),
+    tagFilterClearBtn: document.getElementById('tag-filter-clear-btn'),
+    confirmTagFilter: document.getElementById('confirm-tag-filter'),
+    cancelTagFilter: document.getElementById('cancel-tag-filter'),
     addFileBtn: document.getElementById('add-file-btn'),
     fileList: document.getElementById('file-list'),
     fileDetails: document.getElementById('file-details'),
@@ -195,6 +212,7 @@ const elements = {
     scanCategorySelect: document.getElementById('scan-category-select'),
     confirmScanDir: document.getElementById('confirm-scan-dir'),
     cancelScanDir: document.getElementById('cancel-scan-dir'),
+    movieScaningProgress: document.getElementById('movie-scaning-progress'),
     scanResultModal: document.getElementById('scan-result-modal'),
     closeScanResult: document.getElementById('close-scan-result'),
     scanResultInfo: document.getElementById('scan-result-info'),
@@ -224,6 +242,8 @@ const elements = {
     refreshProgressModal: document.getElementById('refresh-progress-modal'),
     refreshProgressText: document.getElementById('refresh-progress-text'),
     refreshProgressBar: document.getElementById('refresh-progress-bar'),
+    movieLoadingModal: document.getElementById('movie-loading-modal'),
+    movieLoadingProgress: document.getElementById('movie-loading-progress'),
     confirmScanMovieEdit: document.getElementById('confirm-scan-movie-edit'),
     cancelScanMovieEdit: document.getElementById('cancel-scan-movie-edit'),
     batchSearchBtn: document.getElementById('batch-search-btn'),
@@ -244,6 +264,9 @@ const elements = {
 async function init() {
     console.log('Initializing app...');
 
+    // 显示电影加载进度弹窗（禁止关闭）
+    elements.movieLoadingModal.style.display = 'flex';
+
     // 加载设置
     await loadSettings();
 
@@ -259,8 +282,12 @@ async function init() {
     // 加载盒子列表
     await loadBoxes();
 
-    // 加载电影
+
+    // 使用LazyLoader加载电影，第一页加载完成后自动关闭弹窗
     await loadMovies();
+
+    // 关闭加载进度弹窗
+    elements.movieLoadingModal.style.display = 'none';
 
     // 绑定事件
     bindEvents();
@@ -348,8 +375,10 @@ async function loadTags() {
  * 更新标签筛选下拉框
  */
 function updateTagFilter() {
-    elements.tagFilter.innerHTML = '<option value="">全部标签</option>';
-    state.tags.forEach(tag => {
+    elements.tagFilter.innerHTML = '<option value="">全部标签</option><option value="select">选择标签</option>';
+    
+    const displayTags = state.tags.slice(0, 10);
+    displayTags.forEach(tag => {
         const option = document.createElement('option');
         option.value = tag.id;
         option.textContent = tag.name;
@@ -576,6 +605,155 @@ function updateActorFilterClearButton() {
         elements.actorFilterClearBtn.style.display = 'block';
     } else {
         elements.actorFilterClearBtn.style.display = 'none';
+    }
+}
+
+/**
+ * 打开标签过滤模态窗
+ */
+async function openTagFilterModal() {
+    state.tagFilterModalVisible = true;
+    state.tagFilterSearchKeyword = '';
+    elements.tagFilterSearchInput.value = '';
+    await loadTags();
+    state.tempSelectedTag = state.currentTagFilter || null;
+    renderTagFilterList();
+    elements.tagFilterModal.style.display = 'flex';
+}
+
+/**
+ * 关闭标签过滤模态窗
+ */
+function closeTagFilterModal() {
+    state.tagFilterModalVisible = false;
+    elements.tagFilterModal.style.display = 'none';
+}
+
+/**
+ * 确认标签过滤选择
+ */
+function confirmTagFilter() {
+    state.currentTagFilter = state.tempSelectedTag;
+    state.currentTag = state.tempSelectedTag || '';
+    updateTagFilterDisplay();
+    closeTagFilterModal();
+    loadMovies();
+}
+
+/**
+ * 取消标签过滤选择，重置为"全部标签"
+ */
+function cancelTagFilter() {
+    state.currentTagFilter = '';
+    state.currentTag = '';
+    state.tempSelectedTag = null;
+    updateTagFilterDisplay();
+    closeTagFilterModal();
+    loadMovies();
+}
+
+/**
+ * 渲染标签过滤列表
+ */
+function renderTagFilterList() {
+    const searchKeyword = state.tagFilterSearchKeyword || '';
+    
+    let filteredTags = state.tags.filter(tag => {
+        if (!searchKeyword) return true;
+        const keyword = searchKeyword.toLowerCase();
+        const idMatch = tag.id && tag.id.toLowerCase().includes(keyword);
+        const nameMatch = tag.name && tag.name.toLowerCase().includes(keyword);
+        return idMatch || nameMatch;
+    });
+    
+    filteredTags.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    
+    if (filteredTags.length === 0) {
+        elements.tagFilterList.innerHTML = '<div class="tag-filter-empty">暂无标签</div>';
+        return;
+    }
+    
+    elements.tagFilterList.innerHTML = filteredTags.map(tag => {
+        const isSelected = state.tempSelectedTag === tag.id;
+        
+        return `
+            <div class="tag-filter-item ${isSelected ? 'selected' : ''}" data-id="${escapeHtml(tag.id)}">
+                <div class="tag-filter-radio ${isSelected ? 'checked' : ''}" data-tag-id="${escapeHtml(tag.id)}"></div>
+                <div class="tag-filter-info">
+                    <div class="tag-filter-name">${escapeHtml(tag.name)}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    elements.tagFilterList.querySelectorAll('.tag-filter-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const tagId = item.dataset.id;
+            toggleTagSelection(tagId);
+        });
+    });
+    
+    elements.tagFilterList.querySelectorAll('.tag-filter-radio').forEach(radio => {
+        radio.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const tagId = radio.dataset.tagId;
+            toggleTagSelection(tagId);
+        });
+    });
+}
+
+/**
+ * 切换标签选中状态（单选）
+ */
+function toggleTagSelection(tagId) {
+    state.tempSelectedTag = state.tempSelectedTag === tagId ? null : tagId;
+    
+    elements.tagFilterList.querySelectorAll('.tag-filter-item').forEach(item => {
+        const isSelected = item.dataset.id === state.tempSelectedTag;
+        item.classList.toggle('selected', isSelected);
+        const radio = item.querySelector('.tag-filter-radio');
+        radio.classList.toggle('checked', isSelected);
+    });
+}
+
+/**
+ * 更新标签过滤下拉框显示
+ */
+function updateTagFilterDisplay() {
+    if (!state.currentTagFilter) {
+        elements.tagFilter.value = '';
+    } else {
+        // 检查当前选中的标签是否已在下拉框中
+        const existingOption = elements.tagFilter.querySelector(`option[value="${state.currentTagFilter}"]`);
+        if (existingOption) {
+            elements.tagFilter.value = state.currentTagFilter;
+        } else {
+            // 标签不在下拉框中，需要重建innerHTML
+            elements.tagFilter.innerHTML = `
+                <option value="">全部标签</option>
+                <option value="select">选择标签</option>
+                <option value="${state.currentTagFilter}" selected>${state.currentTagFilter}</option>
+            `;
+            state.tags.slice(0, 10).forEach(tag => {
+                if (tag.id !== state.currentTagFilter) {
+                    const option = document.createElement('option');
+                    option.value = tag.id;
+                    option.textContent = tag.name;
+                    elements.tagFilter.appendChild(option);
+                }
+            });
+        }
+    }
+}
+
+/**
+ * 更新标签过滤搜索清除按钮可见性
+ */
+function updateTagFilterClearButton() {
+    if (state.tagFilterSearchKeyword) {
+        elements.tagFilterClearBtn.style.display = 'block';
+    } else {
+        elements.tagFilterClearBtn.style.display = 'none';
     }
 }
 
@@ -907,14 +1085,11 @@ async function openBoxView(boxName) {
  */
 async function loadMovies() {
     try {
-        console.log('loadMovies: searchKeyword:', state.searchKeyword, 'currentTag:', state.currentTag, 'currentActorFilter.length:', state.currentActorFilter.length, 'currentCategory:', state.currentCategory, 'onlyNewMovies:', state.onlyNewMovies);
-
         if (state.searchKeyword || state.currentTag || state.currentActorFilter.length > 0 || state.onlyNewMovies) {
             if (state.lazyLoader) {
                 state.lazyLoader.destroy();
                 state.lazyLoader = null;
             }
-            console.log('loadMovies: calling loadMoviesAll');
             await loadMoviesAll();
             return;
         }
@@ -923,7 +1098,7 @@ async function loadMovies() {
             renderSidebar(state.categories);
             state.sidebarSearchActive = false;
         }
-        console.log('loadMovies: calling initLazyLoader');
+
         await initLazyLoader();
         state.lazyLoader.loadFirstPage();
     } catch (error) {
@@ -943,7 +1118,6 @@ async function loadMoviesAll() {
         };
 
         if (state.searchKeyword) {
-            console.log('loadMoviesAll: search path, actors:', filterOptions.actors);
             movies = await window.electronAPI.searchMovies({
                 keyword: state.searchKeyword,
                 filters: {
@@ -955,7 +1129,6 @@ async function loadMoviesAll() {
                 }
             });
         } else if (state.currentCategory) {
-            console.log('loadMoviesAll: category path, actors:', filterOptions.actors);
             movies = await window.electronAPI.getMoviesByCategory({
                 category: state.currentCategory,
                 sortBy: filterOptions.sortBy,
@@ -965,7 +1138,6 @@ async function loadMoviesAll() {
                 actors: filterOptions.actors
             });
         } else {
-            console.log('loadMoviesAll: all movies path, actors:', filterOptions.actors);
             movies = await window.electronAPI.getAllMovies({
                 sortBy: filterOptions.sortBy,
                 sortOrder: filterOptions.sortOrder,
@@ -1017,7 +1189,6 @@ async function initLazyLoader() {
 
     // 获取滚动容器（.movie-wall）
     const scrollContainer = document.getElementById('movie-wall');
-    console.log('initLazyLoader: scrollContainer =', scrollContainer);
 
     // 创建懒加载管理器
     state.lazyLoader = new LazyLoader({
@@ -1565,8 +1736,62 @@ function bindEvents() {
 
     // 标签筛选
     elements.tagFilter.addEventListener('change', (e) => {
-        state.currentTag = e.target.value;
-        loadMovies();
+        const value = e.target.value;
+        if (value === '') {
+            state.currentTag = '';
+            state.currentTagFilter = '';
+            loadMovies();
+        } else if (value === 'select') {
+            openTagFilterModal();
+        } else {
+            state.currentTag = value;
+            state.currentTagFilter = value;
+            loadMovies();
+        }
+    });
+
+    // 标签过滤模态窗关闭
+    elements.closeTagFilter.addEventListener('click', closeTagFilterModal);
+    elements.cancelTagFilter.addEventListener('click', cancelTagFilter);
+    elements.tagFilterModal.addEventListener('click', (e) => {
+        if (e.target === elements.tagFilterModal) {
+            cancelTagFilter();
+        }
+    });
+
+    // 标签过滤模态窗确认
+    elements.confirmTagFilter.addEventListener('click', confirmTagFilter);
+
+    // 标签过滤搜索
+    elements.tagFilterSearchBtn.addEventListener('click', () => {
+        const keyword = elements.tagFilterSearchInput.value.trim();
+        state.tagFilterSearchKeyword = keyword;
+        updateTagFilterClearButton();
+        renderTagFilterList();
+    });
+
+    elements.tagFilterSearchInput.addEventListener('input', () => {
+        const keyword = elements.tagFilterSearchInput.value.trim();
+        state.tagFilterSearchKeyword = keyword;
+        updateTagFilterClearButton();
+        renderTagFilterList();
+    });
+
+    elements.tagFilterSearchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const keyword = e.target.value.trim();
+            state.tagFilterSearchKeyword = keyword;
+            updateTagFilterClearButton();
+            renderTagFilterList();
+        }
+    });
+
+    // 清除标签过滤搜索
+    elements.tagFilterClearBtn.addEventListener('click', () => {
+        elements.tagFilterSearchInput.value = '';
+        state.tagFilterSearchKeyword = '';
+        updateTagFilterClearButton();
+        renderTagFilterList();
     });
 
     // 演员筛选
@@ -3292,6 +3517,19 @@ function updateScanConfirmButton() {
 }
 
 /**
+ * 更新扫描进度显示
+ * @param {number} current - 当前已扫描的电影数量
+ * @param {number} total - 总共要扫描的电影数量
+ */
+function updateScanProgress(current, total) {
+    if (total > 0) {
+        elements.movieScaningProgress.textContent = `正在扫描：${current}/${total}`;
+    } else {
+        elements.movieScaningProgress.textContent = `已经扫描 ${current} 部电影`;
+    }
+}
+
+/**
  * 开始扫描目录
  */
 async function startScanDirectory() {
@@ -3308,8 +3546,19 @@ async function startScanDirectory() {
     }
 
     try {
+        // 进入扫描状态
+        state.isScanning = true;
+        state.scanAbortController = new AbortController();
+
         elements.confirmScanDir.disabled = true;
         elements.confirmScanDir.textContent = '扫描中...';
+        elements.cancelScanDir.textContent = '停止';
+        elements.movieScaningProgress.textContent = '正在扫描...';
+
+        // 监听实际扫描进度
+        window.electronAPI.onScanProgress((progress) => {
+            updateScanProgress(progress.current, progress.total);
+        });
 
         const result = await window.electronAPI.scanMovieDirectory({
             scanPath: scanPath,
@@ -3327,6 +3576,9 @@ async function startScanDirectory() {
         state.scanTempDir = result.tempDir;
         state.scanMovies = result.movies;
 
+        // 更新最终进度
+        updateScanProgress(result.movies.length, result.movies.length);
+
         // 关闭扫描设置模态框
         closeScanDirModal();
 
@@ -3334,11 +3586,54 @@ async function startScanDirectory() {
         showScanResults(result.movies, category);
 
     } catch (error) {
-        console.error('Error scanning directory:', error);
-        alert('扫描失败: ' + error.message);
+        // 如果是非用户主动中断显示错误提示
+        if (!state.scanCancelledByUser) {
+            console.error('Error scanning directory:', error);
+            alert('扫描失败: ' + error.message);
+        }
     } finally {
-        elements.confirmScanDir.disabled = false;
-        elements.confirmScanDir.textContent = '开始扫描';
+        // 只有非用户中断的情况下才重置UI状态
+        if (!state.scanCancelledByUser) {
+            state.isScanning = false;
+            state.scanAbortController = null;
+            elements.confirmScanDir.disabled = false;
+            elements.confirmScanDir.textContent = '开始扫描';
+            elements.cancelScanDir.textContent = '取消';
+            elements.movieScaningProgress.textContent = '';
+        }
+        // 重置用户中断标记
+        state.scanCancelledByUser = false;
+    }
+}
+
+/**
+ * 处理扫描取消按钮点击
+ * 如果正在扫描，显示确认对话框；如果不在扫描状态，直接关闭模态框
+ */
+function handleScanCancel() {
+    if (state.isScanning) {
+        const confirmed = confirm('正在执行扫描，是否强制中断？');
+        if (confirmed) {
+            // 中断扫描任务
+            if (state.scanAbortController) {
+                state.scanAbortController.abort();
+            }
+            // 标记为用户主动中断，避免 finally 重复处理
+            state.scanCancelledByUser = true;
+            // 退出扫描状态
+            state.isScanning = false;
+            state.scanAbortController = null;
+            // 关闭模态框
+            closeScanDirModal();
+            // 重置按钮状态
+            elements.confirmScanDir.disabled = false;
+            elements.confirmScanDir.textContent = '开始扫描';
+            elements.cancelScanDir.textContent = '取消';
+            elements.movieScaningProgress.textContent = '';
+        }
+        // 点击"取消"则继续执行扫描，不做任何操作
+    } else {
+        closeScanDirModal();
     }
 }
 
@@ -3681,7 +3976,6 @@ async function handleScanCoverChange(e) {
  * 渲染扫描电影编辑的标签
  */
 function renderScanEditTags() {
-    console.log('renderScanEditTags called with scanEditTags:', state.scanEditTags);
     
     let html = '';
 
@@ -3697,11 +3991,8 @@ function renderScanEditTags() {
         }
     });
 
-    console.log('About to add add-tag-btn button');
     html += `<button class="tag-add-btn" id="scan-tag-add-btn">+</button>`;
-
     elements.scanMovieTags.innerHTML = html;
-    console.log('renderScanEditTags completed');
     
     // 绑定 add tag 按钮的事件
     const addButton = document.getElementById('scan-tag-add-btn');
@@ -3712,21 +4003,13 @@ function renderScanEditTags() {
         
         // 使用新的方法绑定事件
         newButton.addEventListener('click', function(e) {
-            console.log('Add tag button clicked via event listener');
             e.preventDefault();
             e.stopPropagation();
             e.stopImmediatePropagation();
             
-            // 检查当前模态框状态
-            console.log('Current scan movie edit modal state:', {
-                display: elements.scanMovieEditModal.style.display,
-                isMovieEditModalOpen: elements.scanMovieEditModal.style.display === 'flex'
-            });
             
             openScanTagSelector();
         });
-        
-        console.log('Add tag button event listener bound successfully');
     }
 }
 
@@ -3745,18 +4028,14 @@ function removeScanEditTag(tagId) {
  * 打开扫描电影标签选择弹窗
  */
 function openScanTagSelector() {
-    console.log('openScanTagSelector called');
-    console.log('Current scanEditTags:', state.scanEditTags);
 
     // 确保当前的扫描电影编辑模态框仍然打开
     if (elements.scanMovieEditModal.style.display !== 'flex') {
-        console.error('Scan movie edit modal is not open! Current display:', elements.scanMovieEditModal.style.display);
         return;
     }
     
     const modal = elements.scanTagSelectorModal;
     if (!modal) {
-        console.error('Tag selector modal not found');
         return;
     }
 
@@ -3772,24 +4051,19 @@ function openScanTagSelector() {
         `;
     });
     container.innerHTML = html;
-    console.log('Tag selector modal content prepared');
 
     modal.style.display = 'flex';
-    console.log('Tag selector modal displayed');
     
     // 使用 setTimeout 确保模态框显示后再添加事件监听
     setTimeout(() => {
         // 确保主编辑模态框仍然是打开的
         if (elements.scanMovieEditModal.style.display !== 'flex') {
-            console.warn('Main modal was closed while opening tag selector!');
             return;
         }
         
         // 为标签选择器绑定专门的事件处理
         modal.addEventListener('click', function handleModalClick(e) {
             if (e.target === modal) {
-                // 只有点击背景时才关闭
-                console.log('Closing tag selector modal - clicked on background');
                 closeScanTagSelector();
             }
         }, { once: true }); // 只绑定一次
@@ -3908,8 +4182,13 @@ async function importAllScannedMovies() {
     }
 
     try {
+        // 设置导入状态
+        state.isImporting = true;
+        state.importAbortController = new AbortController();
+
         elements.scanResultImport.disabled = true;
         elements.scanResultImport.textContent = '导入中...';
+        elements.scanResultCancel.textContent = '停止';
 
         // 获取是否导入演员的选项
         const importActorsCheckbox = document.getElementById('import-actors-checkbox');
@@ -3935,6 +4214,11 @@ async function importAllScannedMovies() {
             }
         });
 
+        // 监听导入进度
+        window.electronAPI.onImportProgress(({ current, total }) => {
+            elements.scanResultInfo.textContent = `正在保存 ${current}/${total}`;
+        });
+
         const result = await window.electronAPI.importScannedMovies(state.scanTempDir, excludeIds, importActors);
 
         if (result.error) {
@@ -3956,8 +4240,8 @@ async function importAllScannedMovies() {
         if (importActors && result.actorsSkipped > 0) {
             message += `，跳过演员: ${result.actorsSkipped} 个`;
         }
-        if (result.errors && result.errors.length > 0) {
-            message += `\n错误: ${result.errors.join('; ')}`;
+        if (result.errorCount > 0) {
+            message += `，错误: ${result.errorCount} 个，详见 ${result.errorLogPath}`;
         }
 
         alert(message);
@@ -3974,8 +4258,39 @@ async function importAllScannedMovies() {
         console.error('Error importing scanned movies:', error);
         alert('导入失败: ' + error.message);
     } finally {
+        state.isImporting = false;
+        state.importAbortController = null;
         elements.scanResultImport.disabled = false;
         elements.scanResultImport.textContent = '导入全部';
+        elements.scanResultCancel.textContent = '取消';
+    }
+}
+
+/**
+ * 处理扫描结果取消按钮点击
+ * 如果正在导入，显示确认对话框；如果不在导入状态，直接关闭模态框
+ */
+function handleScanResultCancel() {
+    if (state.isImporting) {
+        const confirmed = confirm('正在执行导入，是否强制中断？');
+        if (confirmed) {
+            // 中断导入任务
+            if (state.importAbortController) {
+                state.importAbortController.abort();
+            }
+            // 重置导入状态
+            state.isImporting = false;
+            state.importAbortController = null;
+            // 关闭模态框
+            closeScanResultModal();
+            // 重置按钮状态
+            elements.scanResultImport.disabled = false;
+            elements.scanResultImport.textContent = '导入全部';
+            elements.scanResultCancel.textContent = '取消';
+        }
+        // 点击"取消"则继续执行导入，不做任何操作
+    } else {
+        cancelScan();
     }
 }
 
@@ -4004,17 +4319,19 @@ function closeScanResultModal() {
     elements.scanResultModal.style.display = 'none';
     state.scanTempDir = '';
     state.scanMovies = [];
+    state.isImporting = false;
+    state.importAbortController = null;
 }
 
 /**
  * 初始化目录扫描相关事件
  */
 function initScanDirEvents() {
-    // 扫描目录模态框事件
-    elements.closeScanDir.addEventListener('click', closeScanDirModal);
-    elements.cancelScanDir.addEventListener('click', closeScanDirModal);
+    // 扫描目录模态框事件 - 使用 handleScanCancel 处理扫描中断确认
+    elements.closeScanDir.addEventListener('click', handleScanCancel);
+    elements.cancelScanDir.addEventListener('click', handleScanCancel);
     elements.scanDirModal.addEventListener('click', (e) => {
-        if (e.target === elements.scanDirModal) {
+        if (e.target === elements.scanDirModal && !state.isScanning) {
             closeScanDirModal();
         }
     });
@@ -4053,13 +4370,13 @@ function initScanDirEvents() {
     // 开始扫描
     elements.confirmScanDir.addEventListener('click', startScanDirectory);
 
-    // 扫描结果模态框事件
-    elements.closeScanResult.addEventListener('click', closeScanResultModal);
-    elements.scanResultCancel.addEventListener('click', cancelScan);
+    // 扫描结果模态框事件 - 使用 handleScanResultCancel 处理导入中断确认
+    elements.closeScanResult.addEventListener('click', handleScanResultCancel);
+    elements.scanResultCancel.addEventListener('click', handleScanResultCancel);
     elements.scanResultImport.addEventListener('click', importAllScannedMovies);
     elements.scanResultModal.addEventListener('click', (e) => {
         if (e.target === elements.scanResultModal) {
-            closeScanResultModal();
+            handleScanResultCancel();
         }
     });
 
@@ -4093,20 +4410,9 @@ function initScanDirEvents() {
         const isInsideContent = target.closest('.modal-content') !== null;
         const isAddTagBtn = target.matches('.tag-add-btn') || target.closest('.tag-add-btn');
         
-        console.log('Scan movie edit modal clicked:', {
-            target: target,
-            targetClass: target.className,
-            targetId: target.id,
-            tagName: target.tagName,
-            isBackground: isBackground,
-            isInsideContent: isInsideContent,
-            isAddTagBtn: isAddTagBtn
-        });
-        
         // 只有关闭按钮在 modal-content 内，所以我们需要特别处理
         // 如果点击的是背景遮罩（不是内容区域），则关闭
         if (isBackground) {
-            console.log('Closing modal - clicked on background overlay');
             closeScanMovieEditModal();
         }
     });

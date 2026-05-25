@@ -118,9 +118,12 @@
 
                     <div id="tag-movies-section" style="display: none;">
                         <div class="movies-section-header">
-                            <h3 id="tag-movie-count">关联电影</h3>
+                            <div style="display: flex;">
+                                <span class="collapse-toggle" id="movies-collapse-toggle">▶</span>
+                                <h3 id="tag-movie-count" class="collapsible-header">关联电影</h3>
+                            </div>
                         </div>
-                        <div class="movies-grid-container">
+                        <div class="movies-grid-container" id="movies-grid-container">
                             <div class="movies-grid" id="tag-movies-grid">
                             </div>
                             <div class="empty-movies" id="tag-empty-movies" style="display: none;">

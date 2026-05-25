@@ -19,11 +19,6 @@ class ExportService {
      * @returns {Promise<object>} 导出结果
      */
     async exportBoxToZip(movies, moviesDir, exportPath) {
-        console.log(`[ExportService] exportBoxToZip 开始`);
-        console.log(`[ExportService] moviesDir: ${moviesDir}`);
-        console.log(`[ExportService] exportPath: ${exportPath}`);
-        console.log(`[ExportService] 待导出电影数量: ${movies.length}`);
-
         const output = fs.createWriteStream(exportPath);
         const archive = this.archiver('zip', { zlib: { level: 9 } });
 
@@ -32,7 +27,6 @@ class ExportService {
             let skippedMovies = [];
 
             output.on('close', () => {
-                console.log(`[ExportService] ZIP导出完成，实际导出: ${exportedCount}，跳过: ${skippedMovies.length}`);
                 if (skippedMovies.length > 0) {
                     console.log(`[ExportService] 跳过的电影: ${skippedMovies.join(', ')}`);
                 }
@@ -54,10 +48,6 @@ class ExportService {
                 const movieDir = movie.basePath || movie.path || path.join(moviesDir, movie.category, movie.movieId);
                 const nfoPath = path.join(movieDir, 'movie.nfo');
                 
-                console.log(`[ExportService] 处理电影: ${movie.movieId}`);
-                console.log(`[ExportService] basePath: ${movie.basePath}`);
-                console.log(`[ExportService] movieDir: ${movieDir}, exists: ${fs.existsSync(movieDir)}`);
-                
                 if (!fs.existsSync(movieDir)) {
                     console.log(`[ExportService] 电影目录不存在，跳过: ${movie.movieId}`);
                     skippedMovies.push(movie.movieId);
@@ -66,18 +56,15 @@ class ExportService {
 
                 const posterFiles = fs.readdirSync(movieDir)
                     .filter(f => f.match(/^(poster|.*-poster)\.(jpg|png|jpeg)$/i));
-                console.log(`[ExportService] 找到poster文件: ${posterFiles.join(', ') || '无'}`);
 
                 if (fs.existsSync(nfoPath)) {
-                    console.log(`[ExportService] 添加movie.nfo到ZIP`);
                     archive.file(nfoPath, { name: `${movie.movieId}/movie.nfo` });
                 } else {
-                    console.log(`[ExportService] movie.nfo不存在: ${nfoPath}`);
+                    console.error(`[ExportService] movie.nfo不存在: ${nfoPath}`);
                 }
 
                 for (const posterFile of posterFiles) {
                     const posterPath = path.join(movieDir, posterFile);
-                    console.log(`[ExportService] 添加poster到ZIP: ${posterFile}`);
                     archive.file(posterPath, { name: `${movie.movieId}/${posterFile}` });
                 }
                 
@@ -146,9 +133,6 @@ class ExportService {
      * @returns {Promise<object>} 导出结果
      */
     async exportBoxToDpl(movies, exportPath) {
-        console.log(`[ExportService] exportBoxToDpl 开始`);
-        console.log(`[ExportService] exportPath: ${exportPath}`);
-        console.log(`[ExportService] 电影数量: ${movies.length}`);
 
         let content = '[playlist]\n';
         content += `NumberOfEntries=${movies.length}\n`;
@@ -169,7 +153,6 @@ class ExportService {
 
         await fs.promises.writeFile(exportPath, content, 'utf-8');
 
-        console.log(`[ExportService] DPL导出完成`);
         return { success: true, count: movies.length };
     }
 
@@ -181,10 +164,6 @@ class ExportService {
      * @returns {Promise<object>} 导出结果
      */
     async exportBoxToJson(movies, boxName, exportPath) {
-        console.log(`[ExportService] exportBoxToJson 开始`);
-        console.log(`[ExportService] boxName: ${boxName}`);
-        console.log(`[ExportService] exportPath: ${exportPath}`);
-        console.log(`[ExportService] 电影数量: ${movies.length}`);
 
         const boxData = {
             movie: movies.map(m => ({
@@ -202,7 +181,6 @@ class ExportService {
         const jsonContent = JSON.stringify(boxData, null, 2);
         await fs.promises.writeFile(exportPath, jsonContent, 'utf-8');
 
-        console.log(`[ExportService] JSON导出完成，导出数量: ${movies.length}`);
         return { success: true, count: movies.length };
     }
 

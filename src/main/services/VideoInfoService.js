@@ -88,7 +88,7 @@ class VideoInfoService {
             // 执行ffprobe获取视频信息
             command.ffprobe((err, metadata) => {
                 if (err) {
-                    console.error('获取视频信息失败:', err);
+                    console.error('Read Video Info Error:', err);
                     reject(err);
                     return;
                 }
