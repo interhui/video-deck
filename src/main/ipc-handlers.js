@@ -1210,10 +1210,10 @@ function setupIpcHandlers(services) {
     });
 
     // 打开播放器窗口
-    ipcMain.handle('open-player-window', async (event, movieData) => {
+    ipcMain.handle('open-player-window', async (event, movieData, startTime) => {
         try {
             const mainWindow = getMainWindow();
-            playerService.openPlayerWindow(movieData, mainWindow, createPlayerWindow);
+            playerService.openPlayerWindow(movieData, mainWindow, createPlayerWindow, startTime);
             return { success: true };
         } catch (error) {
             console.error('Error opening player window:', error);

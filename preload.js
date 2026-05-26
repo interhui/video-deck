@@ -64,7 +64,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     setDetailEditMode: (isEditing) => ipcRenderer.invoke('set-detail-edit-mode', isEditing),
     openActorManagement: () => ipcRenderer.invoke('open-actor-management'),
     openCategoryManagement: () => ipcRenderer.invoke('open-category-management'),
-    openPlayerWindow: (movieData) => ipcRenderer.invoke('open-player-window', movieData),
+    openPlayerWindow: (movieData, startTime) => ipcRenderer.invoke('open-player-window', movieData, startTime),
     openBatchPlayerWindow: (playlistData) => ipcRenderer.invoke('open-batch-player-window', playlistData),
 
     // 文件选择对话框

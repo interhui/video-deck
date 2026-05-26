@@ -1655,7 +1655,7 @@ async function playBoxMovie(movieId) {
             return;
         }
 
-        await window.electronAPI.openPlayerWindow(movieDetail);
+        await window.electronAPI.openPlayerWindow(movieDetail, 0);
     } catch (error) {
         console.error('Error playing box movie:', error);
         alert('播放失败: ' + error.message);

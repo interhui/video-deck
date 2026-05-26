@@ -51,11 +51,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // 加载播放列表
-    function loadPlaylist(playlistData, initialIndex = 0) {
+    function loadPlaylist(playlistData, initialIndex = 0, startTime = 0) {
         playlist = playlistData;
         currentIndex = initialIndex;
         renderPlaylist();
-        playItem(currentIndex);
+        playItem(currentIndex, startTime);
     }
 
     function removePlaylistItem(index) {
@@ -114,23 +114,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // 播放指定项
-    function playItem(index) {
+    function playItem(index, startTime = 0) {
         if (index < 0 || index >= playlist.length) return;
 
         currentIndex = index;
         const item = playlist[currentIndex];
 
-        // 使用 file:// 协议播放本地视频
         const videoPath = item.path.replace(/\\/g, '/');
         const fileUrl = `file:///${videoPath}`;
 
         elements.videoPlayer.src = fileUrl;
         elements.videoPlayer.load();
 
-        // 重新渲染播放列表以更新高亮
         renderPlaylist();
 
-        // 自动播放
+        const seekToTime = () => {
+            if (startTime > 0 && elements.videoPlayer.duration > startTime) {
+                elements.videoPlayer.currentTime = startTime;
+            }
+            elements.videoPlayer.removeEventListener('loadedmetadata', seekToTime);
+        };
+
+        if (startTime > 0) {
+            elements.videoPlayer.addEventListener('loadedmetadata', seekToTime);
+        }
+
         elements.videoPlayer.play().then(() => {
             isPlaying = true;
             updatePlayPauseBtn();
@@ -341,7 +349,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             elements.playerTitle.textContent = data.movieTitle || '电影播放';
             currentMovieId = data.movieId || null;
             currentMovieFolderPath = data.movieFolderPath || null;
-            loadPlaylist(data.playlist || [], data.currentIndex || 0);
+            loadPlaylist(data.playlist || [], data.currentIndex || 0, data.startTime || 0);
         }
     });
 });
