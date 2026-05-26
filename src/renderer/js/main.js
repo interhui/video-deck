@@ -45,7 +45,9 @@ const state = {
     currentTagFilter: '',
     tagFilterModalVisible: false,
     tagFilterSearchKeyword: '',
-    tempSelectedTag: null
+    tempSelectedTag: null,
+    tagSelectorSearchKeyword: '',
+    scanTagSelectorSearchKeyword: ''
 };
 
 // DOM 元素
@@ -2722,6 +2724,9 @@ function bindEvents() {
     const tagSelectorModal = document.getElementById('tag-selector-modal');
     const closeTagSelector = document.getElementById('close-tag-selector');
     const cancelTagSelection = document.getElementById('cancel-tag-selection');
+    const tagSelectorSearchInput = document.getElementById('tag-selector-search-input');
+    const tagSelectorSearchBtn = document.getElementById('tag-selector-search-btn');
+    const tagSelectorClearBtn = document.getElementById('tag-selector-clear-btn');
 
     if (closeTagSelector) {
         closeTagSelector.addEventListener('click', () => {
@@ -2739,6 +2744,37 @@ function bindEvents() {
         tagSelectorModal.addEventListener('click', (e) => {
             if (e.target === tagSelectorModal) {
                 closeTagSelectorModal();
+            }
+        });
+    }
+
+    if (tagSelectorSearchBtn) {
+        tagSelectorSearchBtn.addEventListener('click', () => {
+            state.tagSelectorSearchKeyword = tagSelectorSearchInput.value.trim();
+            renderTagSelectorList();
+        });
+    }
+
+    if (tagSelectorClearBtn) {
+        tagSelectorClearBtn.addEventListener('click', () => {
+            tagSelectorSearchInput.value = '';
+            state.tagSelectorSearchKeyword = '';
+            tagSelectorClearBtn.style.display = 'none';
+            renderTagSelectorList();
+        });
+    }
+
+    if (tagSelectorSearchInput) {
+        tagSelectorSearchInput.addEventListener('input', () => {
+            if (tagSelectorClearBtn) {
+                tagSelectorClearBtn.style.display = tagSelectorSearchInput.value ? 'block' : 'none';
+            }
+        });
+
+        tagSelectorSearchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                state.tagSelectorSearchKeyword = tagSelectorSearchInput.value.trim();
+                renderTagSelectorList();
             }
         });
     }
@@ -3074,21 +3110,71 @@ function openTagSelectorModal() {
         return;
     }
 
-    // 渲染标签选择列表
-    const container = document.getElementById('tag-selector-list');
-    let html = '';
-    state.tags.forEach(tag => {
-        const isSelected = state.selectedTags.has(tag.id);
-        html += `
-            <label class="tag-checkbox ${isSelected ? 'selected' : ''}">
-                <input type="checkbox" value="${tag.id}" ${isSelected ? 'checked' : ''} onclick="toggleTagInSelection('${tag.id}')">
-                <span>${tag.name}</span>
-            </label>
-        `;
-    });
-    container.innerHTML = html;
+    state.tagSelectorSearchKeyword = '';
+    const searchInput = document.getElementById('tag-selector-search-input');
+    if (searchInput) {
+        searchInput.value = '';
+    }
+    const clearBtn = document.getElementById('tag-selector-clear-btn');
+    if (clearBtn) {
+        clearBtn.style.display = 'none';
+    }
 
+    renderTagSelectorList();
     modal.style.display = 'flex';
+}
+
+/**
+ * 渲染标签选择列表
+ */
+function renderTagSelectorList() {
+    const container = document.getElementById('tag-selector-list');
+    if (!container) return;
+
+    const searchKeyword = state.tagSelectorSearchKeyword || '';
+    
+    let filteredTags = state.tags.filter(tag => {
+        if (!searchKeyword) return true;
+        const keyword = searchKeyword.toLowerCase();
+        const idMatch = tag.id && tag.id.toLowerCase().includes(keyword);
+        const nameMatch = tag.name && tag.name.toLowerCase().includes(keyword);
+        return idMatch || nameMatch;
+    });
+    
+    filteredTags.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    
+    if (filteredTags.length === 0) {
+        container.innerHTML = '<div class="tag-selector-empty">暂无标签</div>';
+        return;
+    }
+    
+    container.innerHTML = filteredTags.map(tag => {
+        const isSelected = state.selectedTags.has(tag.id);
+        
+        return `
+            <div class="tag-selector-item ${isSelected ? 'selected' : ''}" data-id="${escapeHtml(tag.id)}">
+                <div class="tag-selector-checkbox ${isSelected ? 'checked' : ''}" data-tag-id="${escapeHtml(tag.id)}"></div>
+                <div class="tag-selector-info">
+                    <div class="tag-selector-name">${escapeHtml(tag.name)}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    container.querySelectorAll('.tag-selector-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const tagId = item.dataset.id;
+            toggleTagInSelection(tagId);
+        });
+    });
+    
+    container.querySelectorAll('.tag-selector-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const tagId = checkbox.dataset.tagId;
+            toggleTagInSelection(tagId);
+        });
+    });
 }
 
 /**
@@ -3100,18 +3186,8 @@ function toggleTagInSelection(tagId) {
     } else {
         state.selectedTags.add(tagId);
     }
-    // 更新标签显示
     renderSelectedTags();
-    // 更新选择弹窗中的复选框状态
-    const checkbox = document.querySelector(`#tag-selector-list input[value="${tagId}"]`);
-    if (checkbox) {
-        const label = checkbox.closest('.tag-checkbox');
-        if (state.selectedTags.has(tagId)) {
-            label.classList.add('selected');
-        } else {
-            label.classList.remove('selected');
-        }
-    }
+    renderTagSelectorList();
 }
 
 /**
@@ -4029,7 +4105,6 @@ function removeScanEditTag(tagId) {
  */
 function openScanTagSelector() {
 
-    // 确保当前的扫描电影编辑模态框仍然打开
     if (elements.scanMovieEditModal.style.display !== 'flex') {
         return;
     }
@@ -4039,35 +4114,71 @@ function openScanTagSelector() {
         return;
     }
 
-    const container = elements.scanTagSelectorList;
-    let html = '';
-    state.tags.forEach(tag => {
-        const isSelected = state.scanEditTags.includes(tag.id);
-        html += `
-            <label class="tag-checkbox ${isSelected ? 'selected' : ''}">
-                <input type="checkbox" value="${tag.id}" ${isSelected ? 'checked' : ''} onclick="toggleScanTagSelection('${tag.id}')">
-                <span>${tag.name}</span>
-            </label>
-        `;
-    });
-    container.innerHTML = html;
+    state.scanTagSelectorSearchKeyword = '';
+    const searchInput = document.getElementById('scan-tag-selector-search-input');
+    if (searchInput) {
+        searchInput.value = '';
+    }
+    const clearBtn = document.getElementById('scan-tag-selector-clear-btn');
+    if (clearBtn) {
+        clearBtn.style.display = 'none';
+    }
 
+    renderScanTagSelectorList();
     modal.style.display = 'flex';
+}
+
+/**
+ * 渲染扫描电影标签选择列表
+ */
+function renderScanTagSelectorList() {
+    const container = elements.scanTagSelectorList;
+    if (!container) return;
+
+    const searchKeyword = state.scanTagSelectorSearchKeyword || '';
     
-    // 使用 setTimeout 确保模态框显示后再添加事件监听
-    setTimeout(() => {
-        // 确保主编辑模态框仍然是打开的
-        if (elements.scanMovieEditModal.style.display !== 'flex') {
-            return;
-        }
+    let filteredTags = state.tags.filter(tag => {
+        if (!searchKeyword) return true;
+        const keyword = searchKeyword.toLowerCase();
+        const idMatch = tag.id && tag.id.toLowerCase().includes(keyword);
+        const nameMatch = tag.name && tag.name.toLowerCase().includes(keyword);
+        return idMatch || nameMatch;
+    });
+    
+    filteredTags.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    
+    if (filteredTags.length === 0) {
+        container.innerHTML = '<div class="tag-selector-empty">暂无标签</div>';
+        return;
+    }
+    
+    container.innerHTML = filteredTags.map(tag => {
+        const isSelected = state.scanEditTags.includes(tag.id);
         
-        // 为标签选择器绑定专门的事件处理
-        modal.addEventListener('click', function handleModalClick(e) {
-            if (e.target === modal) {
-                closeScanTagSelector();
-            }
-        }, { once: true }); // 只绑定一次
-    }, 100);
+        return `
+            <div class="tag-selector-item ${isSelected ? 'selected' : ''}" data-id="${escapeHtml(tag.id)}">
+                <div class="tag-selector-checkbox ${isSelected ? 'checked' : ''}" data-tag-id="${escapeHtml(tag.id)}"></div>
+                <div class="tag-selector-info">
+                    <div class="tag-selector-name">${escapeHtml(tag.name)}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    container.querySelectorAll('.tag-selector-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const tagId = item.dataset.id;
+            toggleScanTagSelection(tagId);
+        });
+    });
+    
+    container.querySelectorAll('.tag-selector-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const tagId = checkbox.dataset.tagId;
+            toggleScanTagSelection(tagId);
+        });
+    });
 }
 
 /**
@@ -4081,15 +4192,7 @@ function toggleScanTagSelection(tagId) {
         state.scanEditTags.push(tagId);
     }
     renderScanEditTags();
-    const checkbox = document.querySelector(`#scan-tag-selector-list input[value="${tagId}"]`);
-    if (checkbox) {
-        const label = checkbox.closest('.tag-checkbox');
-        if (state.scanEditTags.includes(tagId)) {
-            label.classList.add('selected');
-        } else {
-            label.classList.remove('selected');
-        }
-    }
+    renderScanTagSelectorList();
 }
 
 /**
@@ -4430,6 +4533,41 @@ function initScanDirEvents() {
             closeScanTagSelector();
         }
     });
+
+    const scanTagSelectorSearchInput = document.getElementById('scan-tag-selector-search-input');
+    const scanTagSelectorSearchBtn = document.getElementById('scan-tag-selector-search-btn');
+    const scanTagSelectorClearBtn = document.getElementById('scan-tag-selector-clear-btn');
+
+    if (scanTagSelectorSearchBtn) {
+        scanTagSelectorSearchBtn.addEventListener('click', () => {
+            state.scanTagSelectorSearchKeyword = scanTagSelectorSearchInput.value.trim();
+            renderScanTagSelectorList();
+        });
+    }
+
+    if (scanTagSelectorClearBtn) {
+        scanTagSelectorClearBtn.addEventListener('click', () => {
+            scanTagSelectorSearchInput.value = '';
+            state.scanTagSelectorSearchKeyword = '';
+            scanTagSelectorClearBtn.style.display = 'none';
+            renderScanTagSelectorList();
+        });
+    }
+
+    if (scanTagSelectorSearchInput) {
+        scanTagSelectorSearchInput.addEventListener('input', () => {
+            if (scanTagSelectorClearBtn) {
+                scanTagSelectorClearBtn.style.display = scanTagSelectorSearchInput.value ? 'block' : 'none';
+            }
+        });
+
+        scanTagSelectorSearchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                state.scanTagSelectorSearchKeyword = scanTagSelectorSearchInput.value.trim();
+                renderScanTagSelectorList();
+            }
+        });
+    }
 
     // 确认保存
     elements.confirmScanMovieEdit.addEventListener('click', confirmScanMovieEdit);

@@ -552,7 +552,7 @@ class MovieService {
 
         const fileCount = (movieData.fileset && Array.isArray(movieData.fileset)) ? movieData.fileset.length + (movieData.original_filename ? 1 : 0) : (movieData.original_filename ? 1 : 0);
 
-        const tagArray = movieData.tag || movieData.tags || [];
+        const tagArray = movieData.tags || movieData.tag || [];
 
         return {
             id: movieData.id || `${category}-${safeFolderName}`,
