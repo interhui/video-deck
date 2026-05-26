@@ -1677,7 +1677,7 @@ async function playMovie(movieId) {
     try {
         const movie = await window.electronAPI.getMovieDetail(movieId);
         if (movie && !movie.error) {
-            await window.electronAPI.openPlayerWindow(movie);
+            await window.electronAPI.openPlayerWindow(movie, 0);
         }
     } catch (error) {
         console.error('Error playing movie:', error);

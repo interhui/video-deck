@@ -1210,10 +1210,10 @@ function setupIpcHandlers(services) {
     });
 
     // 打开播放器窗口
-    ipcMain.handle('open-player-window', async (event, movieData) => {
+    ipcMain.handle('open-player-window', async (event, movieData, startTime) => {
         try {
             const mainWindow = getMainWindow();
-            playerService.openPlayerWindow(movieData, mainWindow, createPlayerWindow);
+            playerService.openPlayerWindow(movieData, mainWindow, createPlayerWindow, startTime);
             return { success: true };
         } catch (error) {
             console.error('Error opening player window:', error);
@@ -1955,7 +1955,7 @@ function setupIpcHandlers(services) {
         }
     });
 
-    ipcMain.handle('save-screenshot', async (event, { movieId, movieFolderPath, imageData }) => {
+    ipcMain.handle('save-screenshot', async (event, { movieId, movieFolderPath, imageData, currentTime }) => {
         try {
             let targetFolderPath = movieFolderPath;
 
@@ -1982,9 +1982,9 @@ function setupIpcHandlers(services) {
                 return { success: false, error: 'Cannot determine movie folder path' };
             }
 
-            const nextNumber = await screenshotService.getNextScreenshotNumber(targetFolderPath);
+            const screenshotNumber = screenshotService.getScreenshotCurrentTime(currentTime);
 
-            const result = await screenshotService.saveScreenshot(targetFolderPath, imageData, nextNumber);
+            const result = await screenshotService.saveScreenshot(targetFolderPath, imageData, screenshotNumber);
             return result;
         } catch (error) {
             console.error('Error saving screenshot:', error);

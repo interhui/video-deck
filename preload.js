@@ -64,7 +64,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     setDetailEditMode: (isEditing) => ipcRenderer.invoke('set-detail-edit-mode', isEditing),
     openActorManagement: () => ipcRenderer.invoke('open-actor-management'),
     openCategoryManagement: () => ipcRenderer.invoke('open-category-management'),
-    openPlayerWindow: (movieData) => ipcRenderer.invoke('open-player-window', movieData),
+    openPlayerWindow: (movieData, startTime) => ipcRenderer.invoke('open-player-window', movieData, startTime),
     openBatchPlayerWindow: (playlistData) => ipcRenderer.invoke('open-batch-player-window', playlistData),
 
     // 文件选择对话框
@@ -223,7 +223,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     // 剧照管理
     getScreenshots: (movieId, movieFolderPath) => ipcRenderer.invoke('get-screenshots', { movieId, movieFolderPath }),
-    saveScreenshot: (movieId, movieFolderPath, imageData) => ipcRenderer.invoke('save-screenshot', { movieId, movieFolderPath, imageData }),
+    saveScreenshot: (movieId, movieFolderPath, imageData, currentTime) => ipcRenderer.invoke('save-screenshot', { movieId, movieFolderPath, imageData, currentTime }),
     deleteScreenshot: (movieId, movieFolderPath, number) => ipcRenderer.invoke('delete-screenshot', { movieId, movieFolderPath, number })
 });
 

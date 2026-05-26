@@ -690,6 +690,7 @@ function renderScreenshots(screenshots) {
         return `
             <div class="screenshot-item" data-path="${screenshot.path}" data-number="${screenshot.number}" data-filename="${screenshot.filename}">
                 <img src="file://${screenshot.path}?t=${Date.now()}" alt="剧照 ${screenshot.number}">
+                <button class="movie-play-btn" title="从此处播放">▶</button>
                 <button class="screenshot-delete-btn" title="删除剧照">✕</button>
             </div>
         `;
@@ -718,15 +719,20 @@ function renderScreenshots(screenshots) {
             item.innerHTML = `<div class="screenshot-placeholder">加载失败</div><button class="screenshot-delete-btn" title="删除剧照">✕</button>`;
             bindDeleteHandler(item);
         };
-        // 点击整个item查看大图
+        const playBtn = item.querySelector('.movie-play-btn');
+        if (playBtn) {
+            playBtn.onclick = (e) => {
+                e.stopPropagation();
+                const startTime = parseInt(item.dataset.number, 10);
+                playMovieFromScreenshot(startTime);
+            };
+        }
         item.onclick = (e) => {
-            // 如果点击的是删除按钮，不触发查看
-            if (e.target.classList.contains('screenshot-delete-btn')) {
+            if (e.target.classList.contains('screenshot-delete-btn') || e.target.classList.contains('movie-play-btn')) {
                 return;
             }
             showScreenshotViewer(item.dataset.path);
         };
-        // 删除按钮点击事件
         bindDeleteHandler(item);
     });
 }
@@ -749,6 +755,18 @@ async function deleteScreenshot(number) {
     } catch (error) {
         console.error('Error deleting screenshot:', error);
         alert('删除剧照失败: ' + error.message);
+    }
+}
+
+async function playMovieFromScreenshot(startTime) {
+    if (!currentMovie) {
+        return;
+    }
+    try {
+        await window.electronAPI.openPlayerWindow(currentMovie, startTime);
+    } catch (error) {
+        console.error('Error playing movie from screenshot:', error);
+        alert('播放电影失败: ' + error.message);
     }
 }
 
@@ -1519,12 +1537,11 @@ async function fetchVideoInfo(videoPath) {
                 elements.newFileDuration.value = result.duration || '';
             }
 
-            console.log('视频信息获取成功:', result);
         } else if (result && result.error) {
-            console.log('视频信息获取失败:', result.error);
+            console.log('Get Video Info Error:', result.error);
         }
     } catch (error) {
-        console.error('获取视频信息异常:', error);
+        console.error('Get Video Info Error:', error);
     }
 }
 
@@ -1643,7 +1660,7 @@ function bindEvents() {
 
     elements.playBtn.addEventListener('click', async () => {
         try {
-            await window.electronAPI.openPlayerWindow(currentMovie);
+            await window.electronAPI.openPlayerWindow(currentMovie, 0);
         } catch (error) {
             console.error('Error playing movie:', error);
             alert('播放电影失败: ' + error.message);
@@ -1780,7 +1797,7 @@ function bindEvents() {
 
     elements.playBtnBox.addEventListener('click', async () => {
         try {
-            await window.electronAPI.openPlayerWindow(currentMovie);
+            await window.electronAPI.openPlayerWindow(currentMovie, 0);
         } catch (error) {
             console.error('Error playing movie:', error);
             alert('播放电影失败: ' + error.message);
