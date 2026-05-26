@@ -2076,6 +2076,29 @@ function bindEvents() {
         state.detailEditModeLocked = isEditing;
     });
 
+    // 监听详情窗口点击演员标签，通知主窗口进行演员过滤
+    window.electronAPI.onFilterByActor((actorName) => {
+        // 设置当前演员过滤
+        state.currentActorFilter = [actorName];
+        updateActorFilterDisplay();
+        // 关闭详情窗口
+        window.electronAPI.closeDetailWindow();
+        // 加载电影列表
+        loadMovies();
+    });
+
+    // 监听详情窗口点击标签，通知主窗口进行标签过滤
+    window.electronAPI.onFilterByTag((tagId) => {
+        // 设置当前标签过滤
+        state.currentTag = tagId;
+        state.currentTagFilter = tagId;
+        updateTagFilterDisplay();
+        // 关闭详情窗口
+        window.electronAPI.closeDetailWindow();
+        // 加载电影列表
+        loadMovies();
+    });
+
     // 监听盒子更新事件
     window.electronAPI.onBoxUpdated(() => {
         loadBoxes();

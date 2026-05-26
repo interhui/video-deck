@@ -807,10 +807,18 @@ function renderTags(tags) {
     }
 
     const html = tags.map(tagId =>
-        `<span class="tag">${getTagNameById(tagId)}</span>`
+        `<span class="tag clickable" data-tag-id="${tagId}" onclick="filterTagById('${tagId}')">${getTagNameById(tagId)}</span>`
     ).join('');
 
     elements.movieTags.innerHTML = html;
+}
+
+/**
+ * 点击标签，通知主窗口进行标签过滤
+ * @param {string} tagId - 标签ID
+ */
+function filterTagById(tagId) {
+    window.electronAPI.filterByTag(tagId);
 }
 
 /**
@@ -841,7 +849,7 @@ function renderActorsForDisplay(actors) {
     let lineBreakAdded = false;
 
     actorsArray.forEach((actor, index) => {
-        html += `<span class="actor-tag">${actor}</span>`;
+        html += `<span class="actor-tag clickable" data-actor-name="${escapeHtml(actor)}" onclick="filterActorByName('${escapeHtml(actor)}')">${actor}</span>`;
 
         // 每6个演员添加换行（除了最后一个）
         if ((index + 1) % MAX_ACTORS_PER_LINE === 0 && index < actorsArray.length - 1) {
@@ -851,6 +859,14 @@ function renderActorsForDisplay(actors) {
     });
 
     elements.movieActorsDisplay.innerHTML = html;
+}
+
+/**
+ * 点击演员标签，通知主窗口进行演员过滤
+ * @param {string} actorName - 演员姓名
+ */
+function filterActorByName(actorName) {
+    window.electronAPI.filterByActor(actorName);
 }
 
 /**

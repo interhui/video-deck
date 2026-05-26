@@ -237,6 +237,14 @@ body {
     white-space: nowrap;
 }
 
+.actor-tag.clickable {
+    cursor: pointer;
+}
+
+.actor-tag.clickable:hover {
+    opacity: 0.8;
+}
+
 .movie-id {
     font-size: 14px;
     font-weight: 500;
@@ -334,6 +342,14 @@ body {
     border-radius: 12px;
     font-size: 13px;
     color: var(--text-secondary);
+}
+
+.tag.clickable {
+    cursor: pointer;
+}
+
+.tag.clickable:hover {
+    opacity: 0.8;
 }
 
 /* 描述 */
