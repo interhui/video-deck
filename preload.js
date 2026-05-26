@@ -63,6 +63,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     openBoxWindow: (boxName) => ipcRenderer.invoke('open-box-window', boxName),
     setDetailEditMode: (isEditing) => ipcRenderer.invoke('set-detail-edit-mode', isEditing),
     filterByActor: (actorName) => ipcRenderer.invoke('filter-by-actor', actorName),
+    filterByTag: (tagId) => ipcRenderer.invoke('filter-by-tag', tagId),
     openActorManagement: () => ipcRenderer.invoke('open-actor-management'),
     openCategoryManagement: () => ipcRenderer.invoke('open-category-management'),
     openPlayerWindow: (movieData, startTime) => ipcRenderer.invoke('open-player-window', movieData, startTime),
@@ -138,6 +139,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     },
     onFilterByActor: (callback) => {
         ipcRenderer.on('filter-by-actor', (event, actorName) => callback(actorName));
+    },
+    onFilterByTag: (callback) => {
+        ipcRenderer.on('filter-by-tag', (event, tagId) => callback(tagId));
     },
 
     // 移除事件监听

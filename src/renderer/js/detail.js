@@ -807,10 +807,18 @@ function renderTags(tags) {
     }
 
     const html = tags.map(tagId =>
-        `<span class="tag">${getTagNameById(tagId)}</span>`
+        `<span class="tag clickable" data-tag-id="${tagId}" onclick="filterTagById('${tagId}')">${getTagNameById(tagId)}</span>`
     ).join('');
 
     elements.movieTags.innerHTML = html;
+}
+
+/**
+ * 点击标签，通知主窗口进行标签过滤
+ * @param {string} tagId - 标签ID
+ */
+function filterTagById(tagId) {
+    window.electronAPI.filterByTag(tagId);
 }
 
 /**

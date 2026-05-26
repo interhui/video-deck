@@ -344,6 +344,14 @@ body {
     color: var(--text-secondary);
 }
 
+.tag.clickable {
+    cursor: pointer;
+}
+
+.tag.clickable:hover {
+    opacity: 0.8;
+}
+
 /* 描述 */
 .description-section {
     margin-top: 16px;

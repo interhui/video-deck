@@ -1190,6 +1190,20 @@ function setupIpcHandlers(services) {
         }
     });
 
+    // 详情窗口点击标签，通知主窗口进行标签过滤
+    ipcMain.handle('filter-by-tag', async (event, tagId) => {
+        try {
+            const mainWindow = services.getMainWindow();
+            if (mainWindow) {
+                mainWindow.webContents.send('filter-by-tag', tagId);
+            }
+            return { success: true };
+        } catch (error) {
+            console.error('Error sending filter-by-tag:', error);
+            return { error: error.message };
+        }
+    });
+
     // 打开电影盒子窗口
     ipcMain.handle('open-box-window', async (event, boxName) => {
         try {
