@@ -39,7 +39,7 @@ class IndexService {
             director: movie.director || '',
             actors: movie.actors || [],
             studio: movie.studio || '',
-            tags: movie.tag || [],
+            tags: movie.tags || movie.tag || [],
             fileCount: fileCount,
             poster: posterPath || movie.poster || null,
             basePath: basePath || movie.path || null,
