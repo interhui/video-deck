@@ -83,22 +83,15 @@ describe('ScreenshotService', () => {
         });
     });
 
-    describe('getNextScreenshotNumber', () => {
-        test('SVC-SCREENSHOT-007: 空目录返回1', async () => {
-            const emptyDir = path.join(testDataDir, 'empty');
-            fs.mkdirSync(emptyDir);
-            const result = await service.getNextScreenshotNumber(emptyDir);
-            expect(result).toBe(1);
+    describe('getScreenshotCurrentTime', () => {
+        test('SVC-SCREENSHOT-007: 返回取整的当前时间', () => {
+            const result = service.getScreenshotCurrentTime(123.456);
+            expect(result).toBe(123);
         });
 
-        test('SVC-SCREENSHOT-008: 返回最大编号+1', async () => {
-            const movieDir = path.join(testDataDir, 'movie4');
-            fs.mkdirSync(movieDir);
-            fs.writeFileSync(path.join(movieDir, 'screenshot_1.jpg'), 'test1');
-            fs.writeFileSync(path.join(movieDir, 'screenshot_5.jpg'), 'test5');
-
-            const result = await service.getNextScreenshotNumber(movieDir);
-            expect(result).toBe(6);
+        test('SVC-SCREENSHOT-008: 返回取整的当前时间(小数)', () => {
+            const result = service.getScreenshotCurrentTime(45.9);
+            expect(result).toBe(45);
         });
     });
 

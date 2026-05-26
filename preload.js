@@ -223,7 +223,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     // 剧照管理
     getScreenshots: (movieId, movieFolderPath) => ipcRenderer.invoke('get-screenshots', { movieId, movieFolderPath }),
-    saveScreenshot: (movieId, movieFolderPath, imageData) => ipcRenderer.invoke('save-screenshot', { movieId, movieFolderPath, imageData }),
+    saveScreenshot: (movieId, movieFolderPath, imageData, currentTime) => ipcRenderer.invoke('save-screenshot', { movieId, movieFolderPath, imageData, currentTime }),
     deleteScreenshot: (movieId, movieFolderPath, number) => ipcRenderer.invoke('delete-screenshot', { movieId, movieFolderPath, number })
 });
 

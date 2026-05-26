@@ -303,8 +303,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
         const base64Data = canvas.toDataURL('image/jpeg', 0.95);
+        const currentTime = video.currentTime;
 
-        window.electronAPI.saveScreenshot(currentMovieId, currentMovieFolderPath, base64Data).then(result => {
+        window.electronAPI.saveScreenshot(currentMovieId, currentMovieFolderPath, base64Data, currentTime).then(result => {
             if (result.success) {
                 showScreenshotToast('截图已保存');
             } else {
