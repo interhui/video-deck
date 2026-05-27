@@ -294,4 +294,114 @@ describe('BoxService', () => {
                 .rejects.toThrow('电影不存在');
         });
     });
+
+    describe('addMoviesToBox', () => {
+        test('SVC-BOX-032: 批量添加多个电影到盒子', async () => {
+            const box = { metadata: { name: 'BatchAddBox' }, movie: [] };
+            fs.writeFileSync(path.join(testDataDir, 'BatchAddBox.json'), JSON.stringify(box));
+
+            const movieInfoList = [
+                { id: 'movie1', status: 'unwatched', comment: 'Good' },
+                { id: 'movie2', status: 'new', comment: 'Great' },
+                { id: 'movie3', status: 'unwatched', comment: '' }
+            ];
+
+            const result = await service.addMoviesToBox('BatchAddBox', movieInfoList, testDataDir);
+            expect(result.success).toBe(true);
+            expect(result.addedCount).toBe(3);
+            expect(result.updatedCount).toBe(0);
+
+            const content = JSON.parse(fs.readFileSync(path.join(testDataDir, 'BatchAddBox.json'), 'utf-8'));
+            expect(content.movie).toHaveLength(3);
+            expect(content.movie.map(m => m.id)).toContain('movie1');
+            expect(content.movie.map(m => m.id)).toContain('movie2');
+            expect(content.movie.map(m => m.id)).toContain('movie3');
+        });
+
+        test('SVC-BOX-033: 部分电影已存在时更新', async () => {
+            const box = {
+                metadata: { name: 'PartialUpdateBox' },
+                movie: [{ id: 'movie1', status: 'watched', comment: 'Old comment' }]
+            };
+            fs.writeFileSync(path.join(testDataDir, 'PartialUpdateBox.json'), JSON.stringify(box));
+
+            const movieInfoList = [
+                { id: 'movie1', status: 'unwatched', comment: 'New comment' },
+                { id: 'movie2', status: 'new', comment: 'New movie' }
+            ];
+
+            const result = await service.addMoviesToBox('PartialUpdateBox', movieInfoList, testDataDir);
+            expect(result.success).toBe(true);
+            expect(result.addedCount).toBe(1);
+            expect(result.updatedCount).toBe(1);
+
+            const content = JSON.parse(fs.readFileSync(path.join(testDataDir, 'PartialUpdateBox.json'), 'utf-8'));
+            expect(content.movie).toHaveLength(2);
+            const movie1 = content.movie.find(m => m.id === 'movie1');
+            expect(movie1.status).toBe('unwatched');
+            expect(movie1.comment).toBe('New comment');
+        });
+
+        test('SVC-BOX-034: 盒子不存在时自动创建', async () => {
+            const movieInfoList = [
+                { id: 'movie1', status: 'unwatched' },
+                { id: 'movie2', status: 'new' }
+            ];
+
+            const result = await service.addMoviesToBox('AutoCreateBox', movieInfoList, testDataDir);
+            expect(result.success).toBe(true);
+            expect(result.addedCount).toBe(2);
+
+            const content = JSON.parse(fs.readFileSync(path.join(testDataDir, 'AutoCreateBox.json'), 'utf-8'));
+            expect(content.movie).toHaveLength(2);
+            expect(content.metadata.name).toBe('AutoCreateBox');
+        });
+
+        test('SVC-BOX-035: 空电影列表返回成功', async () => {
+            const box = { metadata: { name: 'EmptyListBox' }, movie: [] };
+            fs.writeFileSync(path.join(testDataDir, 'EmptyListBox.json'), JSON.stringify(box));
+
+            const result = await service.addMoviesToBox('EmptyListBox', [], testDataDir);
+            expect(result.success).toBe(true);
+            expect(result.addedCount).toBe(0);
+            expect(result.updatedCount).toBe(0);
+        });
+
+        test('SVC-BOX-036: 电影信息无ID时跳过', async () => {
+            const box = { metadata: { name: 'SkipInvalidBox' }, movie: [] };
+            fs.writeFileSync(path.join(testDataDir, 'SkipInvalidBox.json'), JSON.stringify(box));
+
+            const movieInfoList = [
+                { id: 'validMovie', status: 'unwatched' },
+                { status: 'unwatched' },
+                null,
+                { id: 'anotherValid', status: 'new' }
+            ];
+
+            const result = await service.addMoviesToBox('SkipInvalidBox', movieInfoList, testDataDir);
+            expect(result.success).toBe(true);
+            expect(result.addedCount).toBe(2);
+
+            const content = JSON.parse(fs.readFileSync(path.join(testDataDir, 'SkipInvalidBox.json'), 'utf-8'));
+            expect(content.movie).toHaveLength(2);
+        });
+
+        test('SVC-BOX-037: 默认status和rating值', async () => {
+            const box = { metadata: { name: 'DefaultValueBox' }, movie: [] };
+            fs.writeFileSync(path.join(testDataDir, 'DefaultValueBox.json'), JSON.stringify(box));
+
+            const movieInfoList = [
+                { id: 'movie1' },
+                { id: 'movie2', status: 'watched' }
+            ];
+
+            await service.addMoviesToBox('DefaultValueBox', movieInfoList, testDataDir);
+
+            const content = JSON.parse(fs.readFileSync(path.join(testDataDir, 'DefaultValueBox.json'), 'utf-8'));
+            const movie1 = content.movie.find(m => m.id === 'movie1');
+            expect(movie1.status).toBe('unwatched');
+            expect(movie1.rating).toBe(0);
+            expect(movie1.comment).toBe('');
+        });
+    });
 });

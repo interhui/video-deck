@@ -1573,7 +1573,7 @@ function updateBatchButtonsVisibility() {
     if (hasSelected) {
         elements.batchOperation.style.display = 'inline-block';
         elements.batchSearchBtn.textContent = `批量搜索 (${state.selectedMovies.size})`;
-        elements.batchAddBtn.textContent = `批量添加 (${state.selectedMovies.size})`;
+        elements.batchAddBtn.textContent = `批量收藏 (${state.selectedMovies.size})`;
         elements.batchDeleteBtn.textContent = `批量删除 (${state.selectedMovies.size})`;
     } else {
         elements.batchOperation.style.display = 'none';
@@ -2416,7 +2416,9 @@ function bindEvents() {
                                 path: file.fullpath,
                                 title: `${movieDetail.name} - ${file.filename || path.basename(file.fullpath)}`,
                                 codec: file.codec || file.videoCodec || '',
-                                resolution: file.resolution || (file.videoWidth ? `${file.videoWidth}x${file.videoHeight}` : '')
+                                resolution: file.resolution || (file.videoWidth ? `${file.videoWidth}x${file.videoHeight}` : ''),
+                                movieId: movieId,
+                                category: movie.category
                             });
                             movieVideoAdded = true;
                         }
@@ -2428,7 +2430,9 @@ function bindEvents() {
                         path: movieDetail.original_filename,
                         title: movieDetail.name || path.basename(movieDetail.original_filename),
                         codec: movieDetail.videoCodec || '',
-                        resolution: movieDetail.videoWidth ? `${movieDetail.videoWidth}x${movieDetail.videoHeight}` : ''
+                        resolution: movieDetail.videoWidth ? `${movieDetail.videoWidth}x${movieDetail.videoHeight}` : '',
+                        movieId: movieId,
+                        category: movie.category
                     });
                 }
             }

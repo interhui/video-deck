@@ -1575,7 +1575,9 @@ async function playBoxMovies() {
                             path: file.fullpath,
                             title: `${movieDetail.name} - ${file.filename || path.basename(file.fullpath)}`,
                             codec: file.codec || file.videoCodec || '',
-                            resolution: file.resolution || (file.videoWidth ? `${file.videoWidth}x${file.videoHeight}` : '')
+                            resolution: file.resolution || (file.videoWidth ? `${file.videoWidth}x${file.videoHeight}` : ''),
+                            movieId: movie.id,
+                            category: movie.category
                         });
                         movieVideoAdded = true;
                     }
@@ -1587,7 +1589,9 @@ async function playBoxMovies() {
                     path: movieDetail.original_filename,
                     title: movieDetail.name || path.basename(movieDetail.original_filename),
                     codec: movieDetail.videoCodec || '',
-                    resolution: movieDetail.videoWidth ? `${movieDetail.videoWidth}x${movieDetail.videoHeight}` : ''
+                    resolution: movieDetail.videoWidth ? `${movieDetail.videoWidth}x${movieDetail.videoHeight}` : '',
+                    movieId: movie.id,
+                    category: movie.category
                 });
                 movieVideoAdded = true;
             }
@@ -1597,7 +1601,9 @@ async function playBoxMovies() {
                     path: movie.original_filename,
                     title: movie.name || movie.title || path.basename(movie.original_filename),
                     codec: '',
-                    resolution: ''
+                    resolution: '',
+                    movieId: movie.id,
+                    category: movie.category
                 });
             }
         }

@@ -416,17 +416,38 @@ video {
     cursor: pointer;
     font-size: 13px;
     transition: background-color 0.2s;
-    margin-left: 10px;
 }
 
 .history-btn:hover {
     background-color: var(--primary-hover);
 }
 
+.add-to-box-btn {
+    padding: 6px 12px;
+    background-color: var(--card-bg);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.add-to-box-btn:hover {
+    background-color: var(--hover-bg);
+    color: var(--text-color);
+}
+
 .playlist-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
+}
+
+.playlist-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .modal {
@@ -591,4 +612,73 @@ video {
     color: var(--text-secondary);
     font-size: 14px;
     padding: 20px;
+}
+
+.modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-color);
+    font-size: 14px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 10px 12px;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-color);
+    font-size: 14px;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.btn {
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: var(--text-color);
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+}
+
+.btn-secondary {
+    background-color: var(--card-bg);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    background-color: var(--hover-bg);
+    color: var(--text-color);
+}
+
+.add-to-box-info {
+    margin-bottom: 16px;
+    color: var(--text-secondary);
+    font-size: 14px;
 }

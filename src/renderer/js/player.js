@@ -34,7 +34,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         historyClearBtn: document.getElementById('history-clear-btn'),
         historyMovieFilter: document.getElementById('history-movie-filter'),
         historyDateFilter: document.getElementById('history-date-filter'),
-        historyList: document.getElementById('history-list')
+        historyList: document.getElementById('history-list'),
+        addToBoxBtn: document.getElementById('add-to-box-btn'),
+        addToBoxModal: document.getElementById('player-add-to-box-modal'),
+        addToBoxCloseBtn: document.getElementById('add-to-box-close-btn'),
+        addToBoxInfo: document.getElementById('add-to-box-info'),
+        playerBoxSelect: document.getElementById('player-box-select'),
+        confirmAddToBox: document.getElementById('confirm-add-to-box'),
+        cancelAddToBox: document.getElementById('cancel-add-to-box')
     };
 
     let currentMovieId = null;
@@ -432,6 +439,83 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentMovieId = data.movieId || null;
             currentMovieFolderPath = data.movieFolderPath || null;
             loadPlaylist(data.playlist || [], data.currentIndex || 0, data.startTime || 0);
+        }
+    });
+
+    elements.addToBoxBtn.addEventListener('click', async () => {
+        if (playlist.length === 0) {
+            showScreenshotToast('播放列表为空，无法添加到盒子');
+            return;
+        }
+
+        const boxes = await window.electronAPI.getAllBoxes();
+
+        if (!boxes || boxes.length === 0) {
+            showScreenshotToast('请先创建电影盒子');
+            return;
+        }
+
+        elements.playerBoxSelect.innerHTML = '<option value="">选择电影盒子...</option>';
+        boxes.forEach(box => {
+            const option = document.createElement('option');
+            option.value = box.name;
+            option.textContent = `${box.name} (${box.movieCount}部电影)`;
+            elements.playerBoxSelect.appendChild(option);
+        });
+
+        elements.addToBoxInfo.textContent = `播放列表共 ${playlist.length} 个视频`;
+        elements.addToBoxModal.style.display = 'flex';
+    });
+
+    elements.addToBoxCloseBtn.addEventListener('click', () => {
+        elements.addToBoxModal.style.display = 'none';
+    });
+
+    elements.cancelAddToBox.addEventListener('click', () => {
+        elements.addToBoxModal.style.display = 'none';
+    });
+
+    elements.addToBoxModal.addEventListener('click', (e) => {
+        if (e.target === elements.addToBoxModal) {
+            elements.addToBoxModal.style.display = 'none';
+        }
+    });
+
+    elements.confirmAddToBox.addEventListener('click', async () => {
+        const boxName = elements.playerBoxSelect.value;
+
+        if (!boxName) {
+            showScreenshotToast('请选择电影盒子');
+            return;
+        }
+
+        try {
+            let addedCount = 0;
+
+            for (const item of playlist) {
+                if (item.movieId && item.category) {
+                    const result = await window.electronAPI.addMovieToBox({
+                        boxName: boxName,
+                        category: item.category,
+                        movieInfo: {
+                            id: item.movieId,
+                            status: 'unwatched',
+                            rating: 0,
+                            comment: ''
+                        }
+                    });
+
+                    if (!result.error) {
+                        addedCount++;
+                    }
+                }
+            }
+
+            showScreenshotToast(`已添加 ${addedCount} 个电影到 ${boxName}`);
+            elements.addToBoxModal.style.display = 'none';
+        } catch (error) {
+            console.error('Error adding playlist to box:', error);
+            showScreenshotToast('添加失败: ' + error.message);
         }
     });
 });
