@@ -27,7 +27,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         minimizeBtn: document.getElementById('minimize-btn'),
         closeBtn: document.getElementById('close-btn'),
         fullscreenBtn: document.getElementById('fullscreen-btn'),
-        screenshotBtn: document.getElementById('screenshot-btn')
+        screenshotBtn: document.getElementById('screenshot-btn'),
+        historyBtn: document.getElementById('history-btn'),
+        historyModal: document.getElementById('player-history-modal'),
+        historyCloseBtn: document.getElementById('history-close-btn'),
+        historyClearBtn: document.getElementById('history-clear-btn'),
+        historyMovieFilter: document.getElementById('history-movie-filter'),
+        historyDateFilter: document.getElementById('history-date-filter'),
+        historyList: document.getElementById('history-list')
     };
 
     let currentMovieId = null;
@@ -142,6 +149,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.videoPlayer.play().then(() => {
             isPlaying = true;
             updatePlayPauseBtn();
+            const movieName = item.title || path.basename(item.path);
+            window.electronAPI.addPlayHistory(movieName).catch(err => {
+                console.error('记录播放历史失败:', err);
+            });
         }).catch(err => {
             console.error('播放失败:', err);
         });
@@ -343,6 +354,77 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     elements.screenshotBtn.addEventListener('click', takeScreenshot);
+
+    elements.historyBtn.addEventListener('click', async () => {
+        await loadAndDisplayHistory();
+        elements.historyModal.style.display = 'flex';
+    });
+
+    elements.historyCloseBtn.addEventListener('click', () => {
+        elements.historyModal.style.display = 'none';
+    });
+
+    elements.historyClearBtn.addEventListener('click', async () => {
+        if (confirm('确定要清空所有播放历史记录吗？')) {
+            await window.electronAPI.clearPlayHistory();
+            await loadAndDisplayHistory();
+        }
+    });
+
+    elements.historyModal.addEventListener('click', (e) => {
+        if (e.target === elements.historyModal) {
+            elements.historyModal.style.display = 'none';
+        }
+    });
+
+    elements.historyMovieFilter.addEventListener('input', async () => {
+        await loadAndDisplayHistory();
+    });
+
+    elements.historyDateFilter.addEventListener('input', async () => {
+        await loadAndDisplayHistory();
+    });
+
+    async function loadAndDisplayHistory() {
+        const movieName = elements.historyMovieFilter.value.trim();
+        const date = elements.historyDateFilter.value;
+
+        const history = await window.electronAPI.getPlayHistory(movieName, date);
+        renderHistory(history);
+    }
+
+    function renderHistory(history) {
+        elements.historyList.innerHTML = '';
+
+        if (!history || !history.history || history.history.length === 0) {
+            elements.historyList.innerHTML = '<div class="history-empty">暂无播放历史记录</div>';
+            return;
+        }
+
+        history.history.forEach(entry => {
+            const dateDiv = document.createElement('div');
+            dateDiv.className = 'history-date';
+            dateDiv.textContent = entry.date;
+            elements.historyList.appendChild(dateDiv);
+
+            entry.records.forEach(record => {
+                const recordDiv = document.createElement('div');
+                recordDiv.className = 'history-record';
+                recordDiv.innerHTML = `
+                    <span class="history-record-text">    ${record.time} ${record.movie}</span>
+                    <button class="history-record-delete" title="删除此记录">✕</button>
+                `;
+                recordDiv.addEventListener('click', async (e) => {
+                    if (e.target.classList.contains('history-record-delete')) {
+                        e.stopPropagation();
+                        await window.electronAPI.deletePlayHistory(entry.date, record.time);
+                        await loadAndDisplayHistory();
+                    }
+                });
+                elements.historyList.appendChild(recordDiv);
+            });
+        });
+    }
 
     window.electronAPI.onLoadPlayerData((data) => {
         if (data) {

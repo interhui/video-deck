@@ -51,16 +51,36 @@
                 </div>
             </div>
 
-            <aside class="playlist-section">
-                <div class="playlist-header">
-                    <h3>播放列表</h3>
-                </div>
-                <div id="playlist" class="playlist"></div>
-            </aside>
-        </main>
-    </div>
+             <aside class="playlist-section">
+                 <div class="playlist-header">
+                     <h3>播放列表</h3>
+                     <button id="history-btn" class="history-btn" title="历史记录">历史记录</button>
+                 </div>
+                 <div id="playlist" class="playlist"></div>
+             </aside>
+         </main>
+     </div>
 
-    <script src="js/utils/common-utils.js"></script>
-    <script src="js/player.js"></script>
-</body>
-</html>
+     <div id="player-history-modal" class="modal">
+         <div class="modal-content">
+             <div class="modal-header">
+                 <h3>播放历史记录</h3>
+                 <div class="modal-header-actions">
+                     <button id="history-clear-btn" class="history-clear-btn" title="清空历史">清空</button>
+                     <button class="modal-close-btn" id="history-close-btn">&times;</button>
+                 </div>
+             </div>
+             <div class="modal-filter">
+                 <input type="text" id="history-movie-filter" placeholder="电影名称筛选" class="filter-input">
+                 <input type="date" id="history-date-filter" placeholder="日期筛选" class="filter-input">
+             </div>
+             <div class="modal-body">
+                 <div id="history-list" class="history-list"></div>
+             </div>
+         </div>
+     </div>
+
+     <script src="js/utils/common-utils.js"></script>
+     <script src="js/player.js"></script>
+ </body>
+ </html>

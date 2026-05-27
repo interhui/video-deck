@@ -232,7 +232,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // 剧照管理
     getScreenshots: (movieId, movieFolderPath) => ipcRenderer.invoke('get-screenshots', { movieId, movieFolderPath }),
     saveScreenshot: (movieId, movieFolderPath, imageData, currentTime) => ipcRenderer.invoke('save-screenshot', { movieId, movieFolderPath, imageData, currentTime }),
-    deleteScreenshot: (movieId, movieFolderPath, number) => ipcRenderer.invoke('delete-screenshot', { movieId, movieFolderPath, number })
+    deleteScreenshot: (movieId, movieFolderPath, number) => ipcRenderer.invoke('delete-screenshot', { movieId, movieFolderPath, number }),
+
+    // 播放历史记录
+    addPlayHistory: (movieName) => ipcRenderer.invoke('add-play-history', movieName),
+    getPlayHistory: (movieName, date) => ipcRenderer.invoke('get-play-history', movieName, date),
+    deletePlayHistory: (date, time) => ipcRenderer.invoke('delete-play-history', date, time),
+    clearPlayHistory: () => ipcRenderer.invoke('clear-play-history')
 });
 
 console.log('Preload script loaded');
