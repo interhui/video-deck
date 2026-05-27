@@ -195,6 +195,10 @@ class IndexService {
                     valA = (a.name || '').toLowerCase();
                     valB = (b.name || '').toLowerCase();
                     break;
+                case 'actor':
+                    valA = (a.actors && a.actors.length > 0) ? a.actors[0].toLowerCase() : '';
+                    valB = (b.actors && b.actors.length > 0) ? b.actors[0].toLowerCase() : '';
+                    break;
                 case 'rating':
                     valA = a.userRating || 0;
                     valB = b.userRating || 0;
