@@ -464,8 +464,8 @@ let playerWindow = null;
 function createPlayerWindow(playerData) {
     if (playerWindow) {
         playerWindow.focus();
-        // 通知播放器加载新数据
-        playerWindow.webContents.send('load-player-data', playerData);
+        // 通知播放器添加到播放列表
+        playerWindow.webContents.send('add-to-playlist', playerData);
         return;
     }
 

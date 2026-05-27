@@ -442,6 +442,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    window.electronAPI.onAddToPlaylist((data) => {
+        if (data && data.playlist && data.playlist.length > 0) {
+            const addedCount = data.playlist.length;
+            data.playlist.forEach(item => {
+                playlist.push(item);
+            });
+            renderPlaylist();
+            showScreenshotToast(`已添加 ${addedCount} 个视频到播放列表`);
+        }
+    });
+
     elements.addToBoxBtn.addEventListener('click', async () => {
         if (playlist.length === 0) {
             showScreenshotToast('播放列表为空，无法添加到盒子');

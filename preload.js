@@ -228,6 +228,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onLoadPlayerData: (callback) => {
         ipcRenderer.on('load-player-data', (event, data) => callback(data));
     },
+    onAddToPlaylist: (callback) => {
+        ipcRenderer.on('add-to-playlist', (event, data) => callback(data));
+    },
 
     // 剧照管理
     getScreenshots: (movieId, movieFolderPath) => ipcRenderer.invoke('get-screenshots', { movieId, movieFolderPath }),
