@@ -209,6 +209,7 @@ function setupIpcHandlers(services) {
         batchSearchService,
         batchActorSearchService,
         screenshotService,
+        movieHistoryService,
         getMainWindow,
         createMovieDetailWindow,
         createBoxWindow,
@@ -2051,6 +2052,46 @@ function setupIpcHandlers(services) {
             return result;
         } catch (error) {
             console.error('Error deleting screenshot:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    ipcMain.handle('add-play-history', async (event, movieName) => {
+        try {
+            await movieHistoryService.addRecord(movieName);
+            return { success: true };
+        } catch (error) {
+            console.error('Error adding play history:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    ipcMain.handle('get-play-history', async (event, movieName, date) => {
+        try {
+            const history = movieHistoryService.filterHistory(movieName, date);
+            return history;
+        } catch (error) {
+            console.error('Error getting play history:', error);
+            return { history: [] };
+        }
+    });
+
+    ipcMain.handle('delete-play-history', async (event, date, time) => {
+        try {
+            await movieHistoryService.deleteRecord(date, time);
+            return { success: true };
+        } catch (error) {
+            console.error('Error deleting play history:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    ipcMain.handle('clear-play-history', async (event) => {
+        try {
+            await movieHistoryService.clearHistory();
+            return { success: true };
+        } catch (error) {
+            console.error('Error clearing play history:', error);
             return { success: false, error: error.message };
         }
     });

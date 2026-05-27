@@ -51,16 +51,63 @@
                 </div>
             </div>
 
-            <aside class="playlist-section">
-                <div class="playlist-header">
-                    <h3>播放列表</h3>
-                </div>
-                <div id="playlist" class="playlist"></div>
-            </aside>
-        </main>
-    </div>
+              <aside class="playlist-section">
+                  <div class="playlist-header">
+                      <h3>播放列表</h3>
+                      <div class="playlist-header-actions">
+                          <button id="add-to-box-btn" class="add-to-box-btn" title="收藏到盒子">收藏</button>
+                          <button id="history-btn" class="history-btn" title="历史记录">历史</button>
+                      </div>
+                  </div>
+                  <div id="playlist" class="playlist"></div>
+              </aside>
+         </main>
+     </div>
 
-    <script src="js/utils/common-utils.js"></script>
-    <script src="js/player.js"></script>
-</body>
-</html>
+      <div id="player-history-modal" class="modal">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h3>播放历史记录</h3>
+                  <div class="modal-header-actions">
+                      <button id="history-clear-btn" class="history-clear-btn" title="清空历史">清空</button>
+                      <button class="modal-close-btn" id="history-close-btn">&times;</button>
+                  </div>
+              </div>
+              <div class="modal-filter">
+                  <input type="text" id="history-movie-filter" placeholder="电影名称筛选" class="filter-input">
+                  <input type="date" id="history-date-filter" placeholder="日期筛选" class="filter-input">
+              </div>
+              <div class="modal-body">
+                  <div id="history-list" class="history-list"></div>
+              </div>
+          </div>
+      </div>
+
+      <div id="player-add-to-box-modal" class="modal">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h3>添加到电影盒子</h3>
+                  <div class="modal-header-actions">
+                      <button class="modal-close-btn" id="add-to-box-close-btn">&times;</button>
+                  </div>
+              </div>
+              <div class="modal-body">
+                  <p id="add-to-box-info" class="add-to-box-info"></p>
+                  <div class="form-group">
+                      <label>选择电影盒子：</label>
+                      <select id="player-box-select" class="form-input">
+                          <option value="">选择电影盒子...</option>
+                      </select>
+                  </div>
+              </div>
+              <div class="modal-footer">
+                  <button id="confirm-add-to-box" class="btn btn-primary">确定</button>
+                  <button id="cancel-add-to-box" class="btn btn-secondary">取消</button>
+              </div>
+          </div>
+      </div>
+
+     <script src="js/utils/common-utils.js"></script>
+     <script src="js/player.js"></script>
+ </body>
+ </html>
