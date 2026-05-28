@@ -285,6 +285,16 @@ class BatchSearchService {
                     nfoPath: saveResult.nfoPath,
                     posterPath: saveResult.posterPath
                 });
+
+                if (progressCallback) {
+                    progressCallback({
+                        current: i + 1,
+                        total: batchResults.length,
+                        movieId: item.movie.id || item.movie.movieId,
+                        movieName: item.movie.name || item.searchResult.result.title,
+                        status: 'saved'
+                    });
+                }
             } catch (error) {
                 console.error('Error saving movie:', error);
                 savedResults.push({
