@@ -4684,7 +4684,7 @@ function renderBatchSearchMoviesList() {
             <tbody>
                 ${state.batchSearchResults.map(item => {
                     const result = item.searchResult && item.searchResult.result;
-                    const displayData = item.status === 'completed' && result ? {
+                    const displayData = (item.status === 'completed' || item.status === 'saved') && result ? {
                         name: result.title || item.movie.name,
                         actors: result.actors && result.actors.length > 0 
                             ? result.actors.map(a => a.name).join(', ') 
@@ -4726,6 +4726,7 @@ function getStatusClass(status) {
         case 'pending': return 'batch-search-status-pending';
         case 'searching': return 'batch-search-status-searching';
         case 'completed': return 'batch-search-status-completed';
+        case 'saved': return 'batch-search-status-completed';
         case 'none': return 'batch-search-status-none';
         case 'error': return 'batch-search-status-none';
         default: return 'batch-search-status-pending';
@@ -4737,6 +4738,7 @@ function getStatusText(status) {
         case 'pending': return '未搜索';
         case 'searching': return '搜索中';
         case 'completed': return '完成搜索';
+        case 'saved': return '完成保存';
         case 'none': return '无记录';
         case 'error': return '搜索错误';
         default: return '未搜索';
@@ -4817,7 +4819,18 @@ function updateBatchSearchProgress(progress) {
 }
 
 function updateBatchSaveProgress(progress) {
-    const { current, total, movieName } = progress;
+    const { current, total, movieName, movieId, status } = progress;
+    
+    if (status === 'saved' && movieId) {
+        const item = state.batchSearchResults.find(r => 
+            (r.movie.id || r.movie.movieId) === movieId
+        );
+        if (item) {
+            item.status = 'saved';
+            renderBatchSearchMoviesList();
+        }
+    }
+    
     elements.batchSearchProgress.textContent = truncateText(`正在保存: ${current}/${total}（${movieName || '未知'}）`, 54);
 }
 
