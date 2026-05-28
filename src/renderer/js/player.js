@@ -167,7 +167,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 更新播放/暂停按钮
     function updatePlayPauseBtn() {
-        elements.playPauseBtn.textContent = isPlaying ? '❚❚' : '▶';
+        const svg = elements.playPauseBtn.querySelector('svg');
+        if (isPlaying) {
+            svg.innerHTML = '<rect x="6" y="4" width="4" height="14"/><rect x="14" y="4" width="4" height="14"/>';
+        } else {
+            svg.innerHTML = '<path d="M8 5v14l11-7z"/>';
+        }
     }
 
     // 更新进度条
@@ -275,12 +280,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 全屏状态变化
     document.addEventListener('fullscreenchange', () => {
-        elements.fullscreenBtn.textContent = document.fullscreenElement ? '⛶' : '⛶';
+        const svg = elements.fullscreenBtn.querySelector('svg');
+        if (document.fullscreenElement) {
+            svg.innerHTML = '<path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>';
+        } else {
+            svg.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+        }
         elements.fullscreenBtn.title = document.fullscreenElement ? '退出全屏' : '全屏';
     });
 
     // 键盘快捷键
     document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey) {
+            if (e.key === 'p' || e.key === 'P') {
+                e.preventDefault();
+                takeScreenshot();
+                return;
+            }
+            if (e.key === 'f' || e.key === 'F') {
+                e.preventDefault();
+                elements.fullscreenBtn.click();
+                return;
+            }
+        }
         switch (e.key) {
             case ' ':
             case 'k':
