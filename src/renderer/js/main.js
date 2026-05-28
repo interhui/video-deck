@@ -47,7 +47,11 @@ const state = {
     tagFilterSearchKeyword: '',
     tempSelectedTag: null,
     tagSelectorSearchKeyword: '',
-    scanTagSelectorSearchKeyword: ''
+    scanTagSelectorSearchKeyword: '',
+    // 电影盒子筛选状态
+    excludeBoxMode: false,
+    excludeBoxName: '',
+    excludedMovieIds: new Set()
 };
 
 // DOM 元素
@@ -136,6 +140,13 @@ const elements = {
     closeBatchAdd: document.getElementById('close-batch-add'),
     batchDeleteBtn: document.getElementById('batch-delete-btn'),
     batchPlayBtn: document.getElementById('batch-play-btn'),
+    // 电影盒子筛选
+    excludeBoxFilter: document.getElementById('exclude-box-filter'),
+    excludeBoxModal: document.getElementById('exclude-box-modal'),
+    excludeBoxSelect: document.getElementById('exclude-box-select'),
+    confirmExcludeBox: document.getElementById('confirm-exclude-box'),
+    cancelExcludeBox: document.getElementById('cancel-exclude-box'),
+    closeExcludeBox: document.getElementById('close-exclude-box'),
     scanDirBtn: document.getElementById('scan-dir-btn'),
     addMovieModal: document.getElementById('add-movie-modal'),
     closeAddMovie: document.getElementById('close-add-movie'),
@@ -1087,7 +1098,7 @@ async function openBoxView(boxName) {
  */
 async function loadMovies() {
     try {
-        if (state.searchKeyword || state.currentTag || state.currentActorFilter.length > 0 || state.onlyNewMovies) {
+        if (state.searchKeyword || state.currentTag || state.currentActorFilter.length > 0 || state.onlyNewMovies || state.excludeBoxMode) {
             if (state.lazyLoader) {
                 state.lazyLoader.destroy();
                 state.lazyLoader = null;
@@ -1158,10 +1169,15 @@ async function loadMoviesAll() {
             movies = movies.filter(movie => isNewMovie(movie.update_time));
         }
 
+        // 根据电影盒子筛选，排除已收藏的电影
+        if (state.excludeBoxMode && state.excludedMovieIds.size > 0) {
+            movies = movies.filter(movie => !state.excludedMovieIds.has(movie.id));
+        }
+
         state.movies = movies;
         renderMovies(movies, false);
 
-        const filtersActive = state.searchKeyword || state.currentTag || state.currentActorFilter.length > 0 || state.onlyNewMovies;
+        const filtersActive = state.searchKeyword || state.currentTag || state.currentActorFilter.length > 0 || state.onlyNewMovies || state.excludeBoxMode;
 
         if (filtersActive) {
             updateSidebarWithSearchResults(movies);
@@ -1723,6 +1739,83 @@ function bindEvents() {
                 state.lazyLoader = null;
             }
             loadMovies();
+        });
+    }
+
+    // 仅显示未收藏 - 复选框事件
+    if (elements.excludeBoxFilter) {
+        elements.excludeBoxFilter.addEventListener('change', async (e) => {
+            if (e.target.checked) {
+                // 勾选时弹出电影盒子选择模态框
+                const boxes = await window.electronAPI.getAllBoxes();
+                if (!boxes || boxes.length === 0) {
+                    alert('请先创建电影盒子');
+                    e.target.checked = false;
+                    return;
+                }
+                elements.excludeBoxSelect.innerHTML = '<option value="">选择电影盒子...</option>';
+                boxes.forEach(box => {
+                    const option = document.createElement('option');
+                    option.value = box.name;
+                    option.textContent = `${box.name} (${box.movieCount}部电影)`;
+                    elements.excludeBoxSelect.appendChild(option);
+                });
+                elements.excludeBoxModal.style.display = 'flex';
+            } else {
+                // 取消勾选时清除筛选状态
+                state.excludeBoxMode = false;
+                state.excludeBoxName = '';
+                state.excludedMovieIds.clear();
+                loadMovies();
+            }
+        });
+    }
+
+    // 确认电影盒子筛选
+    if (elements.confirmExcludeBox) {
+        elements.confirmExcludeBox.addEventListener('click', async () => {
+            const boxName = elements.excludeBoxSelect.value;
+            if (!boxName) {
+                alert('请选择电影盒子');
+                return;
+            }
+            try {
+                const boxDetail = await window.electronAPI.getBoxDetail(boxName);
+                if (!boxDetail) {
+                    alert('无法获取盒子详情');
+                    return;
+                }
+                state.excludeBoxMode = true;
+                state.excludeBoxName = boxName;
+                state.excludedMovieIds = new Set(boxDetail.movies.map(m => m.id));
+                elements.excludeBoxModal.style.display = 'none';
+                loadMovies();
+            } catch (error) {
+                console.error('Error loading box detail:', error);
+                alert('加载盒子详情失败: ' + error.message);
+            }
+        });
+    }
+
+    // 取消电影盒子筛选
+    if (elements.cancelExcludeBox) {
+        elements.cancelExcludeBox.addEventListener('click', () => {
+            elements.excludeBoxModal.style.display = 'none';
+            elements.excludeBoxFilter.checked = false;
+            state.excludeBoxMode = false;
+            state.excludeBoxName = '';
+            state.excludedMovieIds.clear();
+        });
+    }
+
+    // 关闭电影盒子筛选模态框
+    if (elements.closeExcludeBox) {
+        elements.closeExcludeBox.addEventListener('click', () => {
+            elements.excludeBoxModal.style.display = 'none';
+            elements.excludeBoxFilter.checked = false;
+            state.excludeBoxMode = false;
+            state.excludeBoxName = '';
+            state.excludedMovieIds.clear();
         });
     }
 

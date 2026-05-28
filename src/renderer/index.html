@@ -47,6 +47,12 @@
                         <span>仅显示新电影</span>
                     </label>
                 </div>
+                <div class="filter-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="exclude-box-filter">
+                        <span>仅显示未收藏</span>
+                    </label>
+                </div>
             </div>
             <div class="toolbar-right">
                 <div id="batch-operation" class="dropdown" style="display: none;">
@@ -205,6 +211,29 @@
             <div class="modal-footer">
                 <button id="confirm-batch-add" class="btn btn-primary">确定</button>
                 <button id="cancel-batch-add" class="btn btn-secondary">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 电影盒子筛选模态框 -->
+    <div id="exclude-box-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>选择电影盒子</h2>
+                <button class="close-btn" id="close-exclude-box">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 16px; color: var(--text-secondary);">选择电影盒子后，将从电影列表中排除该盒子中已收藏的电影</p>
+                <div class="form-group">
+                    <label>选择电影盒子：</label>
+                    <select id="exclude-box-select" class="form-input">
+                        <option value="">选择电影盒子...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="confirm-exclude-box" class="btn btn-primary">确定</button>
+                <button id="cancel-exclude-box" class="btn btn-secondary">取消</button>
             </div>
         </div>
     </div>
