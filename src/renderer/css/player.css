@@ -218,8 +218,25 @@ video {
 
 .playback-controls {
     display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.playback-left {
+    flex: 1;
+}
+
+.playback-center {
+    display: flex;
     justify-content: center;
     gap: 8px;
+}
+
+.playback-right {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    flex: 1;
 }
 
 .playback-btn {
@@ -233,6 +250,11 @@ video {
     justify-content: center;
     align-items: center;
     transition: background-color 0.2s;
+}
+
+.playback-btn svg {
+    width: 18px;
+    height: 18px;
 }
 
 .playback-btn:hover {
@@ -251,21 +273,29 @@ video {
     background: var(--primary-hover);
 }
 
-.play-btn {
-    font-size: 20px;
+.play-btn svg {
+    width: 20px;
+    height: 20px;
 }
 
-.stop-btn {
-    font-size: 24px;
-    border-radius: 6px;
+.stop-btn svg {
+    width: 16px;
+    height: 16px;
 }
 
-.prev-next-btn {
-    font-size: 26px;
+.prev-next-btn svg {
+    width: 20px;
+    height: 20px;
 }
 
-.fullscreen-btn {
-    font-size: 26px;
+.fullscreen-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.screenshot-btn svg {
+    width: 16px;
+    height: 16px;
 }
 
 /* Playlist Section */
@@ -376,14 +406,6 @@ video {
 
 .playlist::-webkit-scrollbar-thumb:hover {
     background: var(--text-secondary);
-}
-
-.screenshot-btn {
-    font-size: 18px;
-}
-
-.screenshot-btn:hover {
-    color: var(--primary-color);
 }
 
 .screenshot-toast {

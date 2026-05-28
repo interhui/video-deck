@@ -120,6 +120,7 @@ const elements = {
     tabMovieScreenshots: document.getElementById('tab-movie-screenshots'),
     screenshotsCount: document.getElementById('screenshots-count'),
     screenshotsGallery: document.getElementById('screenshots-gallery'),
+    refreshScreenshots: document.getElementById('refresh-screenshots'),
     movieSearchBtn: document.getElementById('movie-search-btn'),
     movieSearchModal: document.getElementById('movie-search-modal'),
     movieSearchCategory: document.getElementById('movie-search-category'),
@@ -2105,6 +2106,12 @@ function bindEvents() {
             if (e.key === 'Enter') {
                 searchMovieMovies();
             }
+        });
+    }
+
+    if (elements.refreshScreenshots) {
+        elements.refreshScreenshots.addEventListener('click', () => {
+            loadScreenshots();
         });
     }
 }
