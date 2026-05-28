@@ -1232,6 +1232,10 @@ function sortMovies(movies, sortBy = 'name', sortOrder = 'asc') {
                 valA = a.name.toLowerCase();
                 valB = b.name.toLowerCase();
                 break;
+            case 'actor':
+                valA = (a.actors && a.actors.length > 0) ? a.actors[0].toLowerCase() : '';
+                valB = (b.actors && b.actors.length > 0) ? b.actors[0].toLowerCase() : '';
+                break;
             case 'rating':
                 valA = a.boxRating || 0;
                 valB = b.boxRating || 0;
@@ -1571,7 +1575,9 @@ async function playBoxMovies() {
                             path: file.fullpath,
                             title: `${movieDetail.name} - ${file.filename || path.basename(file.fullpath)}`,
                             codec: file.codec || file.videoCodec || '',
-                            resolution: file.resolution || (file.videoWidth ? `${file.videoWidth}x${file.videoHeight}` : '')
+                            resolution: file.resolution || (file.videoWidth ? `${file.videoWidth}x${file.videoHeight}` : ''),
+                            movieId: movie.id,
+                            category: movie.category
                         });
                         movieVideoAdded = true;
                     }
@@ -1583,7 +1589,9 @@ async function playBoxMovies() {
                     path: movieDetail.original_filename,
                     title: movieDetail.name || path.basename(movieDetail.original_filename),
                     codec: movieDetail.videoCodec || '',
-                    resolution: movieDetail.videoWidth ? `${movieDetail.videoWidth}x${movieDetail.videoHeight}` : ''
+                    resolution: movieDetail.videoWidth ? `${movieDetail.videoWidth}x${movieDetail.videoHeight}` : '',
+                    movieId: movie.id,
+                    category: movie.category
                 });
                 movieVideoAdded = true;
             }
@@ -1593,7 +1601,9 @@ async function playBoxMovies() {
                     path: movie.original_filename,
                     title: movie.name || movie.title || path.basename(movie.original_filename),
                     codec: '',
-                    resolution: ''
+                    resolution: '',
+                    movieId: movie.id,
+                    category: movie.category
                 });
             }
         }
@@ -1655,7 +1665,7 @@ async function playBoxMovie(movieId) {
             return;
         }
 
-        await window.electronAPI.openPlayerWindow(movieDetail);
+        await window.electronAPI.openPlayerWindow(movieDetail, 0);
     } catch (error) {
         console.error('Error playing box movie:', error);
         alert('播放失败: ' + error.message);

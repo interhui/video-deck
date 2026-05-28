@@ -28,7 +28,7 @@
                         <button id="play-btn" class="btn btn-primary launch-hidden">播放</button>
                         <button id="edit-btn" class="btn btn-secondary">编辑</button>
                         <button id="delete-btn" class="btn btn-danger">删除</button>
-                        <button id="add-to-box-btn" class="btn btn-secondary">添加到盒子</button>
+                        <button id="add-to-box-btn" class="btn btn-secondary">收藏</button>
                         <button id="confirm-edit-btn" class="btn btn-primary" style="display: none;">确定</button>
                         <button id="cancel-edit-btn" class="btn btn-secondary" style="display: none;">取消</button>
                     </div>
@@ -125,6 +125,7 @@
                 <div class="screenshots-layout">
                     <div class="screenshots-header">
                         <h3>电影剧照 <span id="screenshots-count"></span></h3>
+                        <button id="refresh-screenshots" class="icon-btn" title="刷新剧照">⟳</button>
                     </div>
                     <div id="screenshots-gallery" class="screenshots-gallery"></div>
                 </div>
@@ -231,12 +232,21 @@
 
         <!-- Tag Selector Modal -->
         <div id="tag-selector-modal" class="modal" style="display: none;">
-            <div class="modal-content tag-selector-content">
+            <div class="modal-content tag-selector-modal-content">
                 <div class="modal-header">
                     <h2>选择标签</h2>
                     <button class="close-btn" id="close-tag-selector">&times;</button>
                 </div>
                 <div class="modal-body">
+                    <div class="tag-selector-toolbar">
+                        <div class="tag-selector-right">
+                            <div class="search-box tag-selector-search">
+                                <input type="text" id="tag-selector-search-input" placeholder="搜索标签（ID、名称）...">
+                                <button id="tag-selector-search-btn" class="icon-btn">🔍</button>
+                                <button id="tag-selector-clear-btn" class="icon-btn clear-search-btn" style="display: none;">✕</button>
+                            </div>
+                        </div>
+                    </div>
                     <div id="tag-selector-list" class="tag-selector-list"></div>
                 </div>
                 <div class="modal-footer">

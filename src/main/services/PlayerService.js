@@ -53,7 +53,7 @@ class PlayerService {
      * @param {Object} mainWindow - 主窗口引用
      * @param {Function} createPlayerWindow - 创建播放器窗口的函数
      */
-    openPlayerWindow(movieData, mainWindow, createPlayerWindow) {
+    openPlayerWindow(movieData, mainWindow, createPlayerWindow, startTime = 0) {
         const playlist = this.getPlaylist(movieData);
         if (playlist.length === 0) {
             throw new Error('没有可播放的文件');
@@ -71,7 +71,8 @@ class PlayerService {
                 currentIndex: 0,
                 movieTitle: movieData.title || '电影播放',
                 movieId: movieId,
-                movieFolderPath: movieFolderPath
+                movieFolderPath: movieFolderPath,
+                startTime: startTime
             });
         }
     }

@@ -27,6 +27,7 @@ const PlayerService = require('./src/main/services/PlayerService');
 const BatchSearchService = require('./src/main/services/BatchSearchService');
 const BatchActorSearchService = require('./src/main/services/BatchActorSearchService');
 const ScreenshotService = require('./src/main/services/ScreenshotService');
+const MovieHistoryService = require('./src/main/services/MovieHistoryService');
 const { setupIpcHandlers } = require('./src/main/ipc-handlers');
 const { setGlobalProxy } = require('./src/main/utils/http-utils');
 
@@ -52,6 +53,7 @@ let playerService = null;
 let batchSearchService = null;
 let batchActorSearchService = null;
 let screenshotService = null;
+let movieHistoryService = null;
 
 /**
  * 初始化服务
@@ -103,6 +105,7 @@ async function initializeServices() {
     }
 
     screenshotService = new ScreenshotService();
+    movieHistoryService = new MovieHistoryService(path.join(__dirname, 'config'));
 
     log.info('Services initialized successfully');
 }
@@ -461,8 +464,8 @@ let playerWindow = null;
 function createPlayerWindow(playerData) {
     if (playerWindow) {
         playerWindow.focus();
-        // 通知播放器加载新数据
-        playerWindow.webContents.send('load-player-data', playerData);
+        // 通知播放器添加到播放列表
+        playerWindow.webContents.send('add-to-playlist', playerData);
         return;
     }
 
@@ -534,6 +537,7 @@ app.whenReady().then(async () => {
         batchSearchService,
         batchActorSearchService,
         screenshotService,
+        movieHistoryService,
         getMainWindow: () => mainWindow,
         createMovieDetailWindow,
         createBoxWindow,

@@ -16,12 +16,11 @@ let movieDataLoaded = false;
 let currentTab = 'movie-info';
 let selectedFileIndex = -1;
 let editFileset = [];
-// 演员选择弹窗状态
+
 let actorSelectorSearchKeyword = '';
 let actorSelectorCurrentPage = 1;
 const ACTOR_SELECTOR_PAGE_SIZE = 10;
 
-// 电影搜索弹窗状态
 let movieSearchResults = [];
 let selectedMovie = null;
 const MOVIE_SEARCH_MAX_RESULTS = 10;
@@ -29,6 +28,8 @@ const MOVIE_SEARCH_MAX_RESULTS = 10;
 let screenshotsData = [];
 
 let detailSettings = {};
+
+let tagSelectorSearchKeyword = '';
 
 const elements = {
     closeBtn: document.getElementById('close-btn'),
@@ -119,6 +120,7 @@ const elements = {
     tabMovieScreenshots: document.getElementById('tab-movie-screenshots'),
     screenshotsCount: document.getElementById('screenshots-count'),
     screenshotsGallery: document.getElementById('screenshots-gallery'),
+    refreshScreenshots: document.getElementById('refresh-screenshots'),
     movieSearchBtn: document.getElementById('movie-search-btn'),
     movieSearchModal: document.getElementById('movie-search-modal'),
     movieSearchCategory: document.getElementById('movie-search-category'),
@@ -690,6 +692,7 @@ function renderScreenshots(screenshots) {
         return `
             <div class="screenshot-item" data-path="${screenshot.path}" data-number="${screenshot.number}" data-filename="${screenshot.filename}">
                 <img src="file://${screenshot.path}?t=${Date.now()}" alt="剧照 ${screenshot.number}">
+                <button class="movie-play-btn" title="从此处播放">▶</button>
                 <button class="screenshot-delete-btn" title="删除剧照">✕</button>
             </div>
         `;
@@ -718,15 +721,20 @@ function renderScreenshots(screenshots) {
             item.innerHTML = `<div class="screenshot-placeholder">加载失败</div><button class="screenshot-delete-btn" title="删除剧照">✕</button>`;
             bindDeleteHandler(item);
         };
-        // 点击整个item查看大图
+        const playBtn = item.querySelector('.movie-play-btn');
+        if (playBtn) {
+            playBtn.onclick = (e) => {
+                e.stopPropagation();
+                const startTime = parseInt(item.dataset.number, 10);
+                playMovieFromScreenshot(startTime);
+            };
+        }
         item.onclick = (e) => {
-            // 如果点击的是删除按钮，不触发查看
-            if (e.target.classList.contains('screenshot-delete-btn')) {
+            if (e.target.classList.contains('screenshot-delete-btn') || e.target.classList.contains('movie-play-btn')) {
                 return;
             }
             showScreenshotViewer(item.dataset.path);
         };
-        // 删除按钮点击事件
         bindDeleteHandler(item);
     });
 }
@@ -749,6 +757,18 @@ async function deleteScreenshot(number) {
     } catch (error) {
         console.error('Error deleting screenshot:', error);
         alert('删除剧照失败: ' + error.message);
+    }
+}
+
+async function playMovieFromScreenshot(startTime) {
+    if (!currentMovie) {
+        return;
+    }
+    try {
+        await window.electronAPI.openPlayerWindow(currentMovie, startTime);
+    } catch (error) {
+        console.error('Error playing movie from screenshot:', error);
+        alert('播放电影失败: ' + error.message);
     }
 }
 
@@ -788,10 +808,18 @@ function renderTags(tags) {
     }
 
     const html = tags.map(tagId =>
-        `<span class="tag">${getTagNameById(tagId)}</span>`
+        `<span class="tag clickable" data-tag-id="${tagId}" onclick="filterTagById('${tagId}')">${getTagNameById(tagId)}</span>`
     ).join('');
 
     elements.movieTags.innerHTML = html;
+}
+
+/**
+ * 点击标签，通知主窗口进行标签过滤
+ * @param {string} tagId - 标签ID
+ */
+function filterTagById(tagId) {
+    window.electronAPI.filterByTag(tagId);
 }
 
 /**
@@ -822,7 +850,7 @@ function renderActorsForDisplay(actors) {
     let lineBreakAdded = false;
 
     actorsArray.forEach((actor, index) => {
-        html += `<span class="actor-tag">${actor}</span>`;
+        html += `<span class="actor-tag clickable" data-actor-name="${escapeHtml(actor)}" onclick="filterActorByName('${escapeHtml(actor)}')">${actor}</span>`;
 
         // 每6个演员添加换行（除了最后一个）
         if ((index + 1) % MAX_ACTORS_PER_LINE === 0 && index < actorsArray.length - 1) {
@@ -832,6 +860,14 @@ function renderActorsForDisplay(actors) {
     });
 
     elements.movieActorsDisplay.innerHTML = html;
+}
+
+/**
+ * 点击演员标签，通知主窗口进行演员过滤
+ * @param {string} actorName - 演员姓名
+ */
+function filterActorByName(actorName) {
+    window.electronAPI.filterByActor(actorName);
 }
 
 /**
@@ -1027,20 +1063,71 @@ function openTagSelector() {
         return;
     }
 
-    const container = document.getElementById('tag-selector-list');
-    let html = '';
-    tagsCache.forEach(tag => {
-        const isSelected = editData.tags.includes(tag.id);
-        html += `
-            <label class="tag-checkbox ${isSelected ? 'selected' : ''}">
-                <input type="checkbox" value="${tag.id}" ${isSelected ? 'checked' : ''} onclick="toggleTagSelection('${tag.id}')">
-                <span>${tag.name}</span>
-            </label>
-        `;
-    });
-    container.innerHTML = html;
+    tagSelectorSearchKeyword = '';
+    const searchInput = document.getElementById('tag-selector-search-input');
+    if (searchInput) {
+        searchInput.value = '';
+    }
+    const clearBtn = document.getElementById('tag-selector-clear-btn');
+    if (clearBtn) {
+        clearBtn.style.display = 'none';
+    }
 
+    renderTagSelectorList();
     modal.style.display = 'flex';
+}
+
+/**
+ * 渲染标签选择列表
+ */
+function renderTagSelectorList() {
+    const container = document.getElementById('tag-selector-list');
+    if (!container) return;
+
+    const searchKeyword = tagSelectorSearchKeyword || '';
+    
+    let filteredTags = tagsCache.filter(tag => {
+        if (!searchKeyword) return true;
+        const keyword = searchKeyword.toLowerCase();
+        const idMatch = tag.id && tag.id.toLowerCase().includes(keyword);
+        const nameMatch = tag.name && tag.name.toLowerCase().includes(keyword);
+        return idMatch || nameMatch;
+    });
+    
+    filteredTags.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    
+    if (filteredTags.length === 0) {
+        container.innerHTML = '<div class="tag-selector-empty">暂无标签</div>';
+        return;
+    }
+    
+    container.innerHTML = filteredTags.map(tag => {
+        const isSelected = editData.tags.includes(tag.id);
+        
+        return `
+            <div class="tag-selector-item ${isSelected ? 'selected' : ''}" data-id="${escapeHtml(tag.id)}">
+                <div class="tag-selector-checkbox ${isSelected ? 'checked' : ''}" data-tag-id="${escapeHtml(tag.id)}"></div>
+                <div class="tag-selector-info">
+                    <div class="tag-selector-name">${escapeHtml(tag.name)}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    container.querySelectorAll('.tag-selector-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const tagId = item.dataset.id;
+            toggleTagSelection(tagId);
+        });
+    });
+    
+    container.querySelectorAll('.tag-selector-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const tagId = checkbox.dataset.tagId;
+            toggleTagSelection(tagId);
+        });
+    });
 }
 
 /**
@@ -1054,15 +1141,7 @@ function toggleTagSelection(tagId) {
         editData.tags.push(tagId);
     }
     renderEditTags(editData.tags);
-    const checkbox = document.querySelector(`#tag-selector-list input[value="${tagId}"]`);
-    if (checkbox) {
-        const label = checkbox.closest('.tag-checkbox');
-        if (editData.tags.includes(tagId)) {
-            label.classList.add('selected');
-        } else {
-            label.classList.remove('selected');
-        }
-    }
+    renderTagSelectorList();
 }
 
 /**
@@ -1184,7 +1263,7 @@ function enterEditMode() {
         director: currentMovie.director || '',
         actors: currentMovie.actors || '',
         studio: currentMovie.studio || '',
-        tags: [...(currentMovie.tag || [])],
+        tags: [...(currentMovie.tags || [])],
         description: currentMovie.description || '',
         userComment: currentMovie.userComment || ''
     };
@@ -1519,12 +1598,11 @@ async function fetchVideoInfo(videoPath) {
                 elements.newFileDuration.value = result.duration || '';
             }
 
-            console.log('视频信息获取成功:', result);
         } else if (result && result.error) {
-            console.log('视频信息获取失败:', result.error);
+            console.log('Get Video Info Error:', result.error);
         }
     } catch (error) {
-        console.error('获取视频信息异常:', error);
+        console.error('Get Video Info Error:', error);
     }
 }
 
@@ -1643,7 +1721,7 @@ function bindEvents() {
 
     elements.playBtn.addEventListener('click', async () => {
         try {
-            await window.electronAPI.openPlayerWindow(currentMovie);
+            await window.electronAPI.openPlayerWindow(currentMovie, 0);
         } catch (error) {
             console.error('Error playing movie:', error);
             alert('播放电影失败: ' + error.message);
@@ -1780,7 +1858,7 @@ function bindEvents() {
 
     elements.playBtnBox.addEventListener('click', async () => {
         try {
-            await window.electronAPI.openPlayerWindow(currentMovie);
+            await window.electronAPI.openPlayerWindow(currentMovie, 0);
         } catch (error) {
             console.error('Error playing movie:', error);
             alert('播放电影失败: ' + error.message);
@@ -1855,6 +1933,41 @@ function bindEvents() {
     if (cancelTagSelectionBtn) {
         cancelTagSelectionBtn.addEventListener('click', () => {
             closeTagSelector();
+        });
+    }
+
+    const tagSelectorSearchInput = document.getElementById('tag-selector-search-input');
+    const tagSelectorSearchBtn = document.getElementById('tag-selector-search-btn');
+    const tagSelectorClearBtn = document.getElementById('tag-selector-clear-btn');
+
+    if (tagSelectorSearchBtn) {
+        tagSelectorSearchBtn.addEventListener('click', () => {
+            tagSelectorSearchKeyword = tagSelectorSearchInput.value.trim();
+            renderTagSelectorList();
+        });
+    }
+
+    if (tagSelectorClearBtn) {
+        tagSelectorClearBtn.addEventListener('click', () => {
+            tagSelectorSearchInput.value = '';
+            tagSelectorSearchKeyword = '';
+            tagSelectorClearBtn.style.display = 'none';
+            renderTagSelectorList();
+        });
+    }
+
+    if (tagSelectorSearchInput) {
+        tagSelectorSearchInput.addEventListener('input', () => {
+            if (tagSelectorClearBtn) {
+                tagSelectorClearBtn.style.display = tagSelectorSearchInput.value ? 'block' : 'none';
+            }
+        });
+
+        tagSelectorSearchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                tagSelectorSearchKeyword = tagSelectorSearchInput.value.trim();
+                renderTagSelectorList();
+            }
         });
     }
 
@@ -1993,6 +2106,12 @@ function bindEvents() {
             if (e.key === 'Enter') {
                 searchMovieMovies();
             }
+        });
+    }
+
+    if (elements.refreshScreenshots) {
+        elements.refreshScreenshots.addEventListener('click', () => {
+            loadScreenshots();
         });
     }
 }

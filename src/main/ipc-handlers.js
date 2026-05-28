@@ -209,6 +209,7 @@ function setupIpcHandlers(services) {
         batchSearchService,
         batchActorSearchService,
         screenshotService,
+        movieHistoryService,
         getMainWindow,
         createMovieDetailWindow,
         createBoxWindow,
@@ -1176,6 +1177,34 @@ function setupIpcHandlers(services) {
         }
     });
 
+    // 详情窗口点击演员标签，通知主窗口进行演员过滤
+    ipcMain.handle('filter-by-actor', async (event, actorName) => {
+        try {
+            const mainWindow = services.getMainWindow();
+            if (mainWindow) {
+                mainWindow.webContents.send('filter-by-actor', actorName);
+            }
+            return { success: true };
+        } catch (error) {
+            console.error('Error sending filter-by-actor:', error);
+            return { error: error.message };
+        }
+    });
+
+    // 详情窗口点击标签，通知主窗口进行标签过滤
+    ipcMain.handle('filter-by-tag', async (event, tagId) => {
+        try {
+            const mainWindow = services.getMainWindow();
+            if (mainWindow) {
+                mainWindow.webContents.send('filter-by-tag', tagId);
+            }
+            return { success: true };
+        } catch (error) {
+            console.error('Error sending filter-by-tag:', error);
+            return { error: error.message };
+        }
+    });
+
     // 打开电影盒子窗口
     ipcMain.handle('open-box-window', async (event, boxName) => {
         try {
@@ -1210,10 +1239,10 @@ function setupIpcHandlers(services) {
     });
 
     // 打开播放器窗口
-    ipcMain.handle('open-player-window', async (event, movieData) => {
+    ipcMain.handle('open-player-window', async (event, movieData, startTime) => {
         try {
             const mainWindow = getMainWindow();
-            playerService.openPlayerWindow(movieData, mainWindow, createPlayerWindow);
+            playerService.openPlayerWindow(movieData, mainWindow, createPlayerWindow, startTime);
             return { success: true };
         } catch (error) {
             console.error('Error opening player window:', error);
@@ -1955,7 +1984,7 @@ function setupIpcHandlers(services) {
         }
     });
 
-    ipcMain.handle('save-screenshot', async (event, { movieId, movieFolderPath, imageData }) => {
+    ipcMain.handle('save-screenshot', async (event, { movieId, movieFolderPath, imageData, currentTime }) => {
         try {
             let targetFolderPath = movieFolderPath;
 
@@ -1982,9 +2011,9 @@ function setupIpcHandlers(services) {
                 return { success: false, error: 'Cannot determine movie folder path' };
             }
 
-            const nextNumber = await screenshotService.getNextScreenshotNumber(targetFolderPath);
+            const screenshotNumber = screenshotService.getScreenshotCurrentTime(currentTime);
 
-            const result = await screenshotService.saveScreenshot(targetFolderPath, imageData, nextNumber);
+            const result = await screenshotService.saveScreenshot(targetFolderPath, imageData, screenshotNumber);
             return result;
         } catch (error) {
             console.error('Error saving screenshot:', error);
@@ -2023,6 +2052,46 @@ function setupIpcHandlers(services) {
             return result;
         } catch (error) {
             console.error('Error deleting screenshot:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    ipcMain.handle('add-play-history', async (event, movieName) => {
+        try {
+            await movieHistoryService.addRecord(movieName);
+            return { success: true };
+        } catch (error) {
+            console.error('Error adding play history:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    ipcMain.handle('get-play-history', async (event, movieName, date) => {
+        try {
+            const history = movieHistoryService.filterHistory(movieName, date);
+            return history;
+        } catch (error) {
+            console.error('Error getting play history:', error);
+            return { history: [] };
+        }
+    });
+
+    ipcMain.handle('delete-play-history', async (event, date, time) => {
+        try {
+            await movieHistoryService.deleteRecord(date, time);
+            return { success: true };
+        } catch (error) {
+            console.error('Error deleting play history:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    ipcMain.handle('clear-play-history', async (event) => {
+        try {
+            await movieHistoryService.clearHistory();
+            return { success: true };
+        } catch (error) {
+            console.error('Error clearing play history:', error);
             return { success: false, error: error.message };
         }
     });

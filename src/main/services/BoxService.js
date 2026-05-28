@@ -287,44 +287,8 @@ class BoxService {
      */
     async addMovieToBox(boxName, movieInfo, movieboxDir) {
         try {
-            const boxesDir = this.getBoxesDir(movieboxDir);
-            const boxPath = path.join(boxesDir, `${boxName}.json`);
-
-            // 读取现有盒子数据
-            let boxData = await this.readBoxFile(boxesDir, boxName);
-
-            if (!boxData) {
-                boxData = { movie: [], metadata: { name: boxName, description: '' } };
-            }
-
-            // 确保 movie 数组存在
-            if (!boxData.movie) {
-                boxData.movie = [];
-            }
-
-            // 检查电影是否已存在
-            const existingIndex = boxData.movie.findIndex(m => m.id === movieInfo.id);
-
-            if (existingIndex >= 0) {
-                // 更新现有电影信息
-                boxData.movie[existingIndex] = {
-                    ...boxData.movie[existingIndex],
-                    ...movieInfo
-                };
-            } else {
-                // 添加新电影，使用新属性：status, rating
-                boxData.movie.push({
-                    id: movieInfo.id,
-                    status: movieInfo.status || 'unwatched',
-                    rating: movieInfo.rating || 0,
-                    comment: movieInfo.comment || ''
-                });
-            }
-
-            // 保存盒子数据
-            await this.fileService.writeFile(boxPath, JSON.stringify(boxData, null, 2));
-
-            return { success: true };
+            const result = await this.addMoviesToBox(boxName, [movieInfo], movieboxDir);
+            return { success: true, added: result.addedCount > 0, updated: result.updatedCount > 0 };
         } catch (error) {
             console.error('Error adding movie to box:', error);
             throw error;
@@ -410,26 +374,74 @@ class BoxService {
                 throw new Error('盒子不存在');
             }
 
-            // 查找电影
             const movieIndex = boxData.movie.findIndex(m => m.id === movieId);
 
             if (movieIndex < 0) {
                 throw new Error('电影不存在');
             }
 
-            // 更新电影信息
             boxData.movie[movieIndex] = {
                 ...boxData.movie[movieIndex],
                 ...movieInfo
             };
 
-            // 保存盒子数据
             const boxPath = path.join(boxesDir, `${boxName}.json`);
             await this.fileService.writeFile(boxPath, JSON.stringify(boxData, null, 2));
 
             return { success: true };
         } catch (error) {
             console.error('Error updating movie in box:', error);
+            throw error;
+        }
+    }
+
+    async addMoviesToBox(boxName, movieInfoList, movieboxDir) {
+        try {
+            const boxesDir = this.getBoxesDir(movieboxDir);
+            const boxPath = path.join(boxesDir, `${boxName}.json`);
+
+            let boxData = await this.readBoxFile(boxesDir, boxName);
+
+            if (!boxData) {
+                boxData = { movie: [], metadata: { name: boxName, description: '' } };
+            }
+
+            if (!boxData.movie) {
+                boxData.movie = [];
+            }
+
+            let addedCount = 0;
+            let updatedCount = 0;
+
+            for (const movieInfo of movieInfoList) {
+                if (!movieInfo || !movieInfo.id) {
+                    continue;
+                }
+
+                const existingIndex = boxData.movie.findIndex(m => m.id === movieInfo.id);
+
+                if (existingIndex >= 0) {
+                    boxData.movie[existingIndex] = {
+                        ...boxData.movie[existingIndex],
+                        ...movieInfo
+                    };
+                    updatedCount++;
+                } else {
+                    boxData.movie.push({
+                        id: movieInfo.id,
+                        status: movieInfo.status || 'unwatched',
+                        rating: movieInfo.rating || 0,
+                        comment: movieInfo.comment || ''
+                    });
+                    addedCount++;
+                }
+            }
+
+            await this.fileService.writeFile(boxPath, JSON.stringify(boxData, null, 2));
+
+            return { success: true, addedCount, updatedCount };
+        } catch (error) {
+            console.error('Error adding movies to box:', error);
             throw error;
         }
     }

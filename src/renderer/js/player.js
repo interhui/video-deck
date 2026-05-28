@@ -27,7 +27,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         minimizeBtn: document.getElementById('minimize-btn'),
         closeBtn: document.getElementById('close-btn'),
         fullscreenBtn: document.getElementById('fullscreen-btn'),
-        screenshotBtn: document.getElementById('screenshot-btn')
+        screenshotBtn: document.getElementById('screenshot-btn'),
+        historyBtn: document.getElementById('history-btn'),
+        historyModal: document.getElementById('player-history-modal'),
+        historyCloseBtn: document.getElementById('history-close-btn'),
+        historyClearBtn: document.getElementById('history-clear-btn'),
+        historyMovieFilter: document.getElementById('history-movie-filter'),
+        historyDateFilter: document.getElementById('history-date-filter'),
+        historyList: document.getElementById('history-list'),
+        addToBoxBtn: document.getElementById('add-to-box-btn'),
+        addToBoxModal: document.getElementById('player-add-to-box-modal'),
+        addToBoxCloseBtn: document.getElementById('add-to-box-close-btn'),
+        addToBoxInfo: document.getElementById('add-to-box-info'),
+        playerBoxSelect: document.getElementById('player-box-select'),
+        confirmAddToBox: document.getElementById('confirm-add-to-box'),
+        cancelAddToBox: document.getElementById('cancel-add-to-box')
     };
 
     let currentMovieId = null;
@@ -51,11 +65,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // 加载播放列表
-    function loadPlaylist(playlistData, initialIndex = 0) {
+    function loadPlaylist(playlistData, initialIndex = 0, startTime = 0) {
         playlist = playlistData;
         currentIndex = initialIndex;
         renderPlaylist();
-        playItem(currentIndex);
+        playItem(currentIndex, startTime);
     }
 
     function removePlaylistItem(index) {
@@ -114,26 +128,38 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // 播放指定项
-    function playItem(index) {
+    function playItem(index, startTime = 0) {
         if (index < 0 || index >= playlist.length) return;
 
         currentIndex = index;
         const item = playlist[currentIndex];
 
-        // 使用 file:// 协议播放本地视频
         const videoPath = item.path.replace(/\\/g, '/');
         const fileUrl = `file:///${videoPath}`;
 
         elements.videoPlayer.src = fileUrl;
         elements.videoPlayer.load();
 
-        // 重新渲染播放列表以更新高亮
         renderPlaylist();
 
-        // 自动播放
+        const seekToTime = () => {
+            if (startTime > 0 && elements.videoPlayer.duration > startTime) {
+                elements.videoPlayer.currentTime = startTime;
+            }
+            elements.videoPlayer.removeEventListener('loadedmetadata', seekToTime);
+        };
+
+        if (startTime > 0) {
+            elements.videoPlayer.addEventListener('loadedmetadata', seekToTime);
+        }
+
         elements.videoPlayer.play().then(() => {
             isPlaying = true;
             updatePlayPauseBtn();
+            const movieName = item.title || path.basename(item.path);
+            window.electronAPI.addPlayHistory(movieName).catch(err => {
+                console.error('记录播放历史失败:', err);
+            });
         }).catch(err => {
             console.error('播放失败:', err);
         });
@@ -141,7 +167,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 更新播放/暂停按钮
     function updatePlayPauseBtn() {
-        elements.playPauseBtn.textContent = isPlaying ? '❚❚' : '▶';
+        const svg = elements.playPauseBtn.querySelector('svg');
+        if (isPlaying) {
+            svg.innerHTML = '<rect x="6" y="4" width="4" height="14"/><rect x="14" y="4" width="4" height="14"/>';
+        } else {
+            svg.innerHTML = '<path d="M8 5v14l11-7z"/>';
+        }
     }
 
     // 更新进度条
@@ -249,12 +280,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 全屏状态变化
     document.addEventListener('fullscreenchange', () => {
-        elements.fullscreenBtn.textContent = document.fullscreenElement ? '⛶' : '⛶';
+        const svg = elements.fullscreenBtn.querySelector('svg');
+        if (document.fullscreenElement) {
+            svg.innerHTML = '<path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>';
+        } else {
+            svg.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+        }
         elements.fullscreenBtn.title = document.fullscreenElement ? '退出全屏' : '全屏';
     });
 
     // 键盘快捷键
     document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey) {
+            if (e.key === 'p' || e.key === 'P') {
+                e.preventDefault();
+                takeScreenshot();
+                return;
+            }
+            if (e.key === 'f' || e.key === 'F') {
+                e.preventDefault();
+                elements.fullscreenBtn.click();
+                return;
+            }
+        }
         switch (e.key) {
             case ' ':
             case 'k':
@@ -303,8 +351,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
         const base64Data = canvas.toDataURL('image/jpeg', 0.95);
+        const currentTime = video.currentTime;
 
-        window.electronAPI.saveScreenshot(currentMovieId, currentMovieFolderPath, base64Data).then(result => {
+        window.electronAPI.saveScreenshot(currentMovieId, currentMovieFolderPath, base64Data, currentTime).then(result => {
             if (result.success) {
                 showScreenshotToast('截图已保存');
             } else {
@@ -335,12 +384,171 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     elements.screenshotBtn.addEventListener('click', takeScreenshot);
 
+    elements.historyBtn.addEventListener('click', async () => {
+        await loadAndDisplayHistory();
+        elements.historyModal.style.display = 'flex';
+    });
+
+    elements.historyCloseBtn.addEventListener('click', () => {
+        elements.historyModal.style.display = 'none';
+    });
+
+    elements.historyClearBtn.addEventListener('click', async () => {
+        if (confirm('确定要清空所有播放历史记录吗？')) {
+            await window.electronAPI.clearPlayHistory();
+            await loadAndDisplayHistory();
+        }
+    });
+
+    elements.historyModal.addEventListener('click', (e) => {
+        if (e.target === elements.historyModal) {
+            elements.historyModal.style.display = 'none';
+        }
+    });
+
+    elements.historyMovieFilter.addEventListener('input', async () => {
+        await loadAndDisplayHistory();
+    });
+
+    elements.historyDateFilter.addEventListener('input', async () => {
+        await loadAndDisplayHistory();
+    });
+
+    async function loadAndDisplayHistory() {
+        const movieName = elements.historyMovieFilter.value.trim();
+        const date = elements.historyDateFilter.value;
+
+        const history = await window.electronAPI.getPlayHistory(movieName, date);
+        renderHistory(history);
+    }
+
+    function renderHistory(history) {
+        elements.historyList.innerHTML = '';
+
+        if (!history || !history.history || history.history.length === 0) {
+            elements.historyList.innerHTML = '<div class="history-empty">暂无播放历史记录</div>';
+            return;
+        }
+
+        history.history.forEach(entry => {
+            const dateDiv = document.createElement('div');
+            dateDiv.className = 'history-date';
+            dateDiv.textContent = entry.date;
+            elements.historyList.appendChild(dateDiv);
+
+            entry.records.forEach(record => {
+                const recordDiv = document.createElement('div');
+                recordDiv.className = 'history-record';
+                recordDiv.innerHTML = `
+                    <span class="history-record-text">    ${record.time} ${record.movie}</span>
+                    <button class="history-record-delete" title="删除此记录">✕</button>
+                `;
+                recordDiv.addEventListener('click', async (e) => {
+                    if (e.target.classList.contains('history-record-delete')) {
+                        e.stopPropagation();
+                        await window.electronAPI.deletePlayHistory(entry.date, record.time);
+                        await loadAndDisplayHistory();
+                    }
+                });
+                elements.historyList.appendChild(recordDiv);
+            });
+        });
+    }
+
     window.electronAPI.onLoadPlayerData((data) => {
         if (data) {
             elements.playerTitle.textContent = data.movieTitle || '电影播放';
             currentMovieId = data.movieId || null;
             currentMovieFolderPath = data.movieFolderPath || null;
-            loadPlaylist(data.playlist || [], data.currentIndex || 0);
+            loadPlaylist(data.playlist || [], data.currentIndex || 0, data.startTime || 0);
+        }
+    });
+
+    window.electronAPI.onAddToPlaylist((data) => {
+        if (data && data.playlist && data.playlist.length > 0) {
+            const addedCount = data.playlist.length;
+            data.playlist.forEach(item => {
+                playlist.push(item);
+            });
+            renderPlaylist();
+            showScreenshotToast(`已添加 ${addedCount} 个视频到播放列表`);
+        }
+    });
+
+    elements.addToBoxBtn.addEventListener('click', async () => {
+        if (playlist.length === 0) {
+            showScreenshotToast('播放列表为空，无法添加到盒子');
+            return;
+        }
+
+        const boxes = await window.electronAPI.getAllBoxes();
+
+        if (!boxes || boxes.length === 0) {
+            showScreenshotToast('请先创建电影盒子');
+            return;
+        }
+
+        elements.playerBoxSelect.innerHTML = '<option value="">选择电影盒子...</option>';
+        boxes.forEach(box => {
+            const option = document.createElement('option');
+            option.value = box.name;
+            option.textContent = `${box.name} (${box.movieCount}部电影)`;
+            elements.playerBoxSelect.appendChild(option);
+        });
+
+        elements.addToBoxInfo.textContent = `播放列表共 ${playlist.length} 个视频`;
+        elements.addToBoxModal.style.display = 'flex';
+    });
+
+    elements.addToBoxCloseBtn.addEventListener('click', () => {
+        elements.addToBoxModal.style.display = 'none';
+    });
+
+    elements.cancelAddToBox.addEventListener('click', () => {
+        elements.addToBoxModal.style.display = 'none';
+    });
+
+    elements.addToBoxModal.addEventListener('click', (e) => {
+        if (e.target === elements.addToBoxModal) {
+            elements.addToBoxModal.style.display = 'none';
+        }
+    });
+
+    elements.confirmAddToBox.addEventListener('click', async () => {
+        const boxName = elements.playerBoxSelect.value;
+
+        if (!boxName) {
+            showScreenshotToast('请选择电影盒子');
+            return;
+        }
+
+        try {
+            let addedCount = 0;
+
+            for (const item of playlist) {
+                if (item.movieId && item.category) {
+                    const result = await window.electronAPI.addMovieToBox({
+                        boxName: boxName,
+                        category: item.category,
+                        movieInfo: {
+                            id: item.movieId,
+                            status: 'unwatched',
+                            rating: 0,
+                            comment: ''
+                        }
+                    });
+
+                    if (!result.error) {
+                        addedCount++;
+                    }
+                }
+            }
+
+            showScreenshotToast(`已添加 ${addedCount} 个电影到 ${boxName}`);
+            elements.addToBoxModal.style.display = 'none';
+        } catch (error) {
+            console.error('Error adding playlist to box:', error);
+            showScreenshotToast('添加失败: ' + error.message);
         }
     });
 });

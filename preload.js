@@ -62,9 +62,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     closeDetailWindow: () => ipcRenderer.invoke('close-detail-window'),
     openBoxWindow: (boxName) => ipcRenderer.invoke('open-box-window', boxName),
     setDetailEditMode: (isEditing) => ipcRenderer.invoke('set-detail-edit-mode', isEditing),
+    filterByActor: (actorName) => ipcRenderer.invoke('filter-by-actor', actorName),
+    filterByTag: (tagId) => ipcRenderer.invoke('filter-by-tag', tagId),
     openActorManagement: () => ipcRenderer.invoke('open-actor-management'),
     openCategoryManagement: () => ipcRenderer.invoke('open-category-management'),
-    openPlayerWindow: (movieData) => ipcRenderer.invoke('open-player-window', movieData),
+    openPlayerWindow: (movieData, startTime) => ipcRenderer.invoke('open-player-window', movieData, startTime),
     openBatchPlayerWindow: (playlistData) => ipcRenderer.invoke('open-batch-player-window', playlistData),
 
     // 文件选择对话框
@@ -134,6 +136,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     },
     onDetailEditModeChanged: (callback) => {
         ipcRenderer.on('detail-edit-mode-changed', (event, isEditing) => callback(isEditing));
+    },
+    onFilterByActor: (callback) => {
+        ipcRenderer.on('filter-by-actor', (event, actorName) => callback(actorName));
+    },
+    onFilterByTag: (callback) => {
+        ipcRenderer.on('filter-by-tag', (event, tagId) => callback(tagId));
     },
 
     // 移除事件监听
@@ -220,11 +228,20 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onLoadPlayerData: (callback) => {
         ipcRenderer.on('load-player-data', (event, data) => callback(data));
     },
+    onAddToPlaylist: (callback) => {
+        ipcRenderer.on('add-to-playlist', (event, data) => callback(data));
+    },
 
     // 剧照管理
     getScreenshots: (movieId, movieFolderPath) => ipcRenderer.invoke('get-screenshots', { movieId, movieFolderPath }),
-    saveScreenshot: (movieId, movieFolderPath, imageData) => ipcRenderer.invoke('save-screenshot', { movieId, movieFolderPath, imageData }),
-    deleteScreenshot: (movieId, movieFolderPath, number) => ipcRenderer.invoke('delete-screenshot', { movieId, movieFolderPath, number })
+    saveScreenshot: (movieId, movieFolderPath, imageData, currentTime) => ipcRenderer.invoke('save-screenshot', { movieId, movieFolderPath, imageData, currentTime }),
+    deleteScreenshot: (movieId, movieFolderPath, number) => ipcRenderer.invoke('delete-screenshot', { movieId, movieFolderPath, number }),
+
+    // 播放历史记录
+    addPlayHistory: (movieName) => ipcRenderer.invoke('add-play-history', movieName),
+    getPlayHistory: (movieName, date) => ipcRenderer.invoke('get-play-history', movieName, date),
+    deletePlayHistory: (date, time) => ipcRenderer.invoke('delete-play-history', date, time),
+    clearPlayHistory: () => ipcRenderer.invoke('clear-play-history')
 });
 
 console.log('Preload script loaded');

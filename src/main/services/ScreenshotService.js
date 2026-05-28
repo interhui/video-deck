@@ -43,18 +43,8 @@ class ScreenshotService {
         }
     }
 
-    async getNextScreenshotNumber(movieFolderPath) {
-        try {
-            const screenshots = await this.getScreenshots(movieFolderPath);
-            if (screenshots.length === 0) {
-                return 1;
-            }
-            const maxNumber = Math.max(...screenshots.map(s => s.number));
-            return maxNumber + 1;
-        } catch (error) {
-            console.error('Error getting next screenshot number:', error);
-            return 1;
-        }
+    getScreenshotCurrentTime(currentTime) {
+        return Math.floor(currentTime);
     }
 
     generateScreenshotFilename(number) {

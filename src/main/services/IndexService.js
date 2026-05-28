@@ -39,7 +39,7 @@ class IndexService {
             director: movie.director || '',
             actors: movie.actors || [],
             studio: movie.studio || '',
-            tags: movie.tag || [],
+            tags: movie.tags || movie.tag || [],
             fileCount: fileCount,
             poster: posterPath || movie.poster || null,
             basePath: basePath || movie.path || null,
@@ -194,6 +194,10 @@ class IndexService {
                 case 'name':
                     valA = (a.name || '').toLowerCase();
                     valB = (b.name || '').toLowerCase();
+                    break;
+                case 'actor':
+                    valA = (a.actors && a.actors.length > 0) ? a.actors[0].toLowerCase() : '';
+                    valB = (b.actors && b.actors.length > 0) ? b.actors[0].toLowerCase() : '';
                     break;
                 case 'rating':
                     valA = a.userRating || 0;
