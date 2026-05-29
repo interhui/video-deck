@@ -171,8 +171,8 @@ function getMoviesDirPath(moviesDir) {
 }
 
 /**
- * 获取电影盒子目录的绝对路径
- * @param {string} movieboxDir - 电影盒子目录配置（可能是相对路径或绝对路径）
+ * 获取电影收藏夹目录的绝对路径
+ * @param {string} movieboxDir - 电影收藏夹目录配置（可能是相对路径或绝对路径）
  * @returns {string} 绝对路径
  */
 function getMovieboxDirPath(movieboxDir) {
@@ -981,9 +981,9 @@ function setupIpcHandlers(services) {
         }
     });
 
-    // ==================== 电影盒子管理 ====================
+    // ==================== 电影收藏夹管理 ====================
 
-    // 获取所有电影盒子
+    // 获取所有电影收藏夹
     ipcMain.handle('get-all-boxes', async () => {
         try {
             const settings = settingsService.getSettings();
@@ -996,14 +996,14 @@ function setupIpcHandlers(services) {
         }
     });
 
-    // 通知所有窗口刷新盒子列表
+    // 通知所有窗口刷新收藏夹列表
     function notifyBoxUpdated() {
         BrowserWindow.getAllWindows().forEach(win => {
             win.webContents.send('box-updated');
         });
     }
 
-    // 创建电影盒子
+    // 创建电影收藏夹
     ipcMain.handle('create-box', async (event, { boxName, description }) => {
         try {
             const settings = settingsService.getSettings();
@@ -1017,7 +1017,7 @@ function setupIpcHandlers(services) {
         }
     });
 
-    // 更新电影盒子
+    // 更新电影收藏夹
     ipcMain.handle('update-box', async (event, { boxName, newName, description }) => {
         try {
             const settings = settingsService.getSettings();
@@ -1031,7 +1031,7 @@ function setupIpcHandlers(services) {
         }
     });
 
-    // 删除电影盒子
+    // 删除电影收藏夹
     ipcMain.handle('delete-box', async (event, boxName) => {
         try {
             const settings = settingsService.getSettings();
@@ -1045,7 +1045,7 @@ function setupIpcHandlers(services) {
         }
     });
 
-    // 获取盒子详情
+    // 获取收藏夹详情
     ipcMain.handle('get-box-detail', async (event, boxName) => {
         try {
             const settings = settingsService.getSettings();
@@ -1058,7 +1058,7 @@ function setupIpcHandlers(services) {
         }
     });
 
-    // 添加电影到盒子
+    // 添加电影到收藏夹
     ipcMain.handle('add-movie-to-box', async (event, data) => {
         try {
             const settings = settingsService.getSettings();
@@ -1073,7 +1073,7 @@ function setupIpcHandlers(services) {
         }
     });
 
-    // 从盒子中移除电影
+    // 从收藏夹中移除电影
     ipcMain.handle('remove-movie-from-box', async (event, data) => {
         try {
             const settings = settingsService.getSettings();
@@ -1088,7 +1088,7 @@ function setupIpcHandlers(services) {
         }
     });
 
-    // 清理盒子中已删除的电影
+    // 清理收藏夹中已删除的电影
     ipcMain.handle('clean-box', async (event, data) => {
         try {
             const settings = settingsService.getSettings();
@@ -1103,7 +1103,7 @@ function setupIpcHandlers(services) {
         }
     });
 
-    // 更新盒子中电影的状态
+    // 更新收藏夹中电影的状态
     ipcMain.handle('update-movie-in-box', async (event, data) => {
         try {
             const settings = settingsService.getSettings();
@@ -1205,7 +1205,7 @@ function setupIpcHandlers(services) {
         }
     });
 
-    // 打开电影盒子窗口
+    // 打开电影收藏夹窗口
     ipcMain.handle('open-box-window', async (event, boxName) => {
         try {
             createBoxWindow(boxName);
@@ -1725,7 +1725,7 @@ function setupIpcHandlers(services) {
         }
     });
 
-    // ==================== 盒子导出 ====================
+    // ==================== 收藏夹导出 ====================
 
     ipcMain.handle('show-export-save-dialog', async (event, { defaultPath, filters }) => {
         try {

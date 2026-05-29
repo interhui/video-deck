@@ -1445,7 +1445,7 @@ class MovieService {
     }
 
     /**
-     * 从电影列表中排除指定盒子中已收藏的电影
+     * 从电影列表中排除指定收藏夹中已收藏的电影
      * @param {Array} movies - 电影列表
      * @param {Array<string>} excludedMovieIds - 需要排除的电影ID列表
      * @returns {Array} 过滤后的电影列表

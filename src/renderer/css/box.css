@@ -1,6 +1,6 @@
-/* 电影盒子页面样式 */
+/* 电影收藏夹页面样式 */
 
-/* 盒子标题 */
+/* 收藏夹标题 */
 .box-title {
     margin: 0;
     font-size: 18px;
@@ -47,7 +47,7 @@
     color: var(--text-secondary);
 }
 
-/* 盒子描述信息 */
+/* 收藏夹描述信息 */
 .box-description {
     position: absolute;
     left: 0;
@@ -97,14 +97,14 @@
     font-size: 14px;
 }
 
-/* 盒子主内容区：分栏布局 */
+/* 收藏夹主内容区：分栏布局 */
 .box-main-content {
     display: flex;
     flex: 1;
     overflow: hidden;
 }
 
-/* 盒子侧边栏 */
+/* 收藏夹侧边栏 */
 .box-sidebar {
     position: relative;
     width: var(--sidebar-width, 200px);
@@ -162,7 +162,7 @@
     border-radius: 10px;
 }
 
-/* 盒子电影区域 */
+/* 收藏夹电影区域 */
 .box-movie-wall {
     flex: 1;
     overflow-y: auto;
@@ -171,7 +171,7 @@
     flex-direction: column;
 }
 
-/* 盒子过滤栏 */
+/* 收藏夹过滤栏 */
 .box-filter-bar {
     display: flex;
     align-items: center;
@@ -180,7 +180,7 @@
     max-width: 750px;
 }
 
-/* 盒子电影网格 */
+/* 收藏夹电影网格 */
 .box-movies-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(var(--poster-min-width), 1fr));
@@ -190,7 +190,7 @@
     width: 100%;
 }
 
-/* 盒子电影卡片 */
+/* 收藏夹电影卡片 */
 .box-movie-card {
     position: relative;
     width: 100%;

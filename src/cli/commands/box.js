@@ -26,7 +26,7 @@ async function listBoxes(services, options = {}) {
             outputBoxList(boxes);
         }
     } catch (error) {
-        outputError(`获取盒子列表失败: ${error.message}`);
+        outputError(`获取收藏夹列表失败: ${error.message}`);
         throw error;
     }
 }
@@ -46,11 +46,11 @@ async function showBox(services, boxName, options = {}) {
         const boxDetail = await boxService.getBoxDetail(boxName, movieboxDir);
 
         if (!boxDetail) {
-            outputError('盒子不存在', `名称: ${boxName}`);
+            outputError('收藏夹不存在', `名称: ${boxName}`);
             return;
         }
 
-        console.log('\n盒子详情:');
+        console.log('\n收藏夹详情:');
         console.log(`  名称: ${boxDetail.name}`);
         console.log(`  描述: ${boxDetail.description || '-'}`);
         console.log(`  电影数: ${boxDetail.movieCount}`);
@@ -72,7 +72,7 @@ async function showBox(services, boxName, options = {}) {
             outputMovieList(movies, { format: options.format });
         }
     } catch (error) {
-        outputError(`获取盒子详情失败: ${error.message}`);
+        outputError(`获取收藏夹详情失败: ${error.message}`);
         throw error;
     }
 }
@@ -91,16 +91,16 @@ async function createBox(services, boxName, options = {}) {
         const result = await boxService.createBox(boxName, options.description || '', movieboxDir);
 
         if (result.success) {
-            outputSuccess('盒子创建成功', {
+            outputSuccess('收藏夹创建成功', {
                 '名称': boxName,
                 '描述': options.description || '-'
             });
         }
     } catch (error) {
         if (error.message.includes('已存在')) {
-            outputError('盒子已存在', `名称: ${boxName}`);
+            outputError('收藏夹已存在', `名称: ${boxName}`);
         } else {
-            outputError(`创建盒子失败: ${error.message}`);
+            outputError(`创建收藏夹失败: ${error.message}`);
         }
         throw error;
     }
@@ -122,18 +122,18 @@ async function updateBox(services, boxName, options = {}) {
 
         await boxService.updateBox(boxName, newName, description, movieboxDir);
 
-        outputSuccess('盒子已更新', {
+        outputSuccess('收藏夹已更新', {
             '原名称': boxName,
             '新名称': newName,
             '描述': description || '-'
         });
     } catch (error) {
         if (error.message.includes('不存在')) {
-            outputError('盒子不存在', `名称: ${boxName}`);
+            outputError('收藏夹不存在', `名称: ${boxName}`);
         } else if (error.message.includes('已存在')) {
             outputError('新名称已存在', `名称: ${options.name}`);
         } else {
-            outputError(`更新盒子失败: ${error.message}`);
+            outputError(`更新收藏夹失败: ${error.message}`);
         }
         throw error;
     }
@@ -152,12 +152,12 @@ async function deleteBox(services, boxName, options = {}) {
 
         await boxService.deleteBox(boxName, movieboxDir);
 
-        outputSuccess('盒子已删除', { '名称': boxName });
+        outputSuccess('收藏夹已删除', { '名称': boxName });
     } catch (error) {
         if (error.message.includes('不存在')) {
-            outputError('盒子不存在', `名称: ${boxName}`);
+            outputError('收藏夹不存在', `名称: ${boxName}`);
         } else {
-            outputError(`删除盒子失败: ${error.message}`);
+            outputError(`删除收藏夹失败: ${error.message}`);
         }
         throw error;
     }
@@ -190,12 +190,12 @@ async function addMovieToBox(services, boxName, movieId) {
 
         await boxService.addMovieToBox(boxName, movieDetail.category, movieInfo, movieboxDir);
 
-        outputSuccess('电影已添加到盒子', {
-            '盒子': boxName,
+        outputSuccess('电影已添加到收藏夹', {
+            '收藏夹': boxName,
             '电影': movieDetail.name
         });
     } catch (error) {
-        outputError(`添加到盒子失败: ${error.message}`);
+        outputError(`添加到收藏夹失败: ${error.message}`);
         throw error;
     }
 }
@@ -214,7 +214,7 @@ async function removeMovieFromBox(services, boxName, movieId) {
         // Try to find the category for this movie in the box
         const boxDetail = await boxService.getBoxDetail(boxName, movieboxDir);
         if (!boxDetail) {
-            outputError('盒子不存在', `名称: ${boxName}`);
+            outputError('收藏夹不存在', `名称: ${boxName}`);
             return;
         }
 
@@ -229,18 +229,18 @@ async function removeMovieFromBox(services, boxName, movieId) {
         }
 
         if (!category) {
-            outputError('电影不在盒子中', `电影: ${movieId}`);
+            outputError('电影不在收藏夹中', `电影: ${movieId}`);
             return;
         }
 
         await boxService.removeMovieFromBox(boxName, category, movieId, movieboxDir);
 
-        outputSuccess('电影已从盒子移除', {
-            '盒子': boxName,
+        outputSuccess('电影已从收藏夹移除', {
+            '收藏夹': boxName,
             '电影': movieId
         });
     } catch (error) {
-        outputError(`从盒子移除失败: ${error.message}`);
+        outputError(`从收藏夹移除失败: ${error.message}`);
         throw error;
     }
 }

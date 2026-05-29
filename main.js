@@ -321,7 +321,7 @@ function createMovieDetailWindow(movieData) {
 }
 
 /**
- * 创建电影盒子窗口
+ * 创建电影收藏窗口
  */
 let boxWindow = null;
 
@@ -336,7 +336,7 @@ function createBoxWindow(boxName) {
         height: 800,
         minWidth: 800,
         minHeight: 600,
-        title: `电影盒子 - ${boxName}`,
+        title: `电影收藏 - ${boxName}`,
         frame: false,
         autoHideMenuBar: true,
         webPreferences: {

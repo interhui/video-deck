@@ -477,18 +477,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     elements.addToBoxBtn.addEventListener('click', async () => {
         if (playlist.length === 0) {
-            showScreenshotToast('播放列表为空，无法添加到盒子');
+            showScreenshotToast('播放列表为空，无法添加到收藏夹');
             return;
         }
 
         const boxes = await window.electronAPI.getAllBoxes();
 
         if (!boxes || boxes.length === 0) {
-            showScreenshotToast('请先创建电影盒子');
+            showScreenshotToast('请先创建电影收藏夹');
             return;
         }
 
-        elements.playerBoxSelect.innerHTML = '<option value="">选择电影盒子...</option>';
+        elements.playerBoxSelect.innerHTML = '<option value="">选择电影收藏夹...</option>';
         boxes.forEach(box => {
             const option = document.createElement('option');
             option.value = box.name;
@@ -518,7 +518,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const boxName = elements.playerBoxSelect.value;
 
         if (!boxName) {
-            showScreenshotToast('请选择电影盒子');
+            showScreenshotToast('请选择电影收藏夹');
             return;
         }
 

@@ -64,7 +64,7 @@ describe('CLI Box Commands', () => {
     });
 
     describe('box list', () => {
-        test('CLI-BOX-LIST-001: 列出所有盒子', async () => {
+        test('CLI-BOX-LIST-001: 列出所有收藏夹', async () => {
             mockBoxService.getAllBoxes.mockResolvedValue([
                 { name: 'Test Box', description: 'Test', movieCount: 2, categories: ['movie'] }
             ]);
@@ -95,7 +95,7 @@ describe('CLI Box Commands', () => {
             expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('"name"'));
         });
 
-        test('CLI-BOX-LIST-003: 空盒子列表（边界条件）', async () => {
+        test('CLI-BOX-LIST-003: 空收藏夹列表（边界条件）', async () => {
             mockBoxService.getAllBoxes.mockResolvedValue([]);
 
             const services = {
@@ -109,7 +109,7 @@ describe('CLI Box Commands', () => {
         });
 
         test('CLI-BOX-LIST-004: 列表服务异常处理', async () => {
-            mockBoxService.getAllBoxes.mockRejectedValue(new Error('盒子列表服务异常'));
+            mockBoxService.getAllBoxes.mockRejectedValue(new Error('收藏夹列表服务异常'));
 
             const services = {
                 boxService: mockBoxService,
@@ -119,7 +119,7 @@ describe('CLI Box Commands', () => {
             try {
                 await boxCommands.listBoxes(services, {});
             } catch (e) {
-                expect(e.message).toContain('盒子列表服务异常');
+                expect(e.message).toContain('收藏夹列表服务异常');
             }
 
             expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('失败'));
@@ -127,7 +127,7 @@ describe('CLI Box Commands', () => {
     });
 
     describe('box show', () => {
-        test('CLI-BOX-SHOW-001: 显示存在的盒子', async () => {
+        test('CLI-BOX-SHOW-001: 显示存在的收藏夹', async () => {
             mockBoxService.getBoxDetail.mockResolvedValue({
                 name: 'Test Box',
                 description: 'Test Description',
@@ -157,7 +157,7 @@ describe('CLI Box Commands', () => {
             expect(consoleLogSpy).toHaveBeenCalled();
         });
 
-        test('CLI-BOX-SHOW-002: 显示不存在的盒子', async () => {
+        test('CLI-BOX-SHOW-002: 显示不存在的收藏夹', async () => {
             mockBoxService.getBoxDetail.mockResolvedValue(null);
 
             const services = {
@@ -172,7 +172,7 @@ describe('CLI Box Commands', () => {
             expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('不存在'));
         });
 
-        test('CLI-BOX-SHOW-003: 盒子无电影时显示详情', async () => {
+        test('CLI-BOX-SHOW-003: 收藏夹无电影时显示详情', async () => {
             mockBoxService.getBoxDetail.mockResolvedValue({
                 name: 'Empty Box',
                 description: 'Empty',
@@ -195,7 +195,7 @@ describe('CLI Box Commands', () => {
             expect(consoleLogSpy).toHaveBeenCalled();
         });
 
-        test('CLI-BOX-SHOW-004: 盒子详情JSON格式输出', async () => {
+        test('CLI-BOX-SHOW-004: 收藏夹详情JSON格式输出', async () => {
             mockBoxService.getBoxDetail.mockResolvedValue({
                 name: 'Test Box',
                 description: 'Test',
@@ -221,8 +221,8 @@ describe('CLI Box Commands', () => {
             expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('"name"'));
         });
 
-        test('CLI-BOX-SHOW-005: 盒子详情服务异常处理', async () => {
-            mockBoxService.getBoxDetail.mockRejectedValue(new Error('盒子详情服务异常'));
+        test('CLI-BOX-SHOW-005: 收藏夹详情服务异常处理', async () => {
+            mockBoxService.getBoxDetail.mockRejectedValue(new Error('收藏夹详情服务异常'));
 
             const services = {
                 boxService: mockBoxService,
@@ -234,7 +234,7 @@ describe('CLI Box Commands', () => {
             try {
                 await boxCommands.showBox(services, 'Test Box', {});
             } catch (e) {
-                expect(e.message).toContain('盒子详情服务异常');
+                expect(e.message).toContain('收藏夹详情服务异常');
             }
 
             expect(consoleErrorSpy).toHaveBeenCalled();
@@ -268,8 +268,8 @@ describe('CLI Box Commands', () => {
             expect(mockBoxService.createBox).toHaveBeenCalled();
         });
 
-        test('CLI-BOX-CREATE-003: 创建已存在盒子', async () => {
-            mockBoxService.createBox.mockRejectedValue(new Error('盒子已存在'));
+        test('CLI-BOX-CREATE-003: 创建已存在收藏夹', async () => {
+            mockBoxService.createBox.mockRejectedValue(new Error('收藏夹已存在'));
 
             const services = {
                 boxService: mockBoxService,
@@ -285,8 +285,8 @@ describe('CLI Box Commands', () => {
             expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('已存在'));
         });
 
-        test('CLI-BOX-CREATE-004: 空盒子名称（边界条件）', async () => {
-            mockBoxService.createBox.mockRejectedValue(new Error('盒子名称不能为空'));
+        test('CLI-BOX-CREATE-004: 空收藏夹名称（边界条件）', async () => {
+            mockBoxService.createBox.mockRejectedValue(new Error('收藏夹名称不能为空'));
 
             const services = {
                 boxService: mockBoxService,
@@ -302,7 +302,7 @@ describe('CLI Box Commands', () => {
             expect(consoleErrorSpy).toHaveBeenCalled();
         });
 
-        test('CLI-BOX-CREATE-005: 超长盒子名称', async () => {
+        test('CLI-BOX-CREATE-005: 超长收藏夹名称', async () => {
             const longName = 'A'.repeat(300);
             mockBoxService.createBox.mockResolvedValue({ success: true });
 
@@ -316,7 +316,7 @@ describe('CLI Box Commands', () => {
             expect(mockBoxService.createBox).toHaveBeenCalled();
         });
 
-        test('CLI-BOX-CREATE-006: 特殊字符盒子名称', async () => {
+        test('CLI-BOX-CREATE-006: 特殊字符收藏夹名称', async () => {
             mockBoxService.createBox.mockResolvedValue({ success: true });
 
             const services = {
@@ -324,13 +324,13 @@ describe('CLI Box Commands', () => {
                 getMovieboxDir: () => BOXES_DIR
             };
 
-            await boxCommands.createBox(services, '盒子-测试@#$%', {});
+            await boxCommands.createBox(services, '收藏夹-测试@#$%', {});
 
             expect(mockBoxService.createBox).toHaveBeenCalled();
         });
 
         test('CLI-BOX-CREATE-007: 创建服务异常处理', async () => {
-            mockBoxService.createBox.mockRejectedValue(new Error('创建盒子服务异常'));
+            mockBoxService.createBox.mockRejectedValue(new Error('创建收藏夹服务异常'));
 
             const services = {
                 boxService: mockBoxService,
@@ -340,7 +340,7 @@ describe('CLI Box Commands', () => {
             try {
                 await boxCommands.createBox(services, 'New Box', {});
             } catch (e) {
-                expect(e.message).toContain('创建盒子服务异常');
+                expect(e.message).toContain('创建收藏夹服务异常');
             }
 
             expect(consoleErrorSpy).toHaveBeenCalled();
@@ -374,8 +374,8 @@ describe('CLI Box Commands', () => {
             expect(mockBoxService.updateBox).toHaveBeenCalled();
         });
 
-        test('CLI-BOX-EDIT-003: 修改不存在的盒子', async () => {
-            mockBoxService.updateBox.mockRejectedValue(new Error('盒子不存在'));
+        test('CLI-BOX-EDIT-003: 修改不存在的收藏夹', async () => {
+            mockBoxService.updateBox.mockRejectedValue(new Error('收藏夹不存在'));
 
             const services = {
                 boxService: mockBoxService,
@@ -392,7 +392,7 @@ describe('CLI Box Commands', () => {
         });
 
         test('CLI-BOX-EDIT-004: 重命名为已存在的名称', async () => {
-            mockBoxService.updateBox.mockRejectedValue(new Error('盒子名称已存在'));
+            mockBoxService.updateBox.mockRejectedValue(new Error('收藏夹名称已存在'));
 
             const services = {
                 boxService: mockBoxService,
@@ -409,7 +409,7 @@ describe('CLI Box Commands', () => {
         });
 
         test('CLI-BOX-EDIT-005: 编辑服务异常处理', async () => {
-            mockBoxService.updateBox.mockRejectedValue(new Error('编辑盒子服务异常'));
+            mockBoxService.updateBox.mockRejectedValue(new Error('编辑收藏夹服务异常'));
 
             const services = {
                 boxService: mockBoxService,
@@ -419,7 +419,7 @@ describe('CLI Box Commands', () => {
             try {
                 await boxCommands.updateBox(services, 'Test Box', { name: 'New Name' });
             } catch (e) {
-                expect(e.message).toContain('编辑盒子服务异常');
+                expect(e.message).toContain('编辑收藏夹服务异常');
             }
 
             expect(consoleErrorSpy).toHaveBeenCalled();
@@ -427,7 +427,7 @@ describe('CLI Box Commands', () => {
     });
 
     describe('box delete', () => {
-        test('CLI-BOX-DELETE-001: 删除存在的盒子', async () => {
+        test('CLI-BOX-DELETE-001: 删除存在的收藏夹', async () => {
             mockBoxService.deleteBox.mockResolvedValue();
 
             const services = {
@@ -440,8 +440,8 @@ describe('CLI Box Commands', () => {
             expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('已删除'));
         });
 
-        test('CLI-BOX-DELETE-002: 删除不存在的盒子', async () => {
-            mockBoxService.deleteBox.mockRejectedValue(new Error('盒子不存在'));
+        test('CLI-BOX-DELETE-002: 删除不存在的收藏夹', async () => {
+            mockBoxService.deleteBox.mockRejectedValue(new Error('收藏夹不存在'));
 
             const services = {
                 boxService: mockBoxService,
@@ -471,7 +471,7 @@ describe('CLI Box Commands', () => {
         });
 
         test('CLI-BOX-DELETE-004: 删除服务异常处理', async () => {
-            mockBoxService.deleteBox.mockRejectedValue(new Error('删除盒子服务异常'));
+            mockBoxService.deleteBox.mockRejectedValue(new Error('删除收藏夹服务异常'));
 
             const services = {
                 boxService: mockBoxService,
@@ -481,7 +481,7 @@ describe('CLI Box Commands', () => {
             try {
                 await boxCommands.deleteBox(services, 'Test Box', {});
             } catch (e) {
-                expect(e.message).toContain('删除盒子服务异常');
+                expect(e.message).toContain('删除收藏夹服务异常');
             }
 
             expect(consoleErrorSpy).toHaveBeenCalled();
@@ -489,7 +489,7 @@ describe('CLI Box Commands', () => {
     });
 
     describe('box add', () => {
-        test('CLI-BOX-ADD-001: 添加电影到盒子', async () => {
+        test('CLI-BOX-ADD-001: 添加电影到收藏夹', async () => {
             mockMovieService.getMovieDetail.mockResolvedValue({
                 id: 'movie-test1',
                 name: 'Test Movie',
@@ -527,13 +527,13 @@ describe('CLI Box Commands', () => {
             expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('不存在'));
         });
 
-        test('CLI-BOX-ADD-003: 添加到不存在的盒子', async () => {
+        test('CLI-BOX-ADD-003: 添加到不存在的收藏夹', async () => {
             mockMovieService.getMovieDetail.mockResolvedValue({
                 id: 'movie-test1',
                 name: 'Test Movie',
                 category: 'movie'
             });
-            mockBoxService.addMovieToBox.mockRejectedValue(new Error('盒子不存在'));
+            mockBoxService.addMovieToBox.mockRejectedValue(new Error('收藏夹不存在'));
 
             const services = {
                 boxService: mockBoxService,
@@ -551,13 +551,13 @@ describe('CLI Box Commands', () => {
             expect(consoleErrorSpy).toHaveBeenCalled();
         });
 
-        test('CLI-BOX-ADD-004: 重复添加同一电影到盒子', async () => {
+        test('CLI-BOX-ADD-004: 重复添加同一电影到收藏夹', async () => {
             mockMovieService.getMovieDetail.mockResolvedValue({
                 id: 'movie-test1',
                 name: 'Test Movie',
                 category: 'movie'
             });
-            mockBoxService.addMovieToBox.mockRejectedValue(new Error('电影已在盒子中'));
+            mockBoxService.addMovieToBox.mockRejectedValue(new Error('电影已在收藏夹中'));
 
             const services = {
                 boxService: mockBoxService,
@@ -596,7 +596,7 @@ describe('CLI Box Commands', () => {
                 name: 'Test Movie',
                 category: 'movie'
             });
-            mockBoxService.addMovieToBox.mockRejectedValue(new Error('添加电影到盒子服务异常'));
+            mockBoxService.addMovieToBox.mockRejectedValue(new Error('添加电影到收藏夹服务异常'));
 
             const services = {
                 boxService: mockBoxService,
@@ -608,7 +608,7 @@ describe('CLI Box Commands', () => {
             try {
                 await boxCommands.addMovieToBox(services, 'Test Box', 'movie-test1');
             } catch (e) {
-                expect(e.message).toContain('添加电影到盒子服务异常');
+                expect(e.message).toContain('添加电影到收藏夹服务异常');
             }
 
             expect(consoleErrorSpy).toHaveBeenCalled();
@@ -616,7 +616,7 @@ describe('CLI Box Commands', () => {
     });
 
     describe('box remove', () => {
-        test('CLI-BOX-REMOVE-001: 从盒子移除电影', async () => {
+        test('CLI-BOX-REMOVE-001: 从收藏夹移除电影', async () => {
             mockBoxService.getBoxDetail.mockResolvedValue({
                 name: 'Test Box',
                 data: {
@@ -632,10 +632,10 @@ describe('CLI Box Commands', () => {
 
             await boxCommands.removeMovieFromBox(services, 'Test Box', 'movie-test1');
 
-            expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('已从盒子移除'));
+            expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('已从收藏夹移除'));
         });
 
-        test('CLI-BOX-REMOVE-002: 移除不在盒子中的电影', async () => {
+        test('CLI-BOX-REMOVE-002: 移除不在收藏夹中的电影', async () => {
             mockBoxService.getBoxDetail.mockResolvedValue({
                 name: 'Test Box',
                 data: {
@@ -650,10 +650,10 @@ describe('CLI Box Commands', () => {
 
             await boxCommands.removeMovieFromBox(services, 'Test Box', 'movie-test1');
 
-            expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('不在盒子中'));
+            expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('不在收藏夹中'));
         });
 
-        test('CLI-BOX-REMOVE-003: 从不存在的盒子移除电影', async () => {
+        test('CLI-BOX-REMOVE-003: 从不存在的收藏夹移除电影', async () => {
             mockBoxService.getBoxDetail.mockResolvedValue(null);
 
             const services = {
@@ -679,7 +679,7 @@ describe('CLI Box Commands', () => {
 
             await boxCommands.removeMovieFromBox(services, 'Test Box', 'invalid-id');
 
-            expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('不在盒子中'));
+            expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('不在收藏夹中'));
         });
 
         test('CLI-BOX-REMOVE-005: 移除服务异常处理', async () => {
