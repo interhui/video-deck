@@ -45,7 +45,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     deleteMovie: (movieData) => ipcRenderer.invoke('delete-movie', movieData),
     refreshMovieLibrary: () => ipcRenderer.invoke('refresh-movie-library'),
 
-    // 电影盒子管理
+    // 电影收藏夹管理
     getAllBoxes: () => ipcRenderer.invoke('get-all-boxes'),
     createBox: (data) => ipcRenderer.invoke('create-box', data),
     updateBox: (data) => ipcRenderer.invoke('update-box', data),
@@ -171,7 +171,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     updateCategory: (data) => ipcRenderer.invoke('update-category', data),
     deleteCategory: (categoryId) => ipcRenderer.invoke('delete-category', categoryId),
 
-    // 盒子导出
+    // 收藏夹导出
     showExportSaveDialog: (data) => ipcRenderer.invoke('show-export-save-dialog', data),
     exportBox: (data) => ipcRenderer.invoke('export-box', data),
 

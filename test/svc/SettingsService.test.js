@@ -105,13 +105,13 @@ describe('SettingsService', () => {
     });
 
     describe('getMovieboxDir / setMovieboxDir', () => {
-        test('SVC-SETTINGS-011: 返回盒子目录', async () => {
+        test('SVC-SETTINGS-011: 返回收藏夹目录', async () => {
             await new Promise(resolve => setTimeout(resolve, 100));
             const boxDir = service.getMovieboxDir();
             expect(boxDir).toBeDefined();
         });
 
-        test('SVC-SETTINGS-012: 设置盒子目录', async () => {
+        test('SVC-SETTINGS-012: 设置收藏夹目录', async () => {
             await new Promise(resolve => setTimeout(resolve, 100));
             service.setMovieboxDir('/new/box/path');
             expect(service.getMovieboxDir()).toBe('/new/box/path');

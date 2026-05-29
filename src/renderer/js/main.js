@@ -47,7 +47,11 @@ const state = {
     tagFilterSearchKeyword: '',
     tempSelectedTag: null,
     tagSelectorSearchKeyword: '',
-    scanTagSelectorSearchKeyword: ''
+    scanTagSelectorSearchKeyword: '',
+    // 电影收藏夹筛选状态
+    excludeBoxMode: false,
+    excludeBoxName: '',
+    excludedMovieIds: new Set()
 };
 
 // DOM 元素
@@ -136,6 +140,13 @@ const elements = {
     closeBatchAdd: document.getElementById('close-batch-add'),
     batchDeleteBtn: document.getElementById('batch-delete-btn'),
     batchPlayBtn: document.getElementById('batch-play-btn'),
+    // 电影收藏夹筛选
+    excludeBoxFilter: document.getElementById('exclude-box-filter'),
+    excludeBoxModal: document.getElementById('exclude-box-modal'),
+    excludeBoxSelect: document.getElementById('exclude-box-select'),
+    confirmExcludeBox: document.getElementById('confirm-exclude-box'),
+    cancelExcludeBox: document.getElementById('cancel-exclude-box'),
+    closeExcludeBox: document.getElementById('close-exclude-box'),
     scanDirBtn: document.getElementById('scan-dir-btn'),
     addMovieModal: document.getElementById('add-movie-modal'),
     closeAddMovie: document.getElementById('close-add-movie'),
@@ -281,7 +292,7 @@ async function init() {
     // 加载分类列表
     await loadCategories();
 
-    // 加载盒子列表
+    // 加载收藏夹列表
     await loadBoxes();
 
 
@@ -942,7 +953,7 @@ function setCurrentCategory(category) {
     }
 
     state.currentCategory = category;
-    state.currentBox = ''; // 清除当前盒子
+    state.currentBox = ''; // 清除当前收藏夹
 
     // 更新左侧栏分类选中状态
     document.querySelectorAll('.category-item').forEach(item => {
@@ -953,7 +964,7 @@ function setCurrentCategory(category) {
         }
     });
 
-    // 清除左侧栏盒子选中状态
+    // 清除左侧栏收藏夹选中状态
     document.querySelectorAll('.box-item').forEach(i => i.classList.remove('active'));
 
     // 更新下拉框
@@ -971,7 +982,7 @@ function getTotalMovieCount(categories) {
 }
 
 /**
- * 加载盒子列表
+ * 加载收藏夹列表
  */
 async function loadBoxes() {
     try {
@@ -984,7 +995,7 @@ async function loadBoxes() {
 }
 
 /**
- * 更新盒子列表
+ * 更新收藏夹列表
  */
 function updateBoxList(boxes) {
     let html = '';
@@ -1004,7 +1015,7 @@ function updateBoxList(boxes) {
 
     elements.boxList.innerHTML = html;
 
-    // 绑定盒子点击事件（打开盒子视图）
+    // 绑定收藏夹点击事件（打开收藏夹视图）
     document.querySelectorAll('.box-item').forEach(item => {
         item.addEventListener('click', (e) => {
             // 如果点击的是按钮，不处理
@@ -1015,14 +1026,14 @@ function updateBoxList(boxes) {
             // 清除分类选中状态
             document.querySelectorAll('.category-item').forEach(i => i.classList.remove('active'));
 
-            // 清除之前的盒子选中状态
+            // 清除之前的收藏夹选中状态
             document.querySelectorAll('.box-item').forEach(i => i.classList.remove('active'));
 
-            // 设置当前盒子选中状态
+            // 设置当前收藏夹选中状态
             item.classList.add('active');
             state.currentBox = item.dataset.originalName || item.dataset.box;
 
-            // 打开盒子视图（新窗口）
+            // 打开收藏夹视图（新窗口）
             openBoxView(state.currentBox);
         });
     });
@@ -1047,7 +1058,7 @@ function updateBoxList(boxes) {
 }
 
 /**
- * 打开编辑盒子模态框
+ * 打开编辑收藏夹模态框
  */
 async function openEditBoxModal(boxOriginalName) {
     try {
@@ -1064,7 +1075,7 @@ async function openEditBoxModal(boxOriginalName) {
 }
 
 /**
- * 打开删除盒子确认模态框
+ * 打开删除收藏夹确认模态框
  */
 function openDeleteBoxModal(boxName) {
     document.getElementById('delete-box-name').textContent = boxName;
@@ -1072,7 +1083,7 @@ function openDeleteBoxModal(boxName) {
 }
 
 /**
- * 打开盒子视图（新窗口）
+ * 打开收藏夹视图（新窗口）
  */
 async function openBoxView(boxName) {
     try {
@@ -1087,7 +1098,7 @@ async function openBoxView(boxName) {
  */
 async function loadMovies() {
     try {
-        if (state.searchKeyword || state.currentTag || state.currentActorFilter.length > 0 || state.onlyNewMovies) {
+        if (state.searchKeyword || state.currentTag || state.currentActorFilter.length > 0 || state.onlyNewMovies || state.excludeBoxMode) {
             if (state.lazyLoader) {
                 state.lazyLoader.destroy();
                 state.lazyLoader = null;
@@ -1158,10 +1169,15 @@ async function loadMoviesAll() {
             movies = movies.filter(movie => isNewMovie(movie.update_time));
         }
 
+        // 根据电影收藏夹筛选，排除已收藏的电影
+        if (state.excludeBoxMode && state.excludedMovieIds.size > 0) {
+            movies = movies.filter(movie => !state.excludedMovieIds.has(movie.id));
+        }
+
         state.movies = movies;
         renderMovies(movies, false);
 
-        const filtersActive = state.searchKeyword || state.currentTag || state.currentActorFilter.length > 0 || state.onlyNewMovies;
+        const filtersActive = state.searchKeyword || state.currentTag || state.currentActorFilter.length > 0 || state.onlyNewMovies || state.excludeBoxMode;
 
         if (filtersActive) {
             updateSidebarWithSearchResults(movies);
@@ -1726,6 +1742,83 @@ function bindEvents() {
         });
     }
 
+    // 仅显示未收藏 - 复选框事件
+    if (elements.excludeBoxFilter) {
+        elements.excludeBoxFilter.addEventListener('change', async (e) => {
+            if (e.target.checked) {
+                // 勾选时弹出电影收藏夹选择模态框
+                const boxes = await window.electronAPI.getAllBoxes();
+                if (!boxes || boxes.length === 0) {
+                    alert('请先创建电影收藏夹');
+                    e.target.checked = false;
+                    return;
+                }
+                elements.excludeBoxSelect.innerHTML = '<option value="">选择电影收藏夹...</option>';
+                boxes.forEach(box => {
+                    const option = document.createElement('option');
+                    option.value = box.name;
+                    option.textContent = `${box.name} (${box.movieCount}部电影)`;
+                    elements.excludeBoxSelect.appendChild(option);
+                });
+                elements.excludeBoxModal.style.display = 'flex';
+            } else {
+                // 取消勾选时清除筛选状态
+                state.excludeBoxMode = false;
+                state.excludeBoxName = '';
+                state.excludedMovieIds.clear();
+                loadMovies();
+            }
+        });
+    }
+
+    // 确认电影收藏夹筛选
+    if (elements.confirmExcludeBox) {
+        elements.confirmExcludeBox.addEventListener('click', async () => {
+            const boxName = elements.excludeBoxSelect.value;
+            if (!boxName) {
+                alert('请选择电影收藏夹');
+                return;
+            }
+            try {
+                const boxDetail = await window.electronAPI.getBoxDetail(boxName);
+                if (!boxDetail) {
+                    alert('无法获取收藏夹详情');
+                    return;
+                }
+                state.excludeBoxMode = true;
+                state.excludeBoxName = boxName;
+                state.excludedMovieIds = new Set(boxDetail.movies.map(m => m.id));
+                elements.excludeBoxModal.style.display = 'none';
+                loadMovies();
+            } catch (error) {
+                console.error('Error loading box detail:', error);
+                alert('加载收藏夹详情失败: ' + error.message);
+            }
+        });
+    }
+
+    // 取消电影收藏夹筛选
+    if (elements.cancelExcludeBox) {
+        elements.cancelExcludeBox.addEventListener('click', () => {
+            elements.excludeBoxModal.style.display = 'none';
+            elements.excludeBoxFilter.checked = false;
+            state.excludeBoxMode = false;
+            state.excludeBoxName = '';
+            state.excludedMovieIds.clear();
+        });
+    }
+
+    // 关闭电影收藏夹筛选模态框
+    if (elements.closeExcludeBox) {
+        elements.closeExcludeBox.addEventListener('click', () => {
+            elements.excludeBoxModal.style.display = 'none';
+            elements.excludeBoxFilter.checked = false;
+            state.excludeBoxMode = false;
+            state.excludeBoxName = '';
+            state.excludedMovieIds.clear();
+        });
+    }
+
     elements.categoryFilter.addEventListener('change', (e) => {
         setCurrentCategory(e.target.value);
     });
@@ -1945,7 +2038,7 @@ function bindEvents() {
             }
         });
 
-        // 清除左侧栏盒子选中状态
+        // 清除左侧栏收藏夹选中状态
         document.querySelectorAll('.box-item').forEach(i => i.classList.remove('active'));
     }
 
@@ -2024,7 +2117,7 @@ function bindEvents() {
         }
     });
 
-    // 选择电影盒子目录
+    // 选择电影收藏夹目录
     elements.selectMovieboxDirBtn.addEventListener('click', async () => {
         const result = await window.electronAPI.selectDirectory();
         if (!result.canceled && result.path) {
@@ -2099,7 +2192,7 @@ function bindEvents() {
         loadMovies();
     });
 
-    // 监听盒子更新事件
+    // 监听收藏夹更新事件
     window.electronAPI.onBoxUpdated(() => {
         loadBoxes();
     });
@@ -2152,20 +2245,20 @@ function bindEvents() {
         }
     });
 
-    // 创建盒子按钮
+    // 创建收藏夹按钮
     elements.addBoxBtn.addEventListener('click', () => {
         elements.boxNameInput.value = '';
         elements.createBoxModal.style.display = 'flex';
         elements.boxNameInput.focus();
     });
 
-    // 确认创建盒子
+    // 确认创建收藏夹
     elements.confirmCreateBox.addEventListener('click', async () => {
         const boxName = elements.boxNameInput.value.trim();
         const description = elements.boxDescriptionInput.value.trim();
 
         if (!boxName) {
-            alert('请输入盒子名称');
+            alert('请输入收藏夹名称');
             return;
         }
 
@@ -2186,12 +2279,12 @@ function bindEvents() {
         }
     });
 
-    // 取消创建盒子
+    // 取消创建收藏夹
     elements.cancelCreateBox.addEventListener('click', () => {
         elements.createBoxModal.style.display = 'none';
     });
 
-    // 关闭创建盒子模态框
+    // 关闭创建收藏夹模态框
     elements.closeCreateBox.addEventListener('click', () => {
         elements.createBoxModal.style.display = 'none';
     });
@@ -2203,16 +2296,16 @@ function bindEvents() {
         }
     });
 
-    // ==================== 编辑盒子相关事件 ====================
+    // ==================== 编辑收藏夹相关事件 ====================
 
-    // 确认编辑盒子
+    // 确认编辑收藏夹
     elements.confirmEditBox.addEventListener('click', async () => {
         const originalName = elements.editBoxOriginalName.value;
         const newName = elements.editBoxNameInput.value.trim();
         const description = elements.editBoxDescriptionInput.value.trim();
 
         if (!newName) {
-            alert('请输入盒子名称');
+            alert('请输入收藏夹名称');
             return;
         }
 
@@ -2231,12 +2324,12 @@ function bindEvents() {
         }
     });
 
-    // 取消编辑盒子
+    // 取消编辑收藏夹
     elements.cancelEditBox.addEventListener('click', () => {
         elements.editBoxModal.style.display = 'none';
     });
 
-    // 关闭编辑盒子模态框
+    // 关闭编辑收藏夹模态框
     elements.closeEditBox.addEventListener('click', () => {
         elements.editBoxModal.style.display = 'none';
     });
@@ -2248,9 +2341,9 @@ function bindEvents() {
         }
     });
 
-    // ==================== 删除盒子相关事件 ====================
+    // ==================== 删除收藏夹相关事件 ====================
 
-    // 确认删除盒子
+    // 确认删除收藏夹
     elements.confirmDeleteBox.addEventListener('click', async () => {
         const deleteBoxName = document.getElementById('delete-box-name').textContent;
 
@@ -2269,12 +2362,12 @@ function bindEvents() {
         }
     });
 
-    // 取消删除盒子
+    // 取消删除收藏夹
     elements.cancelDeleteBox.addEventListener('click', () => {
         elements.deleteBoxModal.style.display = 'none';
     });
 
-    // 关闭删除盒子模态框
+    // 关闭删除收藏夹模态框
     elements.closeDeleteBox.addEventListener('click', () => {
         elements.deleteBoxModal.style.display = 'none';
     });
@@ -2295,16 +2388,16 @@ function bindEvents() {
             return;
         }
 
-        // 获取所有盒子
+        // 获取所有收藏夹
         const boxes = await window.electronAPI.getAllBoxes();
 
         if (!boxes || boxes.length === 0) {
-            alert('请先创建电影盒子');
+            alert('请先创建电影收藏夹');
             return;
         }
 
-        // 填充盒子选择下拉框
-        elements.batchBoxSelect.innerHTML = '<option value="">选择电影盒子...</option>';
+        // 填充收藏夹选择下拉框
+        elements.batchBoxSelect.innerHTML = '<option value="">选择电影收藏夹...</option>';
         boxes.forEach(box => {
             const option = document.createElement('option');
             option.value = box.name;
@@ -2324,7 +2417,7 @@ function bindEvents() {
         const boxName = elements.batchBoxSelect.value;
 
         if (!boxName) {
-            alert('请选择电影盒子');
+            alert('请选择电影收藏夹');
             return;
         }
 
@@ -2464,16 +2557,16 @@ function bindEvents() {
         }
 
         try {
-            // 获取所有盒子信息
+            // 获取所有收藏夹信息
             const boxes = await window.electronAPI.getAllBoxes();
             const selectedMovieIds = Array.from(state.selectedMovies);
 
-            // 先从所有盒子中移除这些电影
+            // 先从所有收藏夹中移除这些电影
             for (const movieId of selectedMovieIds) {
                 const movie = state.movies.find(m => m.id === movieId);
                 if (!movie) continue;
 
-                // 从所有盒子中移除该电影
+                // 从所有收藏夹中移除该电影
                 for (const box of boxes) {
                     const boxDetail = await window.electronAPI.getBoxDetail(box.name);
                     if (boxDetail && boxDetail.data && boxDetail.data[movie.category]) {
@@ -2497,7 +2590,7 @@ function bindEvents() {
             // 清空选择
             clearSelectedMovies();
 
-            // 刷新电影库、分类列表和电影盒子
+            // 刷新电影库、分类列表和电影收藏夹
             await loadMovies();
             await loadCategories();
             await loadBoxes();

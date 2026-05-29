@@ -21,7 +21,7 @@ async function showConfig(services, options = {}) {
         } else {
             console.log('\n当前配置:');
             console.log(`  电影目录: ${settings.library?.moviesDir || '-'}`);
-            console.log(`  电影盒子目录: ${settings.moviebox?.movieboxDir || '-'}`);
+            console.log(`  电影收藏夹目录: ${settings.moviebox?.movieboxDir || '-'}`);
             console.log(`  主题: ${settings.appearance?.theme || 'dark'}`);
             console.log(`  语言: ${settings.appearance?.language || 'zh-CN'}`);
         }

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: file: https://image.tmdb.org https://pics.dmm.co.jp;">
-    <title>电影盒子</title>
+    <title>电影收藏夹</title>
     <link rel="stylesheet" href="css/themes/dark.css">
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/box.css">
@@ -15,7 +15,7 @@
         <header class="toolbar">
             <div class="toolbar-left">
                 <button id="back-btn" class="icon-btn" title="返回">←</button>
-                <h2 id="box-title" class="box-title">电影盒子</h2>
+                <h2 id="box-title" class="box-title">电影收藏</h2>
             </div>
             <div class="toolbar-right">
                 <button id="export-btn" class="btn btn-secondary">导出</button>
@@ -52,7 +52,7 @@
                 <ul class="box-category-list" id="category-list">
                     <!-- 动态生成 -->
                 </ul>
-                <!-- 盒子描述信息 -->
+                <!-- 收藏夹描述信息 -->
                 <div class="box-description" id="box-description" style="display: none;">
                     <p id="box-description-text"></p>
                 </div>
@@ -105,7 +105,7 @@
                 </div>
                 <div class="empty-state" id="empty-state" style="display: none;">
                     <p>暂无电影</p>
-                    <p>请在电影详情中添加电影到盒子</p>
+                    <p>请在电影详情中添加电影到收藏夹</p>
                 </div>
             </section>
         </main>
@@ -197,7 +197,7 @@
     <div id="export-modal" class="modal" style="display: none;">
         <div class="modal-content export-modal-content">
             <div class="modal-header">
-                <h2>导出电影盒子</h2>
+                <h2>导出电影收藏夹</h2>
                 <button id="close-export-modal" class="close-btn">&times;</button>
             </div>
             <div class="modal-body">
@@ -218,7 +218,7 @@
                         <label class="export-radio">
                             <input type="radio" name="export-type" value="json">
                             <span class="export-radio-label">JSON格式</span>
-                            <span class="export-radio-desc">导出盒子原始JSON文件</span>
+                            <span class="export-radio-desc">导出收藏夹原始JSON文件</span>
                         </label>
                         <label class="export-radio">
                             <input type="radio" name="export-type" value="dpl">

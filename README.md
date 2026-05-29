@@ -10,7 +10,7 @@
 - **分类管理**：自定义电影分类（电影、电视剧、纪录片、动漫等）
 - **标签系统**：灵活的标签管理，支持多标签筛选
 - **演员管理**：维护演员信息及照片，支持分页浏览
-- **电影盒子**：创建自定义电影合集/播放列表，支持观看状态和评分管理
+- **电影收藏夹**：创建自定义电影合集/播放列表，支持观看状态和评分管理
 - **搜索功能**：按名称、标签、分类、演员等条件搜索电影
 - **统计信息**：查看影库统计数据（总数、评分分布、播放时长等）
 - **TMDB集成**：支持从TMDB API搜索电影信息、下载海报、获取演员详情
@@ -31,7 +31,7 @@
 ### CLI 特性
 
 - 完整的电影管理命令
-- 分类、标签、盒子管理
+- 分类、标签、收藏夹管理
 - 多种输出格式（表格、JSON、简单文本）
 - 支持全局选项配置路径
 - 导入导出功能
@@ -70,7 +70,7 @@
     "includeSubfolders": true      // 包含子文件夹
   },
   "moviebox": {
-    "movieboxDir": "boxes"         // 电影盒子目录
+    "movieboxDir": "boxes"         // 电影收藏夹目录
   },
   "tmdb": {
     "url": "https://api.themoviedb.org",  // TMDB API地址
@@ -103,7 +103,7 @@
 
 首次使用需要在"设置"中配置以下必填项：
 - **moviesDir**: 电影库目录（存放按分类组织的电影文件夹）
-- **movieboxDir**: 电影盒子目录（存放盒子定义文件）
+- **movieboxDir**: 电影收藏夹目录（存放收藏夹定义文件）
 - **actorPhotoDir**: 演员照片目录（存放演员头像图片）
 - **tmdb.token**: TMDB API Token（如需使用TMDB搜索功能）
 - **r18.dbUrl**: R18数据库连接（如需使用R18数据源）
@@ -193,29 +193,29 @@ movie-mgt movie delete <电影ID>
 movie-mgt movie status <电影ID> <状态>
 ```
 
-#### 电影盒子命令
+#### 电影收藏夹命令
 
 ```bash
-# 列出所有盒子
+# 列出所有收藏夹
 movie-mgt box list
 
-# 查看盒子详情
-movie-mgt box show <盒子名称>
+# 查看收藏夹详情
+movie-mgt box show <收藏夹名称>
 
-# 创建盒子
-movie-mgt box create <盒子名称> --description <描述>
+# 创建收藏夹
+movie-mgt box create <收藏夹名称> --description <描述>
 
-# 编辑盒子
-movie-mgt box edit <盒子名称> --name <新名称>
+# 编辑收藏夹
+movie-mgt box edit <收藏夹名称> --name <新名称>
 
-# 删除盒子
-movie-mgt box delete <盒子名称>
+# 删除收藏夹
+movie-mgt box delete <收藏夹名称>
 
-# 添加电影到盒子
-movie-mgt box add <盒子名称> <电影ID>
+# 添加电影到收藏夹
+movie-mgt box add <收藏夹名称> <电影ID>
 
-# 从盒子移除电影
-movie-mgt box remove <盒子名称> <电影ID>
+# 从收藏夹移除电影
+movie-mgt box remove <收藏夹名称> <电影ID>
 ```
 
 #### 分类命令
@@ -289,7 +289,7 @@ movie-mgt [选项] <命令>
   -V, --version              显示版本号
   -c, --config <path>        指定配置文件路径
   -m, --movies-dir <dir>     指定电影目录
-  -b, --box-dir <dir>        指定盒子目录
+  -b, --box-dir <dir>        指定收藏夹目录
   -o, --output <format>      输出格式: table | json | simple (默认: table)
   --no-color                 禁用颜色输出
   -v, --verbose              详细输出模式
@@ -335,7 +335,7 @@ movie-mgt/
 │           ├── movie.nfo  # 电影元数据 (NFO格式)
 │           └── cover.jpg  # 封面图片
 ├── boxes/
-│   └── <盒子名称>.json    # 电影盒子定义
+│   └── <收藏夹名称>.json    # 电影收藏夹定义
 └── actor/
     └── <演员>/            # 演员照片目录
 ```

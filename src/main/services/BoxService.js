@@ -1,6 +1,6 @@
 /**
- * 电影盒子服务
- * 负责电影盒子的业务逻辑处理
+ * 电影收藏夹服务
+ * 负责电影收藏夹的业务逻辑处理
  */
 const FileService = require('./FileService');
 const path = require('path');
@@ -11,18 +11,18 @@ class BoxService {
     }
 
     /**
-     * 获取盒子目录路径
-     * @param {string} movieboxDir - 电影盒子目录
-     * @returns {string} 盒子目录路径
+     * 获取收藏夹目录路径
+     * @param {string} movieboxDir - 电影收藏夹目录
+     * @returns {string} 收藏夹目录路径
      */
     getBoxesDir(movieboxDir) {
         return movieboxDir;
     }
 
     /**
-     * 获取所有电影盒子
+     * 获取所有电影收藏夹
      * @param {string} movieboxDir - 基础目录
-     * @returns {Promise<Array>} 盒子列表
+     * @returns {Promise<Array>} 收藏夹列表
      */
     async getAllBoxes(movieboxDir) {
         try {
@@ -45,7 +45,7 @@ class BoxService {
                     const boxName = file.replace('.json', '');
                     const boxData = await this.readBoxFile(boxesDir, boxName);
                     if (boxData) {
-                        // 计算盒子中的电影总数
+                        // 计算收藏夹中的电影总数
                         let movieCount = 0;
                         const movies = boxData.movie || [];
                         movieCount = movies.length;
@@ -70,10 +70,10 @@ class BoxService {
     }
 
     /**
-     * 读取盒子文件
-     * @param {string} boxesDir - 盒子目录
-     * @param {string} boxName - 盒子名称
-     * @returns {Promise<object>} 盒子数据
+     * 读取收藏夹文件
+     * @param {string} boxesDir - 收藏夹目录
+     * @param {string} boxName - 收藏夹名称
+     * @returns {Promise<object>} 收藏夹数据
      */
     async readBoxFile(boxesDir, boxName) {
         try {
@@ -104,9 +104,9 @@ class BoxService {
     }
 
     /**
-     * 创建电影盒子
-     * @param {string} boxName - 盒子名称
-     * @param {string} description - 盒子描述
+     * 创建电影收藏夹
+     * @param {string} boxName - 收藏夹名称
+     * @param {string} description - 收藏夹描述
      * @param {string} movieboxDir - 基础目录
      * @returns {Promise<object>} 创建结果
      */
@@ -114,18 +114,18 @@ class BoxService {
         try {
             const boxesDir = this.getBoxesDir(movieboxDir);
 
-            // 确保盒子目录存在
+            // 确保收藏夹目录存在
             await this.fileService.ensureDir(boxesDir);
 
-            // 检查盒子是否已存在
+            // 检查收藏夹是否已存在
             const boxPath = path.join(boxesDir, `${boxName}.json`);
             const exists = await this.fileService.fileExists(boxPath);
 
             if (exists) {
-                throw new Error('盒子已存在');
+                throw new Error('电影收藏夹已存在');
             }
 
-            // 创建带metadata的电影盒子
+            // 创建带metadata的电影收藏夹
             const newBox = {
                 movie: [],
                 metadata: {
@@ -143,8 +143,8 @@ class BoxService {
     }
 
     /**
-     * 删除电影盒子（重命名为备份文件）
-     * @param {string} boxName - 盒子名称
+     * 删除电影收藏夹（重命名为备份文件）
+     * @param {string} boxName - 收藏夹名称
      * @param {string} movieboxDir - 基础目录
      * @returns {Promise<object>} 删除结果
      */
@@ -155,7 +155,7 @@ class BoxService {
 
             const exists = await this.fileService.fileExists(boxPath);
             if (!exists) {
-                throw new Error('盒子不存在');
+                throw new Error('电影收藏夹不存在');
             }
 
             // 生成带时间戳的备份文件名
@@ -194,10 +194,10 @@ class BoxService {
     }
 
     /**
-     * 更新电影盒子信息
-     * @param {string} boxName - 原盒子名称
-     * @param {string} newName - 新盒子名称
-     * @param {string} description - 盒子描述
+     * 更新电影收藏夹信息
+     * @param {string} boxName - 原收藏夹名称
+     * @param {string} newName - 新收藏夹名称
+     * @param {string} description - 收藏夹描述
      * @param {string} movieboxDir - 基础目录
      * @returns {Promise<object>} 更新结果
      */
@@ -209,18 +209,18 @@ class BoxService {
 
             const exists = await this.fileService.fileExists(oldBoxPath);
             if (!exists) {
-                throw new Error('盒子不存在');
+                throw new Error('电影收藏夹不存在');
             }
 
-            // 检查新名称是否与其他盒子冲突
+            // 检查新名称是否与其他电影收藏夹冲突
             if (newName !== boxName) {
                 const newExists = await this.fileService.fileExists(newBoxPath);
                 if (newExists) {
-                    throw new Error('新盒子名称已存在');
+                    throw new Error('新电影收藏夹名称已存在');
                 }
             }
 
-            // 读取现有盒子数据
+            // 读取现有收藏夹数据
             const boxData = await this.readBoxFile(boxesDir, boxName);
 
             // 更新metadata
@@ -245,10 +245,10 @@ class BoxService {
     }
 
     /**
-     * 获取盒子详情
-     * @param {string} boxName - 盒子名称
+     * 获取收藏夹详情
+     * @param {string} boxName - 收藏夹名称
      * @param {string} movieboxDir - 基础目录
-     * @returns {Promise<object>} 盒子详情
+     * @returns {Promise<object>} 收藏夹详情
      */
     async getBoxDetail(boxName, movieboxDir) {
         try {
@@ -279,8 +279,8 @@ class BoxService {
     }
 
     /**
-     * 添加电影到盒子
-     * @param {string} boxName - 盒子名称
+     * 添加电影到收藏夹
+     * @param {string} boxName - 收藏夹名称
      * @param {object} movieInfo - 电影信息（包含id, comment等）
      * @param {string} movieboxDir - 基础目录
      * @returns {Promise<object>} 添加结果
@@ -296,8 +296,8 @@ class BoxService {
     }
 
     /**
-     * 从盒子中移除电影
-     * @param {string} boxName - 盒子名称
+     * 从收藏夹中移除电影
+     * @param {string} boxName - 收藏夹名称
      * @param {string} movieId - 电影ID
      * @param {string} movieboxDir - 基础目录
      * @returns {Promise<object>} 移除结果
@@ -308,13 +308,13 @@ class BoxService {
             const boxData = await this.readBoxFile(boxesDir, boxName);
 
             if (!boxData || !boxData.movie) {
-                throw new Error('盒子不存在');
+                throw new Error('电影收藏夹不存在');
             }
 
             // 移除电影
             boxData.movie = boxData.movie.filter(m => m.id !== movieId);
 
-            // 保存盒子数据
+            // 保存收藏夹数据
             const boxPath = path.join(boxesDir, `${boxName}.json`);
             await this.fileService.writeFile(boxPath, JSON.stringify(boxData, null, 2));
 
@@ -326,8 +326,8 @@ class BoxService {
     }
 
     /**
-     * 清理盒子中已删除的电影
-     * @param {string} boxName - 盒子名称
+     * 清理收藏夹中已删除的电影
+     * @param {string} boxName - 收藏夹名称
      * @param {Array<string>} validMovieIds - 有效的电影ID列表
      * @param {string} movieboxDir - 基础目录
      * @returns {Promise<object>} 清理结果 { success, removedCount }
@@ -358,8 +358,8 @@ class BoxService {
     }
 
     /**
-     * 更新盒子中电影的信息
-     * @param {string} boxName - 盒子名称
+     * 更新收藏夹中电影的信息
+     * @param {string} boxName - 收藏夹名称
      * @param {string} movieId - 电影ID
      * @param {object} movieInfo - 电影信息
      * @param {string} movieboxDir - 基础目录
@@ -371,7 +371,7 @@ class BoxService {
             const boxData = await this.readBoxFile(boxesDir, boxName);
 
             if (!boxData || !boxData.movie) {
-                throw new Error('盒子不存在');
+                throw new Error('电影收藏夹不存在');
             }
 
             const movieIndex = boxData.movie.findIndex(m => m.id === movieId);

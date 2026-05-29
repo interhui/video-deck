@@ -165,16 +165,16 @@ getActorPhotoDir() {
     }
 
     /**
-     * 获取电影盒子目录配置
-     * @returns {string} 电影盒子目录路径
+     * 获取电影收藏夹目录配置
+     * @returns {string} 电影收藏夹目录路径
      */
     getMovieboxDir() {
         return this.settings.moviebox.movieboxDir || path.join(__dirname, '..', '..', 'movieboxes');
     }
 
     /**
-     * 设置电影盒子目录
-     * @param {string} dir - 电影盒子目录路径
+     * 设置电影收藏夹目录
+     * @param {string} dir - 电影收藏夹目录路径
      */
     setMovieboxDir(dir) {
         this.settings.moviebox.movieboxDir = dir;

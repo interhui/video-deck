@@ -1162,7 +1162,7 @@ function confirmTagSelection() {
 }
 
 /**
- * 更新盒子评分显示
+ * 更新收藏夹评分显示
  */
 function updateBoxRating(rating) {
     const stars = elements.boxRating.querySelectorAll('.star');
@@ -1770,11 +1770,11 @@ function bindEvents() {
             const boxes = await window.electronAPI.getAllBoxes();
 
             if (!boxes || boxes.length === 0) {
-                alert('请先创建电影盒子');
+                alert('请先创建电影收藏夹');
                 return;
             }
 
-            elements.boxSelect.innerHTML = '<option value="">选择电影盒子</option>';
+            elements.boxSelect.innerHTML = '<option value="">选择电影收藏夹</option>';
             boxes.forEach(box => {
                 const option = document.createElement('option');
                 option.value = box.name;
@@ -1785,7 +1785,7 @@ function bindEvents() {
             elements.addToBoxModal.style.display = 'flex';
         } catch (error) {
             console.error('Error loading boxes:', error);
-            alert('加载盒子失败: ' + error.message);
+            alert('加载收藏夹失败: ' + error.message);
         }
     });
 
@@ -1793,7 +1793,7 @@ function bindEvents() {
         const selectedBoxName = elements.boxSelect.value;
 
         if (!selectedBoxName) {
-            alert('请选择电影盒子');
+            alert('请选择电影收藏夹');
             return;
         }
 
@@ -1834,7 +1834,7 @@ function bindEvents() {
         if (!fromBox || !boxName) return;
 
         const movieName = currentMovie.name;
-        const confirmed = confirm(`确定要从电影盒子"${boxName}"中移除电影"${movieName}"吗？`);
+        const confirmed = confirm(`确定要从电影收藏夹"${boxName}"中移除电影"${movieName}"吗？`);
 
         if (confirmed) {
             try {
@@ -1887,7 +1887,7 @@ function bindEvents() {
         }
     });
 
-    // 盒子评分星星点击
+    // 收藏夹评分星星点击
     elements.boxRating.querySelectorAll('.star').forEach(star => {
         star.addEventListener('click', async () => {
             if (!fromBox) return;

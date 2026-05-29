@@ -47,6 +47,12 @@
                         <span>仅显示新电影</span>
                     </label>
                 </div>
+                <div class="filter-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="exclude-box-filter">
+                        <span>仅显示未收藏</span>
+                    </label>
+                </div>
             </div>
             <div class="toolbar-right">
                 <div id="batch-operation" class="dropdown" style="display: none;">
@@ -91,14 +97,14 @@
                     </li>
                 </ul>
 
-                <!-- 电影盒子 -->
+                <!-- 电影收藏夹 -->
                 <div class="sidebar-section">
                     <div class="sidebar-section-header">
-                        <h3>电影盒子</h3>
-                        <button id="add-box-btn" class="icon-btn small" title="创建盒子">+</button>
+                        <h3>电影收藏夹</h3>
+                        <button id="add-box-btn" class="icon-btn small" title="创建收藏夹">+</button>
                     </div>
                     <ul class="box-list" id="box-list">
-                        <!-- 盒子列表将通过 JS 动态生成 -->
+                        <!-- 收藏夹列表将通过 JS 动态生成 -->
                     </ul>
                 </div>
             </aside>
@@ -119,21 +125,21 @@
         </main>
     </div>
 
-    <!-- 创建盒子模态框 -->
+    <!-- 创建收藏夹模态框 -->
     <div id="create-box-modal" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>创建电影盒子</h2>
+                <h2>创建电影收藏夹</h2>
                 <button class="close-btn" id="close-create-box">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label>盒子名称：</label>
-                    <input type="text" id="box-name-input" class="form-input" placeholder="输入盒子名称">
+                    <label>收藏夹名称：</label>
+                    <input type="text" id="box-name-input" class="form-input" placeholder="输入收藏夹名称">
                 </div>
                 <div class="form-group">
-                    <label>盒子描述：</label>
-                    <textarea id="box-description-input" class="form-input" rows="3" placeholder="输入盒子描述（可选）"></textarea>
+                    <label>收藏夹描述：</label>
+                    <textarea id="box-description-input" class="form-input" rows="3" placeholder="输入收藏夹描述（可选）"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
@@ -143,22 +149,22 @@
         </div>
     </div>
 
-    <!-- 编辑盒子模态框 -->
+    <!-- 编辑收藏夹模态框 -->
     <div id="edit-box-modal" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>编辑电影盒子</h2>
+                <h2>编辑电影收藏夹</h2>
                 <button class="close-btn" id="close-edit-box">&times;</button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="edit-box-original-name">
                 <div class="form-group">
-                    <label>盒子名称：</label>
-                    <input type="text" id="edit-box-name-input" class="form-input" placeholder="输入盒子名称">
+                    <label>收藏夹名称：</label>
+                    <input type="text" id="edit-box-name-input" class="form-input" placeholder="输入收藏夹名称">
                 </div>
                 <div class="form-group">
-                    <label>盒子描述：</label>
-                    <textarea id="edit-box-description-input" class="form-input" rows="3" placeholder="输入盒子描述（可选）"></textarea>
+                    <label>收藏夹描述：</label>
+                    <textarea id="edit-box-description-input" class="form-input" rows="3" placeholder="输入收藏夹描述（可选）"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
@@ -168,16 +174,16 @@
         </div>
     </div>
 
-    <!-- 删除盒子确认模态框 -->
+    <!-- 删除收藏夹确认模态框 -->
     <div id="delete-box-modal" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>删除电影盒子</h2>
+                <h2>删除电影收藏夹</h2>
                 <button class="close-btn" id="close-delete-box">&times;</button>
             </div>
             <div class="modal-body">
-                <p>确定要删除电影盒子 "<span id="delete-box-name"></span>" 吗？</p></p>
-                <p style="color: var(--text-secondary); font-size: 13px; margin-top: 8px;">删除后，盒子文件将被重命名为备份文件。</p>
+                <p>确定要删除电影收藏夹 "<span id="delete-box-name"></span>" 吗？</p></p>
+                <p style="color: var(--text-secondary); font-size: 13px; margin-top: 8px;">删除后，收藏夹文件将被重命名为备份文件。</p>
             </div>
             <div class="modal-footer">
                 <button id="confirm-delete-box" class="btn btn-danger">确定</button>
@@ -186,25 +192,48 @@
         </div>
     </div>
 
-    <!-- 批量添加电影到盒子模态框 -->
+    <!-- 批量添加电影到收藏夹模态框 -->
     <div id="batch-add-modal" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>收藏到电影盒子</h2>
+                <h2>收藏到电影收藏夹</h2>
                 <button class="close-btn" id="close-batch-add">&times;</button>
             </div>
             <div class="modal-body">
                 <p id="batch-add-info" style="margin-bottom: 16px; color: var(--text-secondary);"></p>
                 <div class="form-group">
-                    <label>选择电影盒子：</label>
+                    <label>选择电影收藏夹：</label>
                     <select id="batch-box-select" class="form-input">
-                        <option value="">选择电影盒子...</option>
+                        <option value="">选择电影收藏夹...</option>
                     </select>
                 </div>
             </div>
             <div class="modal-footer">
                 <button id="confirm-batch-add" class="btn btn-primary">确定</button>
                 <button id="cancel-batch-add" class="btn btn-secondary">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 电影收藏夹筛选模态框 -->
+    <div id="exclude-box-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>选择电影收藏夹</h2>
+                <button class="close-btn" id="close-exclude-box">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 16px; color: var(--text-secondary);">选择电影收藏夹后，将从电影列表中排除该收藏夹中已收藏的电影</p>
+                <div class="form-group">
+                    <label>选择电影收藏夹：</label>
+                    <select id="exclude-box-select" class="form-input">
+                        <option value="">选择电影收藏夹...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="confirm-exclude-box" class="btn btn-primary">确定</button>
+                <button id="cancel-exclude-box" class="btn btn-secondary">取消</button>
             </div>
         </div>
     </div>
@@ -274,7 +303,7 @@
                             </div>
                         </div>
                         <div class="settings-item">
-                            <label>电影盒子目录：</label>
+                            <label>电影收藏夹目录：</label>
                             <div class="dir-input-group">
                                 <input type="text" id="moviebox-dir-input" readonly>
                                 <button id="select-moviebox-dir-btn" class="btn btn-small">选择</button>
