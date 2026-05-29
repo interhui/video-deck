@@ -157,6 +157,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             isPlaying = true;
             updatePlayPauseBtn();
             const movieName = item.title || path.basename(item.path);
+            elements.playerTitle.textContent = movieName;
             window.electronAPI.addPlayHistory(movieName).catch(err => {
                 console.error('记录播放历史失败:', err);
             });
