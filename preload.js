@@ -241,7 +241,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     addPlayHistory: (movieName) => ipcRenderer.invoke('add-play-history', movieName),
     getPlayHistory: (movieName, date) => ipcRenderer.invoke('get-play-history', movieName, date),
     deletePlayHistory: (date, time) => ipcRenderer.invoke('delete-play-history', date, time),
-    clearPlayHistory: () => ipcRenderer.invoke('clear-play-history')
+    clearPlayHistory: () => ipcRenderer.invoke('clear-play-history'),
+
+    // 文件操作
+    openFolder: (filePath) => ipcRenderer.invoke('open-folder', filePath),
+    copyToClipboard: (text) => ipcRenderer.invoke('copy-to-clipboard', text),
+    playWithSystemPlayer: (filePath) => ipcRenderer.invoke('play-with-system-player', filePath)
 });
 
 console.log('Preload script loaded');
