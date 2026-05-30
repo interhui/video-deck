@@ -129,14 +129,14 @@ describe('CLI Output Utils', () => {
     });
 
     describe('outputBoxList', () => {
-        test('CLI-OUTPUT-BOXLIST-001: 空盒子列表输出', () => {
+        test('CLI-OUTPUT-BOXLIST-001: 空收藏夹列表输出', () => {
             const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
             outputBoxList([]);
             expect(consoleSpy).toHaveBeenCalled();
             consoleSpy.mockRestore();
         });
 
-        test('CLI-OUTPUT-BOXLIST-002: 有盒子列表输出', () => {
+        test('CLI-OUTPUT-BOXLIST-002: 有收藏夹列表输出', () => {
             const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
             outputBoxList([
                 { name: 'Test Box', description: 'Test', movieCount: 2 }

@@ -1,5 +1,5 @@
 /**
- * 电影盒子视图逻辑
+ * 电影收藏夹视图逻辑
  */
 
 // 状态管理
@@ -7,7 +7,7 @@ const state = {
     boxName: '',
     boxData: null,
     movies: [],
-    categories: [],         // 盒子中的分类列表
+    categories: [],         // 收藏夹中的分类列表
     currentCategory: '',    // 当前选中的分类（左侧栏过滤）
     currentStatus: '',      // 当前选中的状态
     currentSort: 'name-asc',
@@ -290,12 +290,12 @@ function updateTagFilterClearButton() {
 async function init() {
     console.log('Box view initialized');
 
-    // 获取URL参数中的盒子名称
+    // 获取URL参数中的收藏夹名称
     const urlParams = new URLSearchParams(window.location.search);
     state.boxName = urlParams.get('name');
 
     if (!state.boxName) {
-        alert('未指定电影盒子');
+        alert('未指定电影收藏夹');
         window.close();
         return;
     }
@@ -323,7 +323,7 @@ async function init() {
     // 初始化分隔线拖动
     initSplitter();
 
-    // 监听盒子更新事件
+    // 监听收藏夹更新事件
     window.electronAPI.onBoxUpdated(async () => {
         await loadBoxData();
     });
@@ -338,7 +338,7 @@ async function init() {
         state.detailEditModeLocked = isEditing;
     });
 
-    // 加载盒子数据
+    // 加载收藏夹数据
     await loadBoxData();
 }
 
@@ -658,7 +658,7 @@ function setCurrentCategory(category) {
 }
 
 /**
- * 加载盒子数据
+ * 加载收藏夹数据
  */
 async function loadBoxData() {
     try {
@@ -666,16 +666,16 @@ async function loadBoxData() {
 
         if (!boxDetail || boxDetail.error) {
             console.error('Error loading box:', boxDetail.error);
-            alert('加载盒子失败');
+            alert('加载收藏夹失败');
             return;
         }
 
         state.boxData = boxDetail.data;
 
-        // 更新盒子标题
+        // 更新收藏夹标题
         elements.boxTitle.textContent = boxDetail.name || state.boxName;
 
-        // 更新盒子描述
+        // 更新收藏夹描述
         if (boxDetail.description) {
             elements.boxDescription.style.display = 'block';
             elements.boxDescriptionText.textContent = boxDetail.description;
@@ -691,11 +691,11 @@ async function loadBoxData() {
 }
 
 /**
- * 从盒子数据加载电影
+ * 从收藏夹数据加载电影
  */
 async function loadMoviesFromBox(boxData) {
     try {
-        // 提取盒子中的电影ID列表
+        // 提取收藏夹中的电影ID列表
         const boxMovies = boxData.movie || [];
         const boxMovieIds = boxMovies.map(bm => bm.id);
         const boxMovieMap = new Map();
@@ -707,7 +707,7 @@ async function loadMoviesFromBox(boxData) {
             });
         });
 
-        // 盒子电影使用一次性加载（盒子通常不会太大，且需要完整的电影数据进行筛选）
+        // 收藏夹电影使用一次性加载（收藏夹通常不会太大，且需要完整的电影数据进行筛选）
         await loadMoviesFromBoxAll(boxMovieIds, boxMovieMap);
     } catch (error) {
         console.error('Error loading movies from box:', error);
@@ -715,7 +715,7 @@ async function loadMoviesFromBox(boxData) {
 }
 
 /**
- * 一次性加载所有盒子电影（用于筛选模式）
+ * 一次性加载所有收藏夹电影（用于筛选模式）
  */
 async function loadMoviesFromBoxAll(boxMovieIds, boxMovieMap) {
     try {
@@ -725,7 +725,7 @@ async function loadMoviesFromBoxAll(boxMovieIds, boxMovieMap) {
         const validMovieIds = new Set();
 
         for (const movie of allMovies) {
-            // 检查电影是否在盒子中（盒子存储的是 movie.id）
+            // 检查电影是否在收藏夹中（收藏夹存储的是 movie.id）
             const matchedBoxId = boxMovieIds.includes(movie.id) ? movie.id : null;
             if (matchedBoxId) {
                 const boxInfo = boxMovieMap.get(matchedBoxId);
@@ -742,16 +742,16 @@ async function loadMoviesFromBoxAll(boxMovieIds, boxMovieMap) {
             }
         }
 
-        // 检查是否有电影已从库中删除，如果有则清理盒子
+        // 检查是否有电影已从库中删除，如果有则清理收藏夹
         const deletedMovieIds = boxMovieIds.filter(id => !validMovieIds.has(id));
         if (deletedMovieIds.length > 0) {
-            console.log(`发现 ${deletedMovieIds.length} 个电影已从库中删除，正在清理盒子...`);
+            console.log(`发现 ${deletedMovieIds.length} 个电影已从库中删除，正在清理收藏夹...`);
             const cleanResult = await window.electronAPI.cleanBox({
                 boxName: state.boxName,
                 validMovieIds: Array.from(validMovieIds)
             });
             if (cleanResult.success && cleanResult.removedCount > 0) {
-                console.log(`已从盒子中移除 ${cleanResult.removedCount} 个已删除的电影`);
+                console.log(`已从收藏夹中移除 ${cleanResult.removedCount} 个已删除的电影`);
             }
         }
 
@@ -775,7 +775,7 @@ async function loadMoviesFromBoxAll(boxMovieIds, boxMovieMap) {
 }
 
 /**
- * 初始化盒子懒加载管理器
+ * 初始化收藏夹懒加载管理器
  */
 async function initBoxLazyLoader(boxMovieIds, boxMovieMap) {
     // 如果已存在懒加载器，先销毁
@@ -788,7 +788,7 @@ async function initBoxLazyLoader(boxMovieIds, boxMovieMap) {
         sortOrder: state.currentSort.split('-')[1]
     };
 
-    // 用于存储已添加到盒子的电影ID（避免重复）
+    // 用于存储已添加到收藏夹的电影ID（避免重复）
     const addedMovieIds = new Set();
 
     // 获取滚动容器（.movie-wall 或 #box-movie-wall）
@@ -807,7 +807,7 @@ async function initBoxLazyLoader(boxMovieIds, boxMovieMap) {
             });
 
             if (result && result.movies) {
-                // 过滤出盒子中的电影，并添加盒子信息
+                // 过滤出收藏夹中的电影，并添加收藏夹信息
                 const filteredMovies = [];
                 const categoriesSet = new Set();
 
@@ -835,7 +835,7 @@ async function initBoxLazyLoader(boxMovieIds, boxMovieMap) {
                 return {
                     ...result,
                     movies: filteredMovies,
-                    total: boxMovieIds.length  // 使用盒子电影总数作为总数
+                    total: boxMovieIds.length  // 使用收藏夹电影总数作为总数
                 };
             }
 
@@ -1081,7 +1081,7 @@ function renderMovies(movies, isAppend = false) {
                         <input type="checkbox" class="movie-select-checkbox" data-movie-id="${movie.id}" ${isSelected ? 'checked' : ''}>
                     </div>
                     <div class="movie-action-col">
-                        <button class="remove-btn" data-movie-id="${movie.id}" title="从盒子中移除">✕</button>
+                        <button class="remove-btn" data-movie-id="${movie.id}" title="从收藏夹中移除">✕</button>
                     </div>
                     <div class="movie-id-col">${movie.id || ''}</div>
                     <div class="movie-name">${movie.name}</div>
@@ -1097,7 +1097,7 @@ function renderMovies(movies, isAppend = false) {
             // 网格视图
             return `
                 <div class="box-movie-card movie-card ${posterStyleClass}" data-movie-id="${movie.id}" data-id="${movie.id}">
-                    <button class="remove-btn" data-movie-id="${movie.id}" title="从盒子中移除">✕</button>
+                    <button class="remove-btn" data-movie-id="${movie.id}" title="从收藏夹中移除">✕</button>
                     <span class="box-status-tag ${movie.boxStatus || 'unwatched'}" data-movie-id="${movie.id}" data-category="${movie.category}">${getStatusText(movie.boxStatus)}</span>
                     <div class="movie-poster-container" style="width: 100%; height: calc(100% - 50px); position: relative;">
                         <div class="movie-poster-overlay">
@@ -1258,10 +1258,10 @@ function sortMovies(movies, sortBy = 'name', sortOrder = 'asc') {
 }
 
 /**
- * 从盒子中移除电影
+ * 从收藏夹中移除电影
  */
 async function removeMovieFromBox(movieId) {
-    const confirmed = confirm('确定要从盒子中移除这部电影吗？');
+    const confirmed = confirm('确定要从收藏夹中移除这部电影吗？');
 
     if (!confirmed) return;
 
@@ -1276,7 +1276,7 @@ async function removeMovieFromBox(movieId) {
         });
 
         if (!result.error) {
-            // 重新加载盒子数据
+            // 重新加载收藏夹数据
             await loadBoxData();
         } else {
             alert('移除失败: ' + result.error);
@@ -1288,7 +1288,7 @@ async function removeMovieFromBox(movieId) {
 }
 
 /**
- * 批量从盒子中移除电影
+ * 批量从收藏夹中移除电影
  */
 async function batchRemoveMovies() {
     if (state.selectedMovies.size === 0) {
@@ -1296,7 +1296,7 @@ async function batchRemoveMovies() {
         return;
     }
 
-    const confirmed = confirm(`确定要从盒子中移除选中的 ${state.selectedMovies.size} 部电影吗？`);
+    const confirmed = confirm(`确定要从收藏夹中移除选中的 ${state.selectedMovies.size} 部电影吗？`);
 
     if (!confirmed) return;
 
@@ -1330,7 +1330,7 @@ async function batchRemoveMovies() {
         // 清空选择
         state.selectedMovies.clear();
 
-        // 重新加载盒子数据
+        // 重新加载收藏夹数据
         await loadBoxData();
     } catch (error) {
         console.error('Error batch removing movies from box:', error);
@@ -1609,7 +1609,7 @@ async function playBoxMovies() {
         }
 
         if (playlist.length === 0) {
-            alert('盒子中没有可播放的视频文件');
+            alert('收藏夹中没有可播放的视频文件');
             return;
         }
 

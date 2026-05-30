@@ -6,7 +6,7 @@
 
 - [全局选项](#全局选项)
 - [电影命令 (movie)](#电影命令-movie)
-- [盒子命令 (box)](#盒子命令-box)
+- [收藏夹命令 (box)](#收藏夹命令-box)
 - [分类命令 (category)](#分类命令-category)
 - [标签命令 (tag)](#标签命令-tag)
 - [配置命令 (config)](#配置命令-config)
@@ -23,7 +23,7 @@
 | `-V, --version` | 显示版本号 | `movie-mgt -V` |
 | `-c, --config <path>` | 指定配置文件路径 | `movie-mgt -c /path/to/settings.json` |
 | `-m, --movies-dir <dir>` | 指定电影目录 | `movie-mgt -m /path/to/movies` |
-| `-b, --box-dir <dir>` | 指定盒子目录 | `movie-mgt -b /path/to/boxes` |
+| `-b, --box-dir <dir>` | 指定收藏夹目录 | `movie-mgt -b /path/to/boxes` |
 | `-o, --output <format>` | 输出格式：table/json/simple | `movie-mgt -o json` |
 | `--no-color` | 禁用彩色输出 | `movie-mgt --no-color` |
 | `-v, --verbose` | 详细输出模式 | `movie-mgt -v` |
@@ -38,7 +38,7 @@ movie-mgt -V
 # 使用自定义配置路径
 movie-mgt -c /etc/movie-mgt/settings.json movie ls
 
-# 指定电影和盒子目录
+# 指定电影和收藏夹目录
 movie-mgt -m /data/movies -b /data/boxes movie ls
 
 # 以JSON格式输出
@@ -324,20 +324,20 @@ movie-mgt movie status movie-001
 
 ---
 
-## 盒子命令 (box)
+## 收藏夹命令 (box)
 
 ### box list (别名: box ls)
 
-**功能**：列出所有电影盒子
+**功能**：列出所有电影收藏夹
 
 **参数**：无
 
-**输出**：盒子列表（名称、描述、电影数、分类）
+**输出**：收藏夹列表（名称、描述、电影数、分类）
 
 **示例**：
 
 ```bash
-# 列出所有盒子
+# 列出所有收藏夹
 movie-mgt box list
 # 输出:
 # 名称              描述              电影数    分类
@@ -361,21 +361,21 @@ movie-mgt box ls -o json
 
 ### box show (别名: box info)
 
-**功能**：查看盒子详情
+**功能**：查看收藏夹详情
 
 **参数**：
-- `<boxName>`：盒子名称（必需）
+- `<boxName>`：收藏夹名称（必需）
 
-**输出**：盒子详细信息及包含的电影列表
+**输出**：收藏夹详细信息及包含的电影列表
 
 **示例**：
 
 ```bash
-# 查看盒子详情
+# 查看收藏夹详情
 movie-mgt box show "科幻经典"
 # 输出:
 # 
-# 盒子详情:
+# 收藏夹详情:
 #   名称: 科幻经典
 #   描述: 经典科幻电影合集
 #   电影数: 15
@@ -393,38 +393,38 @@ movie-mgt box show "科幻经典" -o json
 
 ### box create
 
-**功能**：创建新盒子
+**功能**：创建新收藏夹
 
 **参数**：
-- `<boxName>`：盒子名称（必需）
-- `-d, --description <desc>`：盒子描述
+- `<boxName>`：收藏夹名称（必需）
+- `-d, --description <desc>`：收藏夹描述
 
 **输出**：创建成功确认
 
 **示例**：
 
 ```bash
-# 创建简单盒子
+# 创建简单收藏夹
 movie-mgt box create "我的待看"
 # 输出:
-# ✓ 盒子创建成功
+# ✓ 收藏夹创建成功
 #   名称: 我的待看
 #   描述: -
 
-# 创建带描述的盒子
+# 创建带描述的收藏夹
 movie-mgt box create "2024最爱" -d "2024年观看的最喜欢的电影"
 # 输出:
-# ✓ 盒子创建成功
+# ✓ 收藏夹创建成功
 #   名称: 2024最爱
 #   描述: 2024年观看的最喜欢的电影
 ```
 
 ### box edit
 
-**功能**：编辑盒子信息
+**功能**：编辑收藏夹信息
 
 **参数**：
-- `<boxName>`：原盒子名称（必需）
+- `<boxName>`：原收藏夹名称（必需）
 - `-n, --name <newName>`：新名称
 - `-d, --description <desc>`：新描述
 
@@ -433,10 +433,10 @@ movie-mgt box create "2024最爱" -d "2024年观看的最喜欢的电影"
 **示例**：
 
 ```bash
-# 修改盒子名称
+# 修改收藏夹名称
 movie-mgt box edit "我的待看" -n "计划观看"
 # 输出:
-# ✓ 盒子已更新
+# ✓ 收藏夹已更新
 #   原名称: 我的待看
 #   新名称: 计划观看
 #   描述: -
@@ -444,7 +444,7 @@ movie-mgt box edit "我的待看" -n "计划观看"
 # 修改描述
 movie-mgt box edit "科幻经典" -d "精选经典科幻电影"
 # 输出:
-# ✓ 盒子已更新
+# ✓ 收藏夹已更新
 #   原名称: 科幻经典
 #   新名称: 科幻经典
 #   描述: 精选经典科幻电影
@@ -452,10 +452,10 @@ movie-mgt box edit "科幻经典" -d "精选经典科幻电影"
 
 ### box delete (别名: box rm)
 
-**功能**：删除盒子
+**功能**：删除收藏夹
 
 **参数**：
-- `<boxName>`：盒子名称（必需）
+- `<boxName>`：收藏夹名称（必需）
 - `-f, --force`：强制删除
 
 **输出**：删除成功确认
@@ -463,22 +463,22 @@ movie-mgt box edit "科幻经典" -d "精选经典科幻电影"
 **示例**：
 
 ```bash
-# 删除盒子
-movie-mgt box delete "临时盒子"
+# 删除收藏夹
+movie-mgt box delete "临时收藏夹"
 # 输出:
-# ✓ 盒子已删除
-#   名称: 临时盒子
+# ✓ 收藏夹已删除
+#   名称: 临时收藏夹
 
 # 强制删除
-movie-mgt box rm "测试盒子" -f
+movie-mgt box rm "测试收藏夹" -f
 ```
 
 ### box add
 
-**功能**：添加电影到盒子
+**功能**：添加电影到收藏夹
 
 **参数**：
-- `<boxName>`：盒子名称（必需）
+- `<boxName>`：收藏夹名称（必需）
 - `<movieId>`：电影ID（必需）
 
 **输出**：添加成功确认
@@ -486,20 +486,20 @@ movie-mgt box rm "测试盒子" -f
 **示例**：
 
 ```bash
-# 添加电影到盒子
+# 添加电影到收藏夹
 movie-mgt box add "科幻经典" movie-001
 # 输出:
-# ✓ 电影已添加到盒子
-#   盒子: 科幻经典
+# ✓ 电影已添加到收藏夹
+#   收藏夹: 科幻经典
 #   电影: 变形金刚4
 ```
 
 ### box remove
 
-**功能**：从盒子移除电影
+**功能**：从收藏夹移除电影
 
 **参数**：
-- `<boxName>`：盒子名称（必需）
+- `<boxName>`：收藏夹名称（必需）
 - `<movieId>`：电影ID（必需）
 
 **输出**：移除成功确认
@@ -507,11 +507,11 @@ movie-mgt box add "科幻经典" movie-001
 **示例**：
 
 ```bash
-# 从盒子移除电影
+# 从收藏夹移除电影
 movie-mgt box remove "科幻经典" movie-001
 # 输出:
-# ✓ 电影已从盒子移除
-#   盒子: 科幻经典
+# ✓ 电影已从收藏夹移除
+#   收藏夹: 科幻经典
 #   电影: movie-001
 ```
 
@@ -680,7 +680,7 @@ movie-mgt config show
 # 
 # 当前配置:
 #   电影目录: /data/movies
-#   电影盒子目录: /data/boxes
+#   电影收藏夹目录: /data/boxes
 #   主题: dark
 #   语言: zh-CN
 
@@ -709,7 +709,7 @@ movie-mgt config show -o json
 
 **支持的键名**：
 - `moviesDir`：电影目录
-- `movieboxDir`：电影盒子目录
+- `movieboxDir`：收藏夹目录
 - `theme`：主题
 - `language`：语言
 
@@ -739,7 +739,7 @@ movie-mgt config get theme
 
 **支持的键名**：
 - `moviesDir`：电影目录
-- `movieboxDir`：电影盒子目录
+- `movieboxDir`：电影收藏夹目录
 - `theme`：主题
 - `language`：语言
 
@@ -822,8 +822,8 @@ movie-mgt stats -o json
 | 错误信息 | 说明 | 解决方法 |
 |---------|------|---------|
 | 电影不存在 | 指定的电影ID不存在 | 检查电影ID是否正确 |
-| 盒子已存在 | 尝试创建已存在的盒子 | 使用不同的名称或编辑现有盒子 |
-| 盒子不存在 | 指定的盒子名称不存在 | 检查盒子名称是否正确 |
+| 收藏夹已存在 | 尝试创建已存在的收藏夹 | 使用不同的名称或编辑现有收藏夹 |
+| 收藏夹不存在 | 指定的收藏夹名称不存在 | 检查收藏夹名称是否正确 |
 | 标签已存在 | 尝试创建已存在的标签ID | 使用不同的ID或编辑现有标签 |
 | 标签不存在 | 指定的标签ID不存在 | 检查标签ID是否正确 |
 | 分类不存在 | 指定的分类ID不存在 | 检查分类ID是否正确 |

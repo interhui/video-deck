@@ -24,14 +24,14 @@ describe('BoxService', () => {
     });
 
     describe('getBoxesDir', () => {
-        test('SVC-BOX-001: 返回正确盒子目录', () => {
+        test('SVC-BOX-001: 返回正确收藏夹目录', () => {
             const result = service.getBoxesDir(testDataDir);
             expect(result).toBe(testDataDir);
         });
     });
 
     describe('getAllBoxes', () => {
-        test('SVC-BOX-002: 返回所有盒子列表', async () => {
+        test('SVC-BOX-002: 返回所有收藏夹列表', async () => {
             const box1 = { metadata: { name: 'Box1', description: 'Desc1' }, movie: [] };
             const box2 = { metadata: { name: 'Box2', description: 'Desc2' }, movie: [] };
             fs.writeFileSync(path.join(testDataDir, 'Box1.json'), JSON.stringify(box1));
@@ -66,14 +66,14 @@ describe('BoxService', () => {
             expect(result).toEqual([]);
         });
 
-        test('SVC-BOX-006: 盒子不存在返回空数组', async () => {
+        test('SVC-BOX-006: 收藏夹不存在返回空数组', async () => {
             const result = await service.getAllBoxes(path.join(__dirname, 'test-data', 'notexists'));
             expect(result).toEqual([]);
         });
     });
 
     describe('readBoxFile', () => {
-        test('SVC-BOX-007: 正确读取盒子JSON', async () => {
+        test('SVC-BOX-007: 正确读取收藏夹JSON', async () => {
             const box = { metadata: { name: 'TestBox' }, movie: [] };
             fs.writeFileSync(path.join(testDataDir, 'TestBox.json'), JSON.stringify(box));
 
@@ -100,22 +100,22 @@ describe('BoxService', () => {
     });
 
     describe('createBox', () => {
-        test('SVC-BOX-011: 创建带描述的盒子', async () => {
+        test('SVC-BOX-011: 创建带描述的收藏夹', async () => {
             const result = await service.createBox('NewBox', 'My Description', testDataDir);
             expect(result.success).toBe(true);
             expect(fs.existsSync(path.join(testDataDir, 'NewBox.json'))).toBe(true);
         });
 
-        test('SVC-BOX-012: 创建不带描述盒子', async () => {
+        test('SVC-BOX-012: 创建不带描述收藏夹', async () => {
             await service.createBox('NoDescBox', '', testDataDir);
             const content = JSON.parse(fs.readFileSync(path.join(testDataDir, 'NoDescBox.json'), 'utf-8'));
             expect(content.metadata.description).toBe('');
         });
 
-        test('SVC-BOX-013: 盒子已存在抛错误', async () => {
+        test('SVC-BOX-013: 收藏夹已存在抛错误', async () => {
             await service.createBox('ExistingBox', '', testDataDir);
             await expect(service.createBox('ExistingBox', '', testDataDir))
-                .rejects.toThrow('盒子已存在');
+                .rejects.toThrow('收藏夹已存在');
         });
 
         test('SVC-BOX-014: 自动创建目录', async () => {
@@ -136,9 +136,9 @@ describe('BoxService', () => {
             expect(result.backupPath).toContain('.json.del');
         });
 
-        test('SVC-BOX-016: 盒子不存在抛错误', async () => {
+        test('SVC-BOX-016: 收藏夹不存在抛错误', async () => {
             await expect(service.deleteBox('NotExists', testDataDir))
-                .rejects.toThrow('盒子不存在');
+                .rejects.toThrow('收藏夹不存在');
         });
 
         test('SVC-BOX-017: 备份内容完整', async () => {
@@ -179,9 +179,9 @@ describe('BoxService', () => {
             expect(content.metadata.description).toBe('NewDesc');
         });
 
-        test('SVC-BOX-021: 盒子不存在抛错误', async () => {
+        test('SVC-BOX-021: 收藏夹不存在抛错误', async () => {
             await expect(service.updateBox('NotExists', 'NewName', 'Desc', testDataDir))
-                .rejects.toThrow('盒子不存在');
+                .rejects.toThrow('收藏夹不存在');
         });
 
         test('SVC-BOX-022: 新名称冲突抛错误', async () => {
@@ -191,12 +191,12 @@ describe('BoxService', () => {
             fs.writeFileSync(path.join(testDataDir, 'Box2.json'), JSON.stringify(box2));
 
             await expect(service.updateBox('Box1', 'Box2', '', testDataDir))
-                .rejects.toThrow('新盒子名称已存在');
+                .rejects.toThrow('新收藏夹名称已存在');
         });
     });
 
     describe('getBoxDetail', () => {
-        test('SVC-BOX-023: 返回完整盒子详情', async () => {
+        test('SVC-BOX-023: 返回完整收藏夹详情', async () => {
             const box = {
                 metadata: { name: 'DetailBox', description: 'Test' },
                 movie: [{ id: 'm1', comment: 'Good' }]
@@ -227,7 +227,7 @@ describe('BoxService', () => {
     });
 
     describe('addMovieToBox', () => {
-        test('SVC-BOX-026: 添加新电影到盒子', async () => {
+        test('SVC-BOX-026: 添加新电影到收藏夹', async () => {
             const box = { metadata: { name: 'AddBox' }, movie: [] };
             fs.writeFileSync(path.join(testDataDir, 'AddBox.json'), JSON.stringify(box));
 
@@ -266,9 +266,9 @@ describe('BoxService', () => {
             expect(content.movie[0].id).toBe('m2');
         });
 
-        test('SVC-BOX-029: 盒子不存在抛错误', async () => {
+        test('SVC-BOX-029: 收藏夹不存在抛错误', async () => {
             await expect(service.removeMovieFromBox('NotExists', 'm1', testDataDir))
-                .rejects.toThrow('盒子不存在');
+                .rejects.toThrow('收藏夹不存在');
         });
     });
 
@@ -296,7 +296,7 @@ describe('BoxService', () => {
     });
 
     describe('addMoviesToBox', () => {
-        test('SVC-BOX-032: 批量添加多个电影到盒子', async () => {
+        test('SVC-BOX-032: 批量添加多个电影到收藏夹', async () => {
             const box = { metadata: { name: 'BatchAddBox' }, movie: [] };
             fs.writeFileSync(path.join(testDataDir, 'BatchAddBox.json'), JSON.stringify(box));
 
@@ -342,7 +342,7 @@ describe('BoxService', () => {
             expect(movie1.comment).toBe('New comment');
         });
 
-        test('SVC-BOX-034: 盒子不存在时自动创建', async () => {
+        test('SVC-BOX-034: 收藏夹不存在时自动创建', async () => {
             const movieInfoList = [
                 { id: 'movie1', status: 'unwatched' },
                 { id: 'movie2', status: 'new' }

@@ -110,6 +110,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         playlist.forEach((item, index) => {
             const div = document.createElement('div');
             div.className = 'playlist-item' + (index === currentIndex ? ' active' : '');
+            div.dataset.index = index;
             div.innerHTML = `
                 <span class="playlist-item-index">${index + 1}</span>
                 <span class="playlist-item-title">${item.title || path.basename(item.path)}</span>
@@ -122,6 +123,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } else {
                     playItem(index);
                 }
+            });
+            div.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                showContextMenu(e, index, item);
             });
             elements.playlist.appendChild(div);
         });
@@ -157,6 +163,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             isPlaying = true;
             updatePlayPauseBtn();
             const movieName = item.title || path.basename(item.path);
+            elements.playerTitle.textContent = movieName;
             window.electronAPI.addPlayHistory(movieName).catch(err => {
                 console.error('记录播放历史失败:', err);
             });
@@ -477,18 +484,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     elements.addToBoxBtn.addEventListener('click', async () => {
         if (playlist.length === 0) {
-            showScreenshotToast('播放列表为空，无法添加到盒子');
+            showScreenshotToast('播放列表为空，无法添加到收藏夹');
             return;
         }
 
         const boxes = await window.electronAPI.getAllBoxes();
 
         if (!boxes || boxes.length === 0) {
-            showScreenshotToast('请先创建电影盒子');
+            showScreenshotToast('请先创建电影收藏夹');
             return;
         }
 
-        elements.playerBoxSelect.innerHTML = '<option value="">选择电影盒子...</option>';
+        elements.playerBoxSelect.innerHTML = '<option value="">选择电影收藏夹...</option>';
         boxes.forEach(box => {
             const option = document.createElement('option');
             option.value = box.name;
@@ -518,7 +525,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const boxName = elements.playerBoxSelect.value;
 
         if (!boxName) {
-            showScreenshotToast('请选择电影盒子');
+            showScreenshotToast('请选择电影收藏夹');
             return;
         }
 
@@ -550,5 +557,100 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error('Error adding playlist to box:', error);
             showScreenshotToast('添加失败: ' + error.message);
         }
+    });
+
+    const contextMenu = document.getElementById('playlist-context-menu');
+    let contextMenuTargetItem = null;
+    let contextMenuTargetIndex = null;
+
+    function showContextMenu(e, index, item) {
+        contextMenuTargetItem = item;
+        contextMenuTargetIndex = index;
+
+        contextMenu.style.left = e.clientX + 'px';
+        contextMenu.style.top = e.clientY + 'px';
+        contextMenu.classList.add('show');
+
+        const menuWidth = contextMenu.offsetWidth;
+        const menuHeight = contextMenu.offsetHeight;
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+
+        if (e.clientX + menuWidth > windowWidth) {
+            contextMenu.style.left = (windowWidth - menuWidth - 5) + 'px';
+        }
+        if (e.clientY + menuHeight > windowHeight) {
+            contextMenu.style.top = (windowHeight - menuHeight - 5) + 'px';
+        }
+    }
+
+    function hideContextMenu() {
+        contextMenu.classList.remove('show');
+        contextMenuTargetItem = null;
+        contextMenuTargetIndex = null;
+    }
+
+    document.addEventListener('click', () => {
+        hideContextMenu();
+    });
+
+    contextMenu.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const menuItem = e.target.closest('.context-menu-item');
+        if (!menuItem || !contextMenuTargetItem) return;
+
+        const action = menuItem.dataset.action;
+
+        switch (action) {
+            case 'play':
+                playItem(contextMenuTargetIndex);
+                break;
+            case 'system-play':
+                try {
+                    const result = await window.electronAPI.playWithSystemPlayer(contextMenuTargetItem.path);
+                    if (result.error) {
+                        showScreenshotToast('使用系统播放器失败: ' + result.error);
+                    }
+                } catch (error) {
+                    showScreenshotToast('使用系统播放器失败: ' + error.message);
+                }
+                break;
+            case 'open-folder':
+                try {
+                    const result = await window.electronAPI.openFolder(contextMenuTargetItem.path);
+                    if (result.error) {
+                        showScreenshotToast('打开文件夹失败: ' + result.error);
+                    }
+                } catch (error) {
+                    showScreenshotToast('打开文件夹失败: ' + error.message);
+                }
+                break;
+            case 'movie-detail':
+                if (contextMenuTargetItem.movieId) {
+                    try {
+                        const movieDetail = await window.electronAPI.getMovieDetail(contextMenuTargetItem.movieId);
+                        if (movieDetail && movieDetail.id) {
+                            await window.electronAPI.openMovieDetail(movieDetail);
+                        } else {
+                            showScreenshotToast('无法获取电影详情: ' + (movieDetail.error || '未知错误'));
+                        }
+                    } catch (error) {
+                        showScreenshotToast('打开电影详情失败: ' + error.message);
+                    }
+                } else {
+                    showScreenshotToast('此播放项没有关联的电影信息');
+                }
+                break;
+            case 'copy-path':
+                try {
+                    await window.electronAPI.copyToClipboard(contextMenuTargetItem.path);
+                    showScreenshotToast('路径已复制到剪贴板');
+                } catch (error) {
+                    showScreenshotToast('复制路径失败: ' + error.message);
+                }
+                break;
+        }
+
+        hideContextMenu();
     });
 });

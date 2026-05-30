@@ -1443,6 +1443,20 @@ class MovieService {
             throw error;
         }
     }
+
+    /**
+     * 从电影列表中排除指定收藏夹中已收藏的电影
+     * @param {Array} movies - 电影列表
+     * @param {Array<string>} excludedMovieIds - 需要排除的电影ID列表
+     * @returns {Array} 过滤后的电影列表
+     */
+    excludeMoviesInBox(movies, excludedMovieIds) {
+        if (!excludedMovieIds || excludedMovieIds.length === 0) {
+            return movies;
+        }
+        const excludedSet = new Set(excludedMovieIds);
+        return movies.filter(movie => !excludedSet.has(movie.id));
+    }
 }
 
 module.exports = MovieService;

@@ -1,6 +1,6 @@
 /**
  * 导出服务
- * 负责电影盒子的导出逻辑处理
+ * 负责电影收藏夹的导出逻辑处理
  */
 const archiver = require('archiver');
 const path = require('path');
@@ -12,7 +12,7 @@ class ExportService {
     }
 
     /**
-     * 导出盒子为ZIP格式
+     * 导出收藏夹为ZIP格式
      * @param {Array} movies - 电影列表
      * @param {string} moviesDir - 电影目录路径
      * @param {string} exportPath - 导出文件路径
@@ -77,7 +77,7 @@ class ExportService {
     }
 
     /**
-     * 导出盒子为CSV格式
+     * 导出收藏夹为CSV格式
      * @param {Array} movies - 电影列表
      * @param {string} exportPath - 导出文件路径
      * @returns {Promise<object>} 导出结果
@@ -127,7 +127,7 @@ class ExportService {
     }
 
     /**
-     * 导出盒子为DPL格式（PotPlayer播放列表）
+     * 导出收藏夹为DPL格式（PotPlayer播放列表）
      * @param {Array} movies - 电影列表
      * @param {string} exportPath - 导出文件路径
      * @returns {Promise<object>} 导出结果
@@ -157,9 +157,9 @@ class ExportService {
     }
 
     /**
-     * 导出盒子为JSON格式
-     * @param {Array} movies - 电影列表（盒子中的电影数据）
-     * @param {string} boxName - 盒子名称
+     * 导出收藏夹为JSON格式
+     * @param {Array} movies - 电影列表（收藏夹中的电影数据）
+     * @param {string} boxName - 收藏夹名称
      * @param {string} exportPath - 导出文件路径
      * @returns {Promise<object>} 导出结果
      */
@@ -185,12 +185,12 @@ class ExportService {
     }
 
     /**
-     * 导出盒子
+     * 导出收藏夹
      * @param {string} exportType - 导出类型 (zip/csv/dpl/json)
      * @param {Array} movies - 电影列表
      * @param {string} moviesDir - 电影目录路径
      * @param {string} exportPath - 导出文件路径
-     * @param {string} boxName - 盒子名称（用于JSON导出）
+     * @param {string} boxName - 收藏夹名称（用于JSON导出）
      * @returns {Promise<object>} 导出结果
      */
     async exportBox(exportType, movies, moviesDir, exportPath, boxName = '') {
@@ -210,7 +210,7 @@ class ExportService {
 
     /**
      * 生成导出文件名
-     * @param {string} boxName - 盒子名称
+     * @param {string} boxName - 收藏夹名称
      * @param {string} exportType - 导出类型
      * @returns {string} 默认文件名
      */

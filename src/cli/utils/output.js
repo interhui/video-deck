@@ -131,7 +131,7 @@ function outputBoxList(boxes) {
     });
 
     console.log(table.toString());
-    console.log(`\n共 ${boxes.length} 个盒子`);
+    console.log(`\n共 ${boxes.length} 个收藏夹`);
 }
 
 /**
