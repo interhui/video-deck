@@ -31,6 +31,11 @@ let detailSettings = {};
 
 let tagSelectorSearchKeyword = '';
 
+// 演员显示状态：默认收缩（只显示前6个），超过6个可展开
+const MAX_VISIBLE_ACTORS = 6;
+let actorsExpanded = false;
+let currentActorsArray = [];
+
 const elements = {
     closeBtn: document.getElementById('close-btn'),
     movieTitle: document.getElementById('movie-title'),
@@ -823,7 +828,7 @@ function filterTagById(tagId) {
 }
 
 /**
- * 渲染演员显示（每行最多6个）
+ * 渲染演员显示（超过6个演员时支持展开/收缩）
  * @param {Array|string} actors - 演员数组或逗号分隔的字符串
  */
 function renderActorsForDisplay(actors) {
@@ -845,21 +850,47 @@ function renderActorsForDisplay(actors) {
         return;
     }
 
-    const MAX_ACTORS_PER_LINE = 6;
+    // 保存演员数组用于展开/收缩切换
+    currentActorsArray = actorsArray;
+
+    // 如果演员数 <= 6，直接渲染全部，不显示展开/收缩按钮
+    if (actorsArray.length <= MAX_VISIBLE_ACTORS) {
+        let html = '';
+        actorsArray.forEach((actor, index) => {
+            html += `<span class="actor-tag clickable" data-actor-name="${escapeHtml(actor)}" onclick="filterActorByName('${escapeHtml(actor)}')">${actor}</span>`;
+            if ((index + 1) % MAX_VISIBLE_ACTORS === 0 && index < actorsArray.length - 1) {
+                html += '<br>';
+            }
+        });
+        elements.movieActorsDisplay.innerHTML = html;
+        return;
+    }
+
+    // 演员数 > 6，支持展开/收缩
     let html = '';
-    let lineBreakAdded = false;
+    const displayActors = actorsExpanded ? actorsArray : actorsArray.slice(0, MAX_VISIBLE_ACTORS);
 
-    actorsArray.forEach((actor, index) => {
+    displayActors.forEach((actor, index) => {
         html += `<span class="actor-tag clickable" data-actor-name="${escapeHtml(actor)}" onclick="filterActorByName('${escapeHtml(actor)}')">${actor}</span>`;
-
-        // 每6个演员添加换行（除了最后一个）
-        if ((index + 1) % MAX_ACTORS_PER_LINE === 0 && index < actorsArray.length - 1) {
+        if ((index + 1) % MAX_VISIBLE_ACTORS === 0 && index < displayActors.length - 1) {
             html += '<br>';
-            lineBreakAdded = true;
         }
     });
 
+    // 添加展开/收缩按钮
+    const buttonText = actorsExpanded ? '收缩' : '展开';
+    const totalText = actorsExpanded ? `（共 ${actorsArray.length} 人）` : `（共 ${actorsArray.length} 人）`;
+    html += `<button class="actors-toggle-btn" onclick="toggleActorsDisplay()">${buttonText}${totalText}</button>`;
+
     elements.movieActorsDisplay.innerHTML = html;
+}
+
+/**
+ * 切换演员显示展开/收缩状态
+ */
+function toggleActorsDisplay() {
+    actorsExpanded = !actorsExpanded;
+    renderActorsForDisplay(currentActorsArray);
 }
 
 /**
