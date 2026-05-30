@@ -100,6 +100,34 @@ body {
 
 .video-container {
     flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #000;
+}
+
+.subtitle-display {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    padding: 10px 20px;
+    font-size: 22px;
+    color: #fff;
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 4px;
+    max-width: 80%;
+    margin: 0 auto;
+    line-height: 1.4;
+    font-weight: 500;
+    z-index: 10;
+    min-height: 40px;
+}
+
+.video-container {
+    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -735,4 +763,46 @@ video {
 
 .context-menu-item span {
     display: block;
+}
+
+.subtitle-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.subtitle-info {
+    margin-bottom: 16px;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.subtitle-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.subtitle-item {
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border-radius: 4px;
+}
+
+.subtitle-item:hover {
+    background-color: var(--hover-bg);
+}
+
+.subtitle-item input[type="radio"] {
+    width: 13px;
+    height: 13px;
+    cursor: pointer;
+}
+
+.subtitle-item label {
+    cursor: pointer;
+    color: var(--text-color);
+    font-size: 13px;
 }

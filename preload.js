@@ -246,7 +246,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // 文件操作
     openFolder: (filePath) => ipcRenderer.invoke('open-folder', filePath),
     copyToClipboard: (text) => ipcRenderer.invoke('copy-to-clipboard', text),
-    playWithSystemPlayer: (filePath) => ipcRenderer.invoke('play-with-system-player', filePath)
+    playWithSystemPlayer: (filePath) => ipcRenderer.invoke('play-with-system-player', filePath),
+
+    // 字幕功能
+    findSubtitleFiles: (videoPath) => ipcRenderer.invoke('find-subtitle-files', videoPath),
+    getAutoSubtitle: (videoPath) => ipcRenderer.invoke('get-auto-subtitle', videoPath),
+    loadSubtitle: (subtitlePath) => ipcRenderer.invoke('load-subtitle', subtitlePath)
 });
 
 console.log('Preload script loaded');

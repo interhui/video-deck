@@ -10,6 +10,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         applyTheme(theme);
     });
 
+    // 实现简单的basename函数（前端无法直接使用Node.js的path模块）
+    function basename(filePath) {
+        if (!filePath) return '';
+        const parts = filePath.replace(/\\/g, '/').split('/');
+        return parts[parts.length - 1] || '';
+    }
+
     // 获取 DOM 元素
     const elements = {
         videoPlayer: document.getElementById('video-player'),
@@ -28,6 +35,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         closeBtn: document.getElementById('close-btn'),
         fullscreenBtn: document.getElementById('fullscreen-btn'),
         screenshotBtn: document.getElementById('screenshot-btn'),
+        subtitleBtn: document.getElementById('subtitle-btn'),
+        subtitleDisplay: document.getElementById('subtitle-display'),
         historyBtn: document.getElementById('history-btn'),
         historyModal: document.getElementById('player-history-modal'),
         historyCloseBtn: document.getElementById('history-close-btn'),
@@ -41,18 +50,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         addToBoxInfo: document.getElementById('add-to-box-info'),
         playerBoxSelect: document.getElementById('player-box-select'),
         confirmAddToBox: document.getElementById('confirm-add-to-box'),
-        cancelAddToBox: document.getElementById('cancel-add-to-box')
+        cancelAddToBox: document.getElementById('cancel-add-to-box'),
+        subtitleModal: document.getElementById('player-subtitle-modal'),
+        subtitleCloseBtn: document.getElementById('subtitle-close-btn'),
+        subtitleInfo: document.getElementById('subtitle-info'),
+        subtitleList: document.getElementById('subtitle-list'),
+        confirmSubtitle: document.getElementById('confirm-subtitle'),
+        cancelSubtitle: document.getElementById('cancel-subtitle')
     };
 
     let currentMovieId = null;
     let currentMovieFolderPath = null;
 
-    // 状态
     let playlist = [];
     let currentIndex = 0;
     let isPlaying = false;
+    
+    let currentSubtitles = [];
+    let currentSubtitleIndex = -1;
+    let availableSubtitleFiles = [];
+    let selectedSubtitleFile = null;
 
-    // 格式化时间
     function formatTime(seconds) {
         if (isNaN(seconds) || seconds < 0) return '00:00';
         const h = Math.floor(seconds / 3600);
@@ -62,6 +80,136 @@ document.addEventListener('DOMContentLoaded', async () => {
             return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
         return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+
+    async function autoLoadSubtitle(videoPath) {
+        if (!videoPath) {
+            currentSubtitles = [];
+            return;
+        }
+
+        try {
+            const result = await window.electronAPI.getAutoSubtitle(videoPath);
+            
+            if (result && result.path) {
+                const subtitles = await window.electronAPI.loadSubtitle(result.path);
+                currentSubtitles = subtitles;
+                availableSubtitleFiles = await window.electronAPI.findSubtitleFiles(videoPath);
+                
+                if (availableSubtitleFiles.length > 0) {
+                    selectedSubtitleFile = result;
+                    showScreenshotToast(`已加载字幕: ${result.filename}`);
+                }
+            } else {
+                currentSubtitles = [];
+                availableSubtitleFiles = await window.electronAPI.findSubtitleFiles(videoPath);
+                selectedSubtitleFile = null;
+            }
+        } catch (error) {
+            console.error('自动加载字幕失败:', error);
+            currentSubtitles = [];
+        }
+    }
+
+    function updateSubtitleDisplay() {
+        if (!elements.subtitleDisplay || currentSubtitles.length === 0) {
+            if (elements.subtitleDisplay) {
+                elements.subtitleDisplay.textContent = '';
+            }
+            return;
+        }
+
+        const currentTime = elements.videoPlayer.currentTime;
+        
+        let subtitleText = '';
+        for (let i = 0; i < currentSubtitles.length; i++) {
+            const subtitle = currentSubtitles[i];
+            if (currentTime >= subtitle.startTime && currentTime <= subtitle.endTime) {
+                subtitleText = subtitle.text;
+                currentSubtitleIndex = i;
+                break;
+            }
+        }
+
+        elements.subtitleDisplay.textContent = subtitleText;
+    }
+
+    async function showSubtitleModal(videoPath) {
+        if (!videoPath) {
+            showScreenshotToast('无法获取视频路径');
+            return;
+        }
+
+        try {
+            const subtitleFiles = await window.electronAPI.findSubtitleFiles(videoPath);
+            
+            if (subtitleFiles.length === 0) {
+                showScreenshotToast('该视频目录下没有字幕文件');
+                return;
+            }
+
+            availableSubtitleFiles = subtitleFiles;
+            elements.subtitleList.innerHTML = '';
+
+            const noneOption = document.createElement('div');
+            noneOption.className = 'subtitle-item';
+            const isNoneSelected = selectedSubtitleFile === null;
+            noneOption.innerHTML = `
+                <input type="radio" name="subtitle-select" value="" id="subtitle-none" ${isNoneSelected ? 'checked' : ''}>
+                <label for="subtitle-none">无字幕</label>
+            `;
+            elements.subtitleList.appendChild(noneOption);
+
+            subtitleFiles.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.className = 'subtitle-item';
+                const isSelected = selectedSubtitleFile && selectedSubtitleFile.path === file.path;
+                item.innerHTML = `
+                    <input type="radio" name="subtitle-select" value="${file.path}" id="subtitle-${index}" ${isSelected ? 'checked' : ''}>
+                    <label for="subtitle-${index}">${file.filename}</label>
+                `;
+                elements.subtitleList.appendChild(item);
+            });
+
+            elements.subtitleInfo.textContent = `当前视频: ${basename(videoPath)}`;
+            elements.subtitleModal.style.display = 'flex';
+        } catch (error) {
+            console.error('加载字幕列表失败:', error);
+            showScreenshotToast('加载字幕列表失败');
+        }
+    }
+
+    async function handleSubtitleSwitch() {
+        const selectedRadio = document.querySelector('input[name="subtitle-select"]:checked');
+        
+        if (!selectedRadio) {
+            showScreenshotToast('请选择字幕文件');
+            return;
+        }
+
+        const selectedPath = selectedRadio.value;
+
+        if (selectedPath === '') {
+            currentSubtitles = [];
+            selectedSubtitleFile = null;
+            elements.subtitleDisplay.textContent = '';
+            showScreenshotToast('已关闭字幕');
+        } else {
+            try {
+                const subtitles = await window.electronAPI.loadSubtitle(selectedPath);
+                currentSubtitles = subtitles;
+                
+                const selectedFile = availableSubtitleFiles.find(f => f.path === selectedPath);
+                selectedSubtitleFile = selectedFile;
+                
+                showScreenshotToast(`已加载字幕: ${selectedFile.filename}`);
+            } catch (error) {
+                console.error('加载字幕失败:', error);
+                showScreenshotToast('加载字幕失败');
+            }
+        }
+
+        elements.subtitleModal.style.display = 'none';
     }
 
     // 加载播放列表
@@ -113,7 +261,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             div.dataset.index = index;
             div.innerHTML = `
                 <span class="playlist-item-index">${index + 1}</span>
-                <span class="playlist-item-title">${item.title || path.basename(item.path)}</span>
+                <span class="playlist-item-title">${item.title || basename(item.path)}</span>
                 <button class="playlist-item-remove" title="从播放列表移除">✕</button>
             `;
             div.addEventListener('click', (e) => {
@@ -133,7 +281,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // 播放指定项
     function playItem(index, startTime = 0) {
         if (index < 0 || index >= playlist.length) return;
 
@@ -145,6 +292,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         elements.videoPlayer.src = fileUrl;
         elements.videoPlayer.load();
+
+        currentSubtitles = [];
+        selectedSubtitleFile = null;
+        elements.subtitleDisplay.textContent = '';
+
+        autoLoadSubtitle(item.path);
 
         renderPlaylist();
 
@@ -162,7 +315,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.videoPlayer.play().then(() => {
             isPlaying = true;
             updatePlayPauseBtn();
-            const movieName = item.title || path.basename(item.path);
+            const movieName = item.title || basename(item.path);
             elements.playerTitle.textContent = movieName;
             window.electronAPI.addPlayHistory(movieName).catch(err => {
                 console.error('记录播放历史失败:', err);
@@ -191,8 +344,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // 事件监听 - 视频播放
-    elements.videoPlayer.addEventListener('timeupdate', updateProgress);
+    elements.videoPlayer.addEventListener('timeupdate', () => {
+        updateProgress();
+        updateSubtitleDisplay();
+    });
 
     elements.videoPlayer.addEventListener('loadedmetadata', () => {
         elements.totalTime.textContent = formatTime(elements.videoPlayer.duration);
@@ -390,6 +545,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     elements.screenshotBtn.addEventListener('click', takeScreenshot);
+
+    elements.subtitleBtn.addEventListener('click', async () => {
+        const currentItem = playlist[currentIndex];
+        if (currentItem) {
+            await showSubtitleModal(currentItem.path);
+        } else {
+            showScreenshotToast('当前没有播放视频');
+        }
+    });
+
+    elements.subtitleCloseBtn.addEventListener('click', () => {
+        elements.subtitleModal.style.display = 'none';
+    });
+
+    elements.cancelSubtitle.addEventListener('click', () => {
+        elements.subtitleModal.style.display = 'none';
+    });
+
+    elements.subtitleModal.addEventListener('click', (e) => {
+        if (e.target === elements.subtitleModal) {
+            elements.subtitleModal.style.display = 'none';
+        }
+    });
+
+    elements.confirmSubtitle.addEventListener('click', async () => {
+        await handleSubtitleSwitch();
+    });
 
     elements.historyBtn.addEventListener('click', async () => {
         await loadAndDisplayHistory();
@@ -604,6 +786,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         switch (action) {
             case 'play':
                 playItem(contextMenuTargetIndex);
+                break;
+            case 'subtitle-switch':
+                await showSubtitleModal(contextMenuTargetItem.path);
                 break;
             case 'system-play':
                 try {

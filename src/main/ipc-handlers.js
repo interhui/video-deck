@@ -2130,6 +2130,36 @@ function setupIpcHandlers(services) {
         }
     });
 
+    ipcMain.handle('find-subtitle-files', async (event, videoPath) => {
+        try {
+            const subtitleFiles = await playerService.findSubtitleFiles(videoPath);
+            return subtitleFiles;
+        } catch (error) {
+            console.error('Error finding subtitle files:', error);
+            return [];
+        }
+    });
+
+    ipcMain.handle('get-auto-subtitle', async (event, videoPath) => {
+        try {
+            const subtitle = await playerService.getAutoSubtitle(videoPath);
+            return subtitle;
+        } catch (error) {
+            console.error('Error getting auto subtitle:', error);
+            return null;
+        }
+    });
+
+    ipcMain.handle('load-subtitle', async (event, subtitlePath) => {
+        try {
+            const subtitles = await playerService.loadSubtitle(subtitlePath);
+            return subtitles;
+        } catch (error) {
+            console.error('Error loading subtitle:', error);
+            return [];
+        }
+    });
+
     console.log('IPC handlers setup complete');
 }
 
