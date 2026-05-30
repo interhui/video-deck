@@ -85,6 +85,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function autoLoadSubtitle(videoPath) {
         if (!videoPath) {
             currentSubtitles = [];
+            elements.subtitleDisplay.style.display = 'none';
             return;
         }
 
@@ -98,16 +99,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 if (availableSubtitleFiles.length > 0) {
                     selectedSubtitleFile = result;
+                    elements.subtitleDisplay.style.display = 'block';
                     showScreenshotToast(`已加载字幕: ${result.filename}`);
                 }
             } else {
                 currentSubtitles = [];
                 availableSubtitleFiles = await window.electronAPI.findSubtitleFiles(videoPath);
                 selectedSubtitleFile = null;
+                elements.subtitleDisplay.style.display = 'none';
             }
         } catch (error) {
             console.error('自动加载字幕失败:', error);
             currentSubtitles = [];
+            elements.subtitleDisplay.style.display = 'none';
         }
     }
 
@@ -193,6 +197,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentSubtitles = [];
             selectedSubtitleFile = null;
             elements.subtitleDisplay.textContent = '';
+            elements.subtitleDisplay.style.display = 'none';
             showScreenshotToast('已关闭字幕');
         } else {
             try {
@@ -202,6 +207,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const selectedFile = availableSubtitleFiles.find(f => f.path === selectedPath);
                 selectedSubtitleFile = selectedFile;
                 
+                elements.subtitleDisplay.style.display = 'block';
                 showScreenshotToast(`已加载字幕: ${selectedFile.filename}`);
             } catch (error) {
                 console.error('加载字幕失败:', error);
@@ -296,6 +302,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentSubtitles = [];
         selectedSubtitleFile = null;
         elements.subtitleDisplay.textContent = '';
+        elements.subtitleDisplay.style.display = 'none';
 
         autoLoadSubtitle(item.path);
 
@@ -436,7 +443,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (document.fullscreenElement) {
             document.exitFullscreen();
         } else {
-            elements.videoPlayer.requestFullscreen();
+            const videoSection = document.querySelector('.video-section');
+            videoSection.requestFullscreen();
         }
     });
 
@@ -547,6 +555,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     elements.screenshotBtn.addEventListener('click', takeScreenshot);
 
     elements.subtitleBtn.addEventListener('click', async () => {
+        if (document.fullscreenElement) {
+            await document.exitFullscreen();
+        }
         const currentItem = playlist[currentIndex];
         if (currentItem) {
             await showSubtitleModal(currentItem.path);
