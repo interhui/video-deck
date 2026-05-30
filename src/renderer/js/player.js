@@ -605,6 +605,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             case 'play':
                 playItem(contextMenuTargetIndex);
                 break;
+            case 'system-play':
+                try {
+                    const result = await window.electronAPI.playWithSystemPlayer(contextMenuTargetItem.path);
+                    if (result.error) {
+                        showScreenshotToast('使用系统播放器失败: ' + result.error);
+                    }
+                } catch (error) {
+                    showScreenshotToast('使用系统播放器失败: ' + error.message);
+                }
+                break;
             case 'open-folder':
                 try {
                     const result = await window.electronAPI.openFolder(contextMenuTargetItem.path);

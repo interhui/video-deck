@@ -2119,6 +2119,17 @@ function setupIpcHandlers(services) {
         }
     });
 
+    ipcMain.handle('play-with-system-player', async (event, filePath) => {
+        try {
+            const { shell } = require('electron');
+            await shell.openPath(filePath);
+            return { success: true };
+        } catch (error) {
+            console.error('Error playing with system player:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
     console.log('IPC handlers setup complete');
 }
 

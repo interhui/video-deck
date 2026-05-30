@@ -245,7 +245,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     // 文件操作
     openFolder: (filePath) => ipcRenderer.invoke('open-folder', filePath),
-    copyToClipboard: (text) => ipcRenderer.invoke('copy-to-clipboard', text)
+    copyToClipboard: (text) => ipcRenderer.invoke('copy-to-clipboard', text),
+    playWithSystemPlayer: (filePath) => ipcRenderer.invoke('play-with-system-player', filePath)
 });
 
 console.log('Preload script loaded');
