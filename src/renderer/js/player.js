@@ -293,10 +293,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentIndex = index;
         const item = playlist[currentIndex];
 
-        const videoPath = item.path.replace(/\\/g, '/');
-        const fileUrl = `file:///${videoPath}`;
+        // Convert Windows path to file:// URL
+        // UNC paths (\\server\share) need to become file:////server/share
+        let videoPath = item.path;
+        if (videoPath.startsWith('\\\\')) {
+            // UNC path - convert to file URL with proper format
+            videoPath = 'file:////' + videoPath.substring(2).replace(/\\/g, '/');
+        } else {
+            // Local path - just convert backslashes
+            videoPath = 'file:///' + videoPath.replace(/\\/g, '/');
+        }
 
-        elements.videoPlayer.src = fileUrl;
+        elements.videoPlayer.src = videoPath;
         elements.videoPlayer.load();
 
         currentSubtitles = [];
@@ -358,6 +366,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     elements.videoPlayer.addEventListener('loadedmetadata', () => {
         elements.totalTime.textContent = formatTime(elements.videoPlayer.duration);
+    });
+
+    elements.videoPlayer.addEventListener('error', (e) => {
+        showScreenshotToast('视频加载失败: ' + (elements.videoPlayer.error?.message || '未知错误'));
     });
 
     // 播放结束，自动播放下一首

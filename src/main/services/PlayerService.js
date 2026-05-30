@@ -28,9 +28,11 @@ class PlayerService {
                 if (fileType === 'Main' && file.fullpath) {
                     playlist.push({
                         path: file.fullpath,
-                        title: file.original || file.filename || path.basename(file.fullpath),
+                        title: movieData.title || file.filename || path.basename(file.fullpath),
                         codec: file.codec || file.videoCodec || '',
-                        resolution: file.resolution || (file.videoWidth ? `${file.videoWidth}x${file.videoHeight}` : '')
+                        resolution: file.resolution || (file.videoWidth ? `${file.videoWidth}x${file.videoHeight}` : ''),
+                        movieId: movieData.id || null,
+                        category: movieData.category || null
                     });
                 }
             }
@@ -42,7 +44,9 @@ class PlayerService {
                 path: movieData.original_filename,
                 title: movieData.title || path.basename(movieData.original_filename),
                 codec: movieData.videoCodec || '',
-                resolution: movieData.videoWidth ? `${movieData.videoWidth}x${movieData.videoHeight}` : ''
+                resolution: movieData.videoWidth ? `${movieData.videoWidth}x${movieData.videoHeight}` : '',
+                movieId: movieData.id || null,
+                category: movieData.category || null
             });
         }
 
