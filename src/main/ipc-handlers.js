@@ -2096,6 +2096,29 @@ function setupIpcHandlers(services) {
         }
     });
 
+    ipcMain.handle('open-folder', async (event, filePath) => {
+        try {
+            const { shell } = require('electron');
+            const folderPath = path.dirname(filePath);
+            await shell.openPath(folderPath);
+            return { success: true };
+        } catch (error) {
+            console.error('Error opening folder:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    ipcMain.handle('copy-to-clipboard', async (event, text) => {
+        try {
+            const { clipboard } = require('electron');
+            clipboard.writeText(text);
+            return { success: true };
+        } catch (error) {
+            console.error('Error copying to clipboard:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
     console.log('IPC handlers setup complete');
 }
 
