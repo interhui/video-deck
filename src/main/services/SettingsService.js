@@ -255,6 +255,30 @@ getActorPhotoDir() {
         this.saveSettings(this.settings);
     }
 
+    /**
+     * 获取播放器配置
+     * @returns {object} 播放器配置
+     */
+    getPlayerConfig() {
+        return this.settings.player || { subtitle: { backgroundColor: 'rgba(0, 0, 0, 0.7)', fontSize: '22px' } };
+    }
+
+    /**
+     * 设置播放器配置
+     * @param {object} config - 播放器配置
+     */
+    setPlayerConfig(config) {
+        if (!this.settings.player) {
+            this.settings.player = {};
+        }
+        if (config.subtitle) {
+            this.settings.player.subtitle = { ...this.settings.player.subtitle, ...config.subtitle };
+        } else {
+            this.settings.player = { ...this.settings.player, ...config };
+        }
+        this.saveSettings(this.settings);
+    }
+
     getProxyAgentUrl() {
         const proxy = this.settings.proxy || {};
         if (!proxy.enabled || !proxy.address) {

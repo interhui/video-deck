@@ -5,6 +5,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 加载主题设置
     await loadTheme();
 
+    // 应用字幕设置
+    await applySubtitleSettings();
+
     // 监听主题变化
     window.electronAPI.onThemeChanged((theme) => {
         applyTheme(theme);
@@ -71,6 +74,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     let availableSubtitleFiles = [];
     let selectedSubtitleFile = null;
 
+    async function applySubtitleSettings() {
+        try {
+            const settings = await window.electronAPI.getSettings();
+            if (settings && settings.player && settings.player.subtitle) {
+                const { backgroundColor, fontSize } = settings.player.subtitle;
+                elements.subtitleDisplay.style.backgroundColor = backgroundColor;
+                elements.subtitleDisplay.style.fontSize = fontSize;
+            }
+        } catch (error) {
+            console.error('Failed to apply subtitle settings:', error);
+        }
+    }
+
     function formatTime(seconds) {
         if (isNaN(seconds) || seconds < 0) return '00:00';
         const h = Math.floor(seconds / 3600);
@@ -100,6 +116,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (availableSubtitleFiles.length > 0) {
                     selectedSubtitleFile = result;
                     elements.subtitleDisplay.style.display = 'block';
+                    await applySubtitleSettings();
                     showScreenshotToast(`已加载字幕: ${result.filename}`);
                 }
             } else {
@@ -208,6 +225,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 selectedSubtitleFile = selectedFile;
                 
                 elements.subtitleDisplay.style.display = 'block';
+                await applySubtitleSettings();
                 showScreenshotToast(`已加载字幕: ${selectedFile.filename}`);
             } catch (error) {
                 console.error('加载字幕失败:', error);
