@@ -78,9 +78,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const settings = await window.electronAPI.getSettings();
             if (settings && settings.player && settings.player.subtitle) {
-                const { backgroundColor, fontSize } = settings.player.subtitle;
+                const { backgroundColor, fontSize, fontWeight, textStroke } = settings.player.subtitle;
                 elements.subtitleDisplay.style.backgroundColor = backgroundColor;
                 elements.subtitleDisplay.style.fontSize = fontSize;
+                if (fontWeight) {
+                    elements.subtitleDisplay.style.fontWeight = fontWeight;
+                }
+                if (textStroke) {
+                    const strokeMatch = textStroke.match(/(\d+px)\s+#([0-9a-fA-F]{6})/);
+                    if (strokeMatch) {
+                        const strokeWidth = strokeMatch[1];
+                        const strokeColor = '#' + strokeMatch[2];
+                        elements.subtitleDisplay.style.webkitTextStroke = `${strokeWidth} ${strokeColor}`;
+                    }
+                }
             }
         } catch (error) {
             console.error('Failed to apply subtitle settings:', error);

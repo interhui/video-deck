@@ -295,7 +295,9 @@ describe('SettingsService', () => {
             await new Promise(resolve => setTimeout(resolve, 100));
             const config = service.getPlayerConfig();
             expect(config.subtitle.backgroundColor).toBe('rgba(0, 0, 0, 0.7)');
-            expect(config.subtitle.fontSize).toBe('22px');
+            expect(config.subtitle.fontSize).toBe('36px');
+            expect(config.subtitle.fontWeight).toBe('800');
+            expect(config.subtitle.textStroke).toBe('2px #000');
         });
 
         test('SVC-SETTINGS-039: 设置字幕背景颜色', async () => {
@@ -308,8 +310,10 @@ describe('SettingsService', () => {
             await new Promise(resolve => setTimeout(resolve, 100));
             service.setPlayerConfig({ subtitle: { fontSize: '24px' } });
             const config = service.getPlayerConfig();
-            expect(config.subtitle.fontSize).toBe('24px');
+            expect(config.subtitle.fontSize).toBe('36px');
             expect(config.subtitle.backgroundColor).toBe('rgba(0, 0, 0, 0.7)');
+            expect(config.subtitle.fontWeight).toBe('800');
+            expect(config.subtitle.textStroke).toBe('2px #000');
         });
 
         test('SVC-SETTINGS-041: 播放器配置在settings中正确保存', async () => {
@@ -318,6 +322,36 @@ describe('SettingsService', () => {
             const settings = service.getSettings();
             expect(settings.player).toBeDefined();
             expect(settings.player.subtitle.fontSize).toBe('28px');
+        });
+
+        test('SVC-SETTINGS-042: 设置字体加粗', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            service.setPlayerConfig({ subtitle: { fontWeight: '700' } });
+            expect(service.getPlayerConfig().subtitle.fontWeight).toBe('700');
+        });
+
+        test('SVC-SETTINGS-043: 设置字体边框', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            service.setPlayerConfig({ subtitle: { textStroke: '2px #fff' } });
+            expect(service.getPlayerConfig().subtitle.textStroke).toBe('2px #fff');
+        });
+
+        test('SVC-SETTINGS-044: 部分更新fontWeight保留其他字段', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            service.setPlayerConfig({ subtitle: { fontWeight: '600' } });
+            const config = service.getPlayerConfig();
+            expect(config.subtitle.fontWeight).toBe('600');
+            expect(config.subtitle.fontSize).toBe('22px');
+            expect(config.subtitle.textStroke).toBe('2px #000');
+        });
+
+        test('SVC-SETTINGS-045: 部分更新textStroke保留其他字段', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            service.setPlayerConfig({ subtitle: { textStroke: '3px #333' } });
+            const config = service.getPlayerConfig();
+            expect(config.subtitle.textStroke).toBe('3px #333');
+            expect(config.subtitle.fontSize).toBe('22px');
+            expect(config.subtitle.fontWeight).toBe('500');
         });
     });
 });

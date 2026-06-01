@@ -69,7 +69,9 @@ class HardCodeService {
             player: {
                 subtitle: {
                     backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                    fontSize: '22px'
+                    fontSize: '36px',
+                    fontWeight: '800',
+                    textStroke: '2px #000'
                 }
             }
         };
