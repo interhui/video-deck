@@ -64,6 +64,15 @@ class HardCodeService {
                 address: '',
                 username: '',
                 password: ''
+            },
+
+            player: {
+                subtitle: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    fontSize: '36px',
+                    fontWeight: '800',
+                    textStroke: '2px #000'
+                }
             }
         };
     }

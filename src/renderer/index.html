@@ -252,6 +252,7 @@
                     <button class="tab-btn" data-tab="path-settings">路径配置</button>
                     <button class="tab-btn" data-tab="movie-settings">电影设置</button>
                     <button class="tab-btn" data-tab="network-settings">网络配置</button>
+                    <button class="tab-btn" data-tab="player-settings">播放器配置</button>
                 </div>
                 <!-- Tab 内容 -->
                 <div class="settings-tab-content active" id="tab-basic-settings">
@@ -413,6 +414,52 @@
                         <div class="settings-item">
                             <label>密码：</label>
                             <input type="password" id="proxy-password" placeholder="代理密码（可选）">
+                        </div>
+                    </div>
+                </div>
+                <!-- 播放器配置 Tab -->
+                <div class="settings-tab-content" id="tab-player-settings">
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">字幕配置</h3>
+                        <div class="settings-item">
+                            <label>背景样式：</label>
+                            <select id="subtitle-bg-mode" class="filter-select">
+                                <option value="transparent">透明背景</option>
+                                <option value="colored" selected>底色背景</option>
+                            </select>
+                        </div>
+                        <div class="settings-item" id="subtitle-color-item">
+                            <label>背景颜色：</label>
+                            <div class="color-picker-wrapper">
+                                <input type="color" id="subtitle-bg-color" value="#000000">
+                            </div>
+                        </div>
+                        <div class="settings-item">
+                            <label>字体大小：</label>
+                            <select id="subtitle-font-size" class="filter-select">
+                                <option value="22px">22px</option>
+                                <option value="24px">24px</option>
+                                <option value="26px" selected>26px</option>
+                                <option value="28px">28px</option>
+                                <option value="32px">32px</option>
+                                <option value="36px">36px</option>
+                                <option value="40px">40px</option>
+                            </select>
+                        </div>
+                        <div class="settings-item">
+                            <label>字体加粗：</label>
+                            <select id="subtitle-font-weight" class="filter-select">
+                                <option value="500" selected>500</option>
+                                <option value="600">600</option>
+                                <option value="700">700</option>
+                                <option value="800">800</option>
+                            </select>
+                        </div>
+                        <div class="settings-item">
+                            <label>字体边框：</label>
+                            <div class="color-picker-wrapper">
+                                <input type="color" id="subtitle-text-stroke" value="#000000">
+                            </div>
                         </div>
                     </div>
                 </div>

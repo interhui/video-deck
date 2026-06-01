@@ -109,6 +109,13 @@ const elements = {
     proxyAddress: document.getElementById('proxy-address'),
     proxyUsername: document.getElementById('proxy-username'),
     proxyPassword: document.getElementById('proxy-password'),
+    // 播放器设置
+    subtitleBgMode: document.getElementById('subtitle-bg-mode'),
+    subtitleBgColor: document.getElementById('subtitle-bg-color'),
+    subtitleColorItem: document.getElementById('subtitle-color-item'),
+    subtitleFontSize: document.getElementById('subtitle-font-size'),
+    subtitleFontWeight: document.getElementById('subtitle-font-weight'),
+    subtitleTextStroke: document.getElementById('subtitle-text-stroke'),
     // 设置 Tab
     settingsTabs: document.querySelector('.settings-tabs'),
     onlyNewMoviesCheckbox: document.getElementById('only-new-movies'),
@@ -811,6 +818,41 @@ async function loadSettings() {
         if (elements.proxyAddress) elements.proxyAddress.value = state.settings.proxy?.address || '';
         if (elements.proxyUsername) elements.proxyUsername.value = state.settings.proxy?.username || '';
         if (elements.proxyPassword) elements.proxyPassword.value = state.settings.proxy?.password || '';
+
+        // 初始化播放器设置
+        if (state.settings.player && state.settings.player.subtitle) {
+            const subtitleConfig = state.settings.player.subtitle;
+
+            // 背景配置
+            if (subtitleConfig.backgroundColor === 'transparent') {
+                elements.subtitleBgMode.value = 'transparent';
+                elements.subtitleColorItem.style.display = 'none';
+            } else {
+                elements.subtitleBgMode.value = 'colored';
+                elements.subtitleColorItem.style.display = 'flex';
+                const rgbaMatch = subtitleConfig.backgroundColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+),?\s*([\d.]*)\)/);
+                if (rgbaMatch) {
+                    const r = parseInt(rgbaMatch[1]).toString(16).padStart(2, '0');
+                    const g = parseInt(rgbaMatch[2]).toString(16).padStart(2, '0');
+                    const b = parseInt(rgbaMatch[3]).toString(16).padStart(2, '0');
+                    elements.subtitleBgColor.value = '#' + r + g + b;
+                }
+            }
+
+            // 字体大小
+            elements.subtitleFontSize.value = subtitleConfig.fontSize || '22px';
+            
+            // 字体加粗
+            elements.subtitleFontWeight.value = subtitleConfig.fontWeight || '500';
+            
+            // 字体边框
+            if (subtitleConfig.textStroke) {
+                const strokeColorMatch = subtitleConfig.textStroke.match(/(\d+px)\s+#([0-9a-fA-F]{6})/);
+                if (strokeColorMatch) {
+                    elements.subtitleTextStroke.value = '#' + strokeColorMatch[2];
+                }
+            }
+        }
 
         state.viewMode = state.settings.layout.viewMode;
         state.newMovieHours = state.settings.library?.newMovieHours || 72;
@@ -2108,6 +2150,33 @@ function bindEvents() {
             }
         });
     }
+
+    // 字幕背景配置 - 透明/底色切换
+    let subtitleLastColoredBg = elements.subtitleBgColor.value;
+    elements.subtitleBgMode.addEventListener('change', () => {
+        if (elements.subtitleBgMode.value === 'transparent') {
+            subtitleLastColoredBg = elements.subtitleBgColor.value;
+            elements.subtitleColorItem.style.display = 'none';
+        } else {
+            elements.subtitleBgColor.value = subtitleLastColoredBg;
+            elements.subtitleBgColor.style.backgroundColor = subtitleLastColoredBg;
+            elements.subtitleColorItem.style.display = 'flex';
+        }
+    });
+
+    // 字幕背景颜色选择器 - 实时预览
+    elements.subtitleBgColor.addEventListener('input', (e) => {
+        const hexColor = e.target.value;
+        elements.subtitleBgColor.style.backgroundColor = hexColor;
+        elements.subtitleBgColor.textContent = hexColor;
+    });
+
+    // 字幕外边颜色选择器 - 实时预览
+    elements.subtitleTextStroke.addEventListener('input', (e) => {
+        const hexColor = e.target.value;
+        elements.subtitleTextStroke.style.backgroundColor = hexColor;
+        elements.subtitleTextStroke.textContent = hexColor;
+    });
 
     // 选择目录
     elements.selectDirBtn.addEventListener('click', async () => {
@@ -3609,6 +3678,16 @@ async function saveSettingsHandler() {
                 address: elements.proxyAddress?.value || '',
                 username: elements.proxyUsername?.value || '',
                 password: elements.proxyPassword?.value || ''
+            },
+            player: {
+                subtitle: {
+                    backgroundColor: elements.subtitleBgMode.value === 'transparent'
+                        ? 'transparent'
+                        : `rgba(0, 0, 0, 0.7)`,
+                    fontSize: elements.subtitleFontSize?.value || '22px',
+                    fontWeight: elements.subtitleFontWeight?.value || '500',
+                    textStroke: `2px ${elements.subtitleTextStroke?.value || '#000'}`
+                }
             }
         };
 
