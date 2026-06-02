@@ -2,7 +2,7 @@
  * TMDB电影适配服务
  * 用于通过电影名称获取电影详细信息
  */
-const { makeHttpRequest } = require('../utils/http-utils');
+const { makeHttpRequest } = require('../utils/HttpUtils');
 
 class TMDBMovieAdapterService {
     constructor(settingsService) {

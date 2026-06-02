@@ -4,25 +4,25 @@
 
 // 状态管理
 const state = {
-    boxName: '',
-    boxData: null,
-    movies: [],
-    categories: [],         // 收藏夹中的分类列表
-    currentCategory: '',    // 当前选中的分类（左侧栏过滤）
-    currentStatus: '',      // 当前选中的状态
-    currentSort: 'name-asc',
-    searchKeyword: '',
-    viewMode: 'grid',
-    selectedMovies: new Set(),
-    detailEditModeLocked: false,
-    currentTag: '',         // 当前选中的标签筛选
-    currentRating: '',      // 当前选中的评分筛选
-    lazyLoader: null,       // 懒加载管理器
-    settings: {},           // 设置对象
-    currentTagFilter: '',   // 当前标签过滤（用于模态窗）
-    tagFilterModalVisible: false,
-    tagFilterSearchKeyword: '',
-    tempSelectedTag: null
+    boxName: '', //收藏夹名称
+    boxData: null, //收藏夹数据对象
+    movies: [], //电影列表
+    categories: [], //收藏夹中的分类列表
+    currentCategory: '', //当前选中的分类(左侧栏过滤)
+    currentStatus: '', //当前选中的状态
+    currentSort: 'name-asc', //当前排序方式
+    searchKeyword: '', //搜索关键词
+    viewMode: 'grid', //视图模式
+    selectedMovies: new Set(), //选中的电影集合
+    detailEditModeLocked: false, //详情编辑模式锁定状态
+    currentTag: '', //当前选中的标签筛选
+    currentRating: '', //当前选中的评分筛选
+    lazyLoader: null, //懒加载管理器
+    settings: {}, //设置对象
+    currentTagFilter: '', //当前标签过滤(用于模态窗)
+    tagFilterModalVisible: false, //标签过滤模态窗可见性
+    tagFilterSearchKeyword: '', //标签过滤搜索关键词
+    tempSelectedTag: null //临时选中的标签
 };
 
 // DOM 元素

@@ -3,7 +3,7 @@
  * 用于通过电影名称获取电影详细信息，从PostgreSQL数据库查询
  */
 const { Pool } = require('pg');
-const { makeHttpRequest, checkUrlAccessible } = require('../utils/http-utils');
+const { makeHttpRequest, checkUrlAccessible } = require('../utils/HttpUtils');
 
 class R18AdapterService {
     constructor(settingsService, tmdbAdapterService) {

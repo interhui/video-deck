@@ -8,7 +8,7 @@ const fs = require('fs');
 const https = require('https');
 const http = require('http');
 const ExportService = require('./services/ExportService');
-const { setGlobalProxy } = require('./utils/http-utils');
+const { setGlobalProxy } = require('./utils/HttpUtils');
 
 // 程序根目录
 const APP_ROOT = path.join(__dirname, '..', '..');

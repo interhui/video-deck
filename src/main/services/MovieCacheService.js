@@ -2,6 +2,8 @@
  * 电影库缓存服务
  * 负责管理电影库的内存缓存，提升数据加载效率
  */
+const { sortMovies } = require('../utils/MovieUtils');
+
 class MovieCacheService {
     constructor() {
         // 缓存数据结构：
@@ -379,47 +381,7 @@ class MovieCacheService {
      * @returns {Array} 排序后的列表
      */
     sortMovies(movies, sortBy = 'name', sortOrder = 'asc') {
-        if (!movies || movies.length === 0) {
-            return movies;
-        }
-
-        // 先按指定字段排序
-        const sorted = [...movies];
-        sorted.sort((a, b) => {
-            let valA, valB;
-
-            switch (sortBy) {
-                case 'name':
-                    valA = a.name.toLowerCase();
-                    valB = b.name.toLowerCase();
-                    break;
-                case 'rating':
-                    valA = a.userRating || 0;
-                    valB = b.userRating || 0;
-                    break;
-                case 'year':
-                    valA = a.year || 0;
-                    valB = b.year || 0;
-                    break;
-                case 'actor':
-                    valA = (a.actors && a.actors.length > 0) ? a.actors[0].toLowerCase() : '';
-                    valB = (b.actors && b.actors.length > 0) ? b.actors[0].toLowerCase() : '';
-                    break;
-                case 'releasedate':
-                    valA = a.year || 0;
-                    valB = b.year || 0;
-                    break;
-                default:
-                    valA = a.name.toLowerCase();
-                    valB = b.name.toLowerCase();
-            }
-
-            if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
-            if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
-            return 0;
-        });
-
-        return sorted;
+        return sortMovies(movies, sortBy, sortOrder);
     }
 }
 

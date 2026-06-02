@@ -1,9 +1,9 @@
 /**
- * http-utils 单元测试
+ * HttpUtils 单元测试
  */
-const { makeHttpRequest } = require('../../src/main/utils/http-utils');
+const { makeHttpRequest } = require('../../src/main/utils/HttpUtils');
 
-describe('http-utils', () => {
+describe('HttpUtils', () => {
     describe('makeHttpRequest', () => {
         test('SVC-HTTP-001: 无效URL抛出错误', async () => {
             await expect(makeHttpRequest('invalid-url')).rejects.toThrow();

@@ -29,7 +29,7 @@ const BatchActorSearchService = require('./src/main/services/BatchActorSearchSer
 const ScreenshotService = require('./src/main/services/ScreenshotService');
 const MovieHistoryService = require('./src/main/services/MovieHistoryService');
 const { setupIpcHandlers } = require('./src/main/ipc-handlers');
-const { setGlobalProxy } = require('./src/main/utils/http-utils');
+const { setGlobalProxy } = require('./src/main/utils/HttpUtils');
 
 // 全局变量
 let mainWindow = null;

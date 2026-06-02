@@ -3,6 +3,7 @@
  * 负责管理每个分类目录下的 index.json 文件，提供快速的电影加载
  */
 const FileService = require('./FileService');
+const { sortMovies } = require('../utils/MovieUtils');
 const path = require('path');
 const fs = require('fs');
 
@@ -182,50 +183,7 @@ class IndexService {
      * @returns {Array} 排序后的列表
      */
     sortMovies(movies, sortBy = 'name', sortOrder = 'asc') {
-        if (!movies || movies.length === 0) {
-            return movies;
-        }
-
-        const sorted = [...movies];
-        sorted.sort((a, b) => {
-            let valA, valB;
-
-            switch (sortBy) {
-                case 'name':
-                    valA = (a.name || '').toLowerCase();
-                    valB = (b.name || '').toLowerCase();
-                    break;
-                case 'actor':
-                    valA = (a.actors && a.actors.length > 0) ? a.actors[0].toLowerCase() : '';
-                    valB = (b.actors && b.actors.length > 0) ? b.actors[0].toLowerCase() : '';
-                    break;
-                case 'rating':
-                    valA = a.userRating || 0;
-                    valB = b.userRating || 0;
-                    break;
-                case 'year':
-                    valA = a.year || 0;
-                    valB = b.year || 0;
-                    break;
-                case 'releasedate':
-                    valA = a.year || 0;
-                    valB = b.year || 0;
-                    break;
-                case 'addtime':
-                    valA = a.update_time || 0;
-                    valB = b.update_time || 0;
-                    break;
-                default:
-                    valA = (a.name || '').toLowerCase();
-                    valB = (b.name || '').toLowerCase();
-            }
-
-            if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
-            if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
-            return 0;
-        });
-
-        return sorted;
+        return sortMovies(movies, sortBy, sortOrder);
     }
 
     /**
