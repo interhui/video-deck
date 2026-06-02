@@ -58,6 +58,32 @@ body {
     color: var(--text-secondary);
 }
 
+.titlebar-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    -webkit-app-region: no-drag;
+}
+
+.titlebar-minimize-btn {
+    -webkit-app-region: no-drag;
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    font-size: 14px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px 8px;
+    border-radius: 4px;
+    width: 30px;
+    height: 30px;
+}
+
+.titlebar-minimize-btn:hover {
+    background: var(--hover-bg);
+    color: var(--text-secondary);
+}
+
 /* 顶部工具栏 */
 .management-toolbar {
     display: flex;

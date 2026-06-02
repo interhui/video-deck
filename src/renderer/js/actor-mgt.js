@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const viewCardBtn = document.getElementById('view-card-btn');
     const viewTableBtn = document.getElementById('view-table-btn');
     const closeBtn = document.getElementById('close-btn');
+    const minimizeBtn = document.getElementById('minimize-btn');
 
     const cardView = document.getElementById('card-view');
     const tableView = document.getElementById('table-view');
@@ -121,6 +122,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 关闭窗口
     closeBtn.addEventListener('click', () => {
         window.close();
+    });
+
+    // 最小化窗口
+    minimizeBtn.addEventListener('click', () => {
+        window.electronAPI.minimizeWindow();
     });
 
     // 监听主题变化

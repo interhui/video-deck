@@ -259,8 +259,8 @@ function createApplicationMenu() {
                         dialog.showMessageBox(mainWindow, {
                             type: 'info',
                             title: '关于',
-                            message: '电影管理程序 v1.0.0',
-                            detail: '基于 Electron 的电影管理工具'
+                            message: 'Video Deck',
+                            detail: '最舒服的电影管理工具'
                         });
                     }
                 }

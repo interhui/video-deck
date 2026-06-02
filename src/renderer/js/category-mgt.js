@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const formTitle = document.getElementById('form-title');
     const searchInput = document.getElementById('search-input');
     const closeBtn = document.getElementById('close-btn');
+    const minimizeBtn = document.getElementById('minimize-btn');
 
     const categoryIdInput = document.getElementById('category-id');
     const categoryNameInput = document.getElementById('category-name');
@@ -32,6 +33,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 关闭窗口
     closeBtn.addEventListener('click', () => {
         window.close();
+    });
+
+    // 最小化窗口
+    minimizeBtn.addEventListener('click', () => {
+        window.electronAPI.minimizeWindow();
     });
 
     // 监听主题变化

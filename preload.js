@@ -153,6 +153,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     resizeWindow: (width, height) => ipcRenderer.invoke('resize-window', width, height),
     setMinSize: (minWidth, minHeight) => ipcRenderer.invoke('set-min-size', minWidth, minHeight),
     minimizeWindow: () => ipcRenderer.invoke('minimize-window'),
+    maximizeWindow: () => ipcRenderer.invoke('maximize-window'),
 
     // 下载电影封面
     downloadMovieCover: (data) => ipcRenderer.invoke('download-movie-cover', data),

@@ -72,6 +72,10 @@ body {
     font-size: 14px;
 }
 
+.maximize-btn {
+    font-size: 22px;
+}
+
 .window-btn:hover {
     background-color: var(--hover-bg);
     color: var(--text-color);
@@ -352,6 +356,11 @@ video {
 .screenshot-btn svg {
     width: 16px;
     height: 16px;
+}
+
+.playlist-toggle-btn svg {
+    width: 18px;
+    height: 18px;
 }
 
 /* Playlist Section */

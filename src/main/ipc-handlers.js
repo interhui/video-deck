@@ -1322,6 +1322,24 @@ function setupIpcHandlers(services) {
         }
     });
 
+    // 最大化窗口
+    ipcMain.handle('maximize-window', async (event) => {
+        try {
+            const win = BrowserWindow.fromWebContents(event.sender);
+            if (win) {
+                if (win.isMaximized()) {
+                    win.unmaximize();
+                } else {
+                    win.maximize();
+                }
+            }
+            return { success: true };
+        } catch (error) {
+            console.error('Error maximizing window:', error);
+            return { error: error.message };
+        }
+    });
+
     // ==================== 添加电影 ====================
 
     // 添加单部电影
