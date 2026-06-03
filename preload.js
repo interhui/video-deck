@@ -243,6 +243,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getPlayHistory: (movieName, date) => ipcRenderer.invoke('get-play-history', movieName, date),
     deletePlayHistory: (date, time) => ipcRenderer.invoke('delete-play-history', date, time),
     clearPlayHistory: () => ipcRenderer.invoke('clear-play-history'),
+    getHistoryDates: () => ipcRenderer.invoke('get-history-dates'),
+    deleteHistoryRecords: (date, movieIds) => ipcRenderer.invoke('delete-history-records', date, movieIds),
+    openHistoryWindow: () => ipcRenderer.invoke('open-history-window'),
 
     // 文件操作
     openFolder: (filePath) => ipcRenderer.invoke('open-folder', filePath),

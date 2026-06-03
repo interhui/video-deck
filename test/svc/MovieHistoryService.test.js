@@ -249,4 +249,87 @@ describe('MovieHistoryService', () => {
             expect(loadedHistory.history[0].records[0].movieId).toBe('movie-001');
         });
     });
+
+    describe('getHistoryDates', () => {
+        test('SVC-HISTORY-017: 获取所有日期列表（按时间倒序）', async () => {
+            await service.getLoadPromise();
+            await service.addRecord('电影A', 'movie-001');
+
+            const historyFilePath = path.join(testDataDir, 'history.json');
+            const existingHistory = await service.fileService.readJson(historyFilePath);
+            existingHistory.history.unshift({
+                date: '2026-05-01',
+                records: [{ time: '10:00:00', movieName: '旧电影', movieId: 'movie-002' }]
+            });
+            await service.fileService.writeJson(historyFilePath, existingHistory);
+
+            const newService = new MovieHistoryService(testDataDir);
+            await newService.getLoadPromise();
+
+            const dates = newService.getHistoryDates();
+            expect(dates.length).toBe(2);
+            expect(dates[0]).toBe(service.formatDate(new Date()));
+            expect(dates[1]).toBe('2026-05-01');
+        });
+
+        test('SVC-HISTORY-018: 空历史记录返回空数组', async () => {
+            await service.getLoadPromise();
+            const dates = service.getHistoryDates();
+            expect(dates).toEqual([]);
+        });
+    });
+
+    describe('deleteRecordsByDateAndMovieIds', () => {
+        test('SVC-HISTORY-019: 按日期和电影ID批量删除记录', async () => {
+            await service.getLoadPromise();
+            await service.addRecord('电影A', 'movie-001');
+            await service.addRecord('电影B', 'movie-002');
+            await service.addRecord('电影C', 'movie-003');
+
+            const history = service.getHistory();
+            const date = history.history[0].date;
+
+            await service.deleteRecordsByDateAndMovieIds(date, ['movie-001', 'movie-003']);
+
+            const updatedHistory = service.getHistory();
+            expect(updatedHistory.history[0].records.length).toBe(1);
+            expect(updatedHistory.history[0].records[0].movieId).toBe('movie-002');
+        });
+
+        test('SVC-HISTORY-020: 删除所有记录后日期条目自动移除', async () => {
+            await service.getLoadPromise();
+            await service.addRecord('电影A', 'movie-001');
+
+            const history = service.getHistory();
+            const date = history.history[0].date;
+
+            await service.deleteRecordsByDateAndMovieIds(date, ['movie-001']);
+
+            const updatedHistory = service.getHistory();
+            expect(updatedHistory.history.length).toBe(0);
+        });
+
+        test('SVC-HISTORY-021: 删除不存在的movieId不影响历史', async () => {
+            await service.getLoadPromise();
+            await service.addRecord('电影A', 'movie-001');
+
+            const history = service.getHistory();
+            const date = history.history[0].date;
+
+            await service.deleteRecordsByDateAndMovieIds(date, ['movie-999']);
+
+            const updatedHistory = service.getHistory();
+            expect(updatedHistory.history[0].records.length).toBe(1);
+        });
+
+        test('SVC-HISTORY-022: 删除不存在日期的记录不影响历史', async () => {
+            await service.getLoadPromise();
+            await service.addRecord('电影A', 'movie-001');
+
+            await service.deleteRecordsByDateAndMovieIds('2020-01-01', ['movie-001']);
+
+            const updatedHistory = service.getHistory();
+            expect(updatedHistory.history.length).toBe(1);
+        });
+    });
 });

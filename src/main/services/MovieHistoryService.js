@@ -152,6 +152,32 @@ class MovieHistoryService {
             }
         }
     }
+
+    getHistoryDates() {
+        return this.history.history
+            .map(entry => entry.date)
+            .sort((a, b) => b.localeCompare(a));
+    }
+
+    async deleteRecordsByDateAndMovieIds(date, movieIds) {
+        await this.loadPromise;
+
+        const dateEntry = this.history.history.find(entry => entry.date === date);
+        if (!dateEntry) return;
+
+        dateEntry.records = dateEntry.records.filter(
+            record => !movieIds.includes(record.movieId)
+        );
+
+        if (dateEntry.records.length === 0) {
+            const dateIndex = this.history.history.findIndex(entry => entry.date === date);
+            if (dateIndex !== -1) {
+                this.history.history.splice(dateIndex, 1);
+            }
+        }
+
+        await this.saveHistory();
+    }
 }
 
 module.exports = MovieHistoryService;

@@ -215,6 +215,7 @@ function setupIpcHandlers(services) {
         createBoxWindow,
         createActorManagementWindow,
         createCategoryManagementWindow,
+        createHistoryWindow,
         createPlayerWindow,
         getPendingDetailMovieData,
         clearPendingDetailMovieData
@@ -2111,6 +2112,36 @@ function setupIpcHandlers(services) {
         } catch (error) {
             console.error('Error clearing play history:', error);
             return { success: false, error: error.message };
+        }
+    });
+
+    ipcMain.handle('get-history-dates', async () => {
+        try {
+            const dates = movieHistoryService.getHistoryDates();
+            return { dates };
+        } catch (error) {
+            console.error('Error getting history dates:', error);
+            return { dates: [] };
+        }
+    });
+
+    ipcMain.handle('delete-history-records', async (event, date, movieIds) => {
+        try {
+            await movieHistoryService.deleteRecordsByDateAndMovieIds(date, movieIds);
+            return { success: true };
+        } catch (error) {
+            console.error('Error deleting history records:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    ipcMain.handle('open-history-window', async () => {
+        try {
+            createHistoryWindow();
+            return { success: true };
+        } catch (error) {
+            console.error('Error opening history window:', error);
+            return { error: error.message };
         }
     });
 

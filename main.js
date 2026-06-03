@@ -239,6 +239,14 @@ function createApplicationMenu() {
                             mainWindow.webContents.send('refresh-library');
                         }
                     }
+                },
+                { type: 'separator' },
+                {
+                    label: '历史记录',
+                    accelerator: 'CmdOrCtrl+H',
+                    click: () => {
+                        createHistoryWindow();
+                    }
                 }
             ]
         },
@@ -450,6 +458,43 @@ function createActorManagementWindow() {
     actorManagementWindow.on('closed', () => { actorManagementWindow = null; });
 }
 
+let historyWindow = null;
+
+function createHistoryWindow() {
+    if (historyWindow) {
+        historyWindow.focus();
+        return;
+    }
+
+    historyWindow = new BrowserWindow({
+        width: 1280,
+        height: 800,
+        minWidth: 800,
+        minHeight: 600,
+        title: '历史记录',
+        frame: false,
+        autoHideMenuBar: true,
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
+            contextIsolation: true,
+            nodeIntegration: false,
+            sandbox: false
+        },
+        show: false
+    });
+
+    historyWindow.loadFile(path.join(__dirname, 'src', 'renderer', 'history-view.html'));
+
+    historyWindow.once('ready-to-show', () => {
+        historyWindow.show();
+        historyWindow.maximize();
+    });
+
+    historyWindow.on('closed', () => {
+        historyWindow = null;
+    });
+}
+
 // 播放器窗口
 let playerWindow = null;
 
@@ -535,6 +580,7 @@ app.whenReady().then(async () => {
         createBoxWindow,
         createActorManagementWindow,
         createCategoryManagementWindow,
+        createHistoryWindow,
         createPlayerWindow,
         getPendingDetailMovieData: () => {
             return pendingDetailMovieData;

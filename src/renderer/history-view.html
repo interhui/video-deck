@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: file: https://image.tmdb.org https://pics.dmm.co.jp;">
+    <title>历史记录</title>
+    <link rel="stylesheet" href="css/themes/dark.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/view.css">
+</head>
+<body>
+    <div id="app">
+        <header class="toolbar">
+            <div class="toolbar-left">
+                <h2 class="view-title">历史记录</h2>
+            </div>
+            <div class="toolbar-right">
+                <div id="batch-actions" class="batch-actions" style="display: none;">
+                    <button id="batch-play-btn" class="btn btn-primary">播放</button>
+                </div>
+                <div class="search-box">
+                    <input type="text" id="search-input" placeholder="搜索电影...">
+                    <button id="search-btn" class="icon-btn">🔍</button>
+                    <button id="clear-search-btn" class="icon-btn clear-search-btn" style="display: none;">✕</button>
+                </div>
+                <button id="minimize-btn" class="titlebar-minimize-btn" title="最小化">─</button>
+                <button id="close-btn" class="titlebar-close-btn" title="关闭">&times;</button>
+            </div>
+        </header>
+
+        <main class="history-main-content">
+            <aside class="history-sidebar" id="history-sidebar">
+                <h3>时间轴</h3>
+                <ul class="history-timeline-list" id="timeline-list">
+                </ul>
+            </aside>
+
+            <div class="splitter" id="history-splitter"></div>
+
+            <section class="history-movie-area" id="history-movie-area">
+                <div class="history-filter-bar">
+                    <select id="category-filter" class="filter-select">
+                        <option value="">全部分类</option>
+                    </select>
+                    <select id="tag-filter" class="filter-select">
+                        <option value="">全部标签</option>
+                    </select>
+                </div>
+
+                <div class="history-content" id="history-content">
+                </div>
+                <div class="empty-state" id="empty-state" style="display: none;">
+                    <p>暂无播放记录</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="js/utils/common-utils.js"></script>
+    <script src="js/history-view.js"></script>
+</body>
+</html>
