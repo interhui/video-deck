@@ -5,9 +5,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 加载主题设置
     await loadTheme();
 
-    // 应用字幕设置
-    await applySubtitleSettings();
-
     // 监听主题变化
     window.electronAPI.onThemeChanged((theme) => {
         applyTheme(theme);
@@ -33,8 +30,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         prevBtn: document.getElementById('prev-btn'),
         nextBtn: document.getElementById('next-btn'),
         playlist: document.getElementById('playlist'),
+        playlistSection: document.querySelector('.playlist-section'),
+        playlistToggleBtn: document.getElementById('playlist-toggle-btn'),
         playerTitle: document.getElementById('player-title'),
         minimizeBtn: document.getElementById('minimize-btn'),
+        maximizeBtn: document.getElementById('maximize-btn'),
         closeBtn: document.getElementById('close-btn'),
         fullscreenBtn: document.getElementById('fullscreen-btn'),
         screenshotBtn: document.getElementById('screenshot-btn'),
@@ -73,6 +73,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentSubtitleIndex = -1;
     let availableSubtitleFiles = [];
     let selectedSubtitleFile = null;
+
+    // 应用字幕设置
+    await applySubtitleSettings();
 
     async function applySubtitleSettings() {
         try {
@@ -361,7 +364,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             updatePlayPauseBtn();
             const movieName = item.title || basename(item.path);
             elements.playerTitle.textContent = movieName;
-            window.electronAPI.addPlayHistory(movieName).catch(err => {
+            window.electronAPI.addPlayHistory(movieName, item.movieId || '').catch(err => {
                 console.error('记录播放历史失败:', err);
             });
         }).catch(err => {
@@ -472,6 +475,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 最小化按钮
     elements.minimizeBtn.addEventListener('click', () => {
         window.electronAPI.minimizeWindow();
+    });
+
+    // 最大化按钮
+    elements.maximizeBtn.addEventListener('click', () => {
+        window.electronAPI.maximizeWindow();
     });
 
     // 关闭按钮
@@ -595,6 +603,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     elements.screenshotBtn.addEventListener('click', takeScreenshot);
 
+    elements.playlistToggleBtn.addEventListener('click', () => {
+        if (elements.playlistSection) {
+            const isVisible = elements.playlistSection.style.display !== 'none';
+            elements.playlistSection.style.display = isVisible ? 'none' : 'block';
+            elements.playlistToggleBtn.title = isVisible ? '打开播放列表' : '关闭播放列表';
+        }
+    });
+
     elements.subtitleBtn.addEventListener('click', async () => {
         if (document.fullscreenElement) {
             await document.exitFullscreen();
@@ -681,7 +697,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const recordDiv = document.createElement('div');
                 recordDiv.className = 'history-record';
                 recordDiv.innerHTML = `
-                    <span class="history-record-text">    ${record.time} ${record.movie}</span>
+                    <span class="history-record-text">    ${record.time} ${record.movieName}</span>
                     <button class="history-record-delete" title="删除此记录">✕</button>
                 `;
                 recordDiv.addEventListener('click', async (e) => {

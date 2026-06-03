@@ -5,8 +5,7 @@
 const fs = require('fs').promises;
 const fsSync = require('fs');
 const path = require('path');
-const https = require('https');
-const http = require('http');
+const { downloadImage } = require('../utils/HttpUtils');
 
 class BatchSearchService {
     constructor(settingsService, tmdbAdapterService, r18AdapterService, movieService, fileService) {
@@ -36,38 +35,7 @@ class BatchSearchService {
     }
 
     async downloadImage(url, outputPath) {
-        return new Promise((resolve, reject) => {
-            const protocol = url.startsWith('https') ? https : http;
-            
-            const request = protocol.get(url, (response) => {
-                if (response.statusCode === 302 || response.statusCode === 301) {
-                    const redirectUrl = response.headers.location;
-                    this.downloadImage(redirectUrl, outputPath).then(resolve).catch(reject);
-                    return;
-                }
-                
-                if (response.statusCode !== 200) {
-                    reject(new Error(`Failed to download image: HTTP ${response.statusCode}`));
-                    return;
-                }
-                
-                const file = fsSync.createWriteStream(outputPath);
-                response.pipe(file);
-                file.on('finish', () => {
-                    file.close();
-                    resolve(outputPath);
-                });
-                file.on('error', (err) => {
-                    fsSync.unlink(outputPath, () => {});
-                    reject(err);
-                });
-            });
-            
-            request.on('error', (err) => {
-                fsSync.unlink(outputPath, () => {});
-                reject(err);
-            });
-        });
+        return downloadImage(url, outputPath);
     }
 
     async searchMovie(movieId, movieName, adapterType) {

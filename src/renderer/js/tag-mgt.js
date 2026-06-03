@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tagNameInput = document.getElementById('tag-name');
     const searchInput = document.getElementById('search-input');
     const closeBtn = document.getElementById('close-btn');
+    const minimizeBtn = document.getElementById('minimize-btn');
 
     const addTagBtn = document.getElementById('add-tag-btn');
     const saveBtn = document.getElementById('save-btn');
@@ -47,6 +48,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 关闭窗口
     closeBtn.addEventListener('click', () => {
         window.close();
+    });
+
+    // 最小化窗口
+    minimizeBtn.addEventListener('click', () => {
+        window.electronAPI.minimizeWindow();
     });
 
     // 监听主题变化

@@ -29,7 +29,7 @@ const BatchActorSearchService = require('./src/main/services/BatchActorSearchSer
 const ScreenshotService = require('./src/main/services/ScreenshotService');
 const MovieHistoryService = require('./src/main/services/MovieHistoryService');
 const { setupIpcHandlers } = require('./src/main/ipc-handlers');
-const { setGlobalProxy } = require('./src/main/utils/http-utils');
+const { setGlobalProxy } = require('./src/main/utils/HttpUtils');
 
 // 全局变量
 let mainWindow = null;
@@ -232,7 +232,7 @@ function createApplicationMenu() {
             label: '视图',
             submenu: [
                 {
-                    label: '重新加载',
+                    label: '刷新',
                     accelerator: 'CmdOrCtrl+R',
                     click: () => {
                         if (mainWindow) {
@@ -240,14 +240,14 @@ function createApplicationMenu() {
                         }
                     }
                 },
-                { role: 'forceReload' },
-                { role: 'toggleDevTools' },
                 { type: 'separator' },
-                { role: 'resetZoom' },
-                { role: 'zoomIn' },
-                { role: 'zoomOut' },
-                { type: 'separator' },
-                { role: 'togglefullscreen' }
+                {
+                    label: '历史记录',
+                    accelerator: 'CmdOrCtrl+H',
+                    click: () => {
+                        createHistoryWindow();
+                    }
+                }
             ]
         },
         {
@@ -259,8 +259,8 @@ function createApplicationMenu() {
                         dialog.showMessageBox(mainWindow, {
                             type: 'info',
                             title: '关于',
-                            message: '电影管理程序 v1.0.0',
-                            detail: '基于 Electron 的电影管理工具'
+                            message: 'Video Deck',
+                            detail: '最舒服的电影管理工具'
                         });
                     }
                 }
@@ -458,6 +458,43 @@ function createActorManagementWindow() {
     actorManagementWindow.on('closed', () => { actorManagementWindow = null; });
 }
 
+let historyWindow = null;
+
+function createHistoryWindow() {
+    if (historyWindow) {
+        historyWindow.focus();
+        return;
+    }
+
+    historyWindow = new BrowserWindow({
+        width: 1280,
+        height: 800,
+        minWidth: 800,
+        minHeight: 600,
+        title: '历史记录',
+        frame: false,
+        autoHideMenuBar: true,
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
+            contextIsolation: true,
+            nodeIntegration: false,
+            sandbox: false
+        },
+        show: false
+    });
+
+    historyWindow.loadFile(path.join(__dirname, 'src', 'renderer', 'history-view.html'));
+
+    historyWindow.once('ready-to-show', () => {
+        historyWindow.show();
+        historyWindow.maximize();
+    });
+
+    historyWindow.on('closed', () => {
+        historyWindow = null;
+    });
+}
+
 // 播放器窗口
 let playerWindow = null;
 
@@ -543,6 +580,7 @@ app.whenReady().then(async () => {
         createBoxWindow,
         createActorManagementWindow,
         createCategoryManagementWindow,
+        createHistoryWindow,
         createPlayerWindow,
         getPendingDetailMovieData: () => {
             return pendingDetailMovieData;

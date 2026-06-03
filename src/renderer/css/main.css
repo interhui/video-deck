@@ -2766,6 +2766,7 @@ body {
 .modal-rating-star {
     font-size: 24px;
     color: #f5c518;
+    cursor: pointer;
 }
 
 .modal-section-label {

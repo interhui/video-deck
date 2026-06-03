@@ -88,7 +88,6 @@ class BoxService {
 
             // 检查内容是否为空或无效
             if (!content || content.trim() === '') {
-                console.warn(`Box file ${boxName}.json is empty, returning empty object`);
                 return {};
             }
 

@@ -4,54 +4,56 @@
 
 // 状态管理
 const state = {
-    categories: [],
-    boxes: [],
-    movies: [],
-    currentCategory: '',
-    currentBox: '',
-    currentSort: 'name-asc',
-    searchKeyword: '',
-    viewMode: 'grid',
-    settings: {},
-    selectedMovies: new Set(),
-    detailEditModeLocked: false,
-    tags: [],
-    selectedTags: new Set(),
-    sidebarSearchActive: false,
-    currentTag: '',
-    movieFiles: [],
-    selectedFileIndex: -1,
-    pendingFilePath: '',
-    scanTempDir: '',
-    scanMovies: [],
-    currentEditMovie: null,
-    actors: [],
-    selectedActors: [],
-    currentActorFilter: [],
-    actorFilterModalVisible: false,
-    actorSelectorSearchKeyword: '',
-    actorSelectorCurrentPage: 1,
-    actorSelectorPageSize: 10,
-    lazyLoader: null,
-    onlyNewMovies: false,
-    newMovieHours: 72,
-    batchSearchResults: [],
-    batchSearchInProgress: false,
-    isScanning: false,
-    scanAbortController: null,
-    scanCancelledByUser: false,
-    isImporting: false,
-    importAbortController: null,
-    currentTagFilter: '',
-    tagFilterModalVisible: false,
-    tagFilterSearchKeyword: '',
-    tempSelectedTag: null,
-    tagSelectorSearchKeyword: '',
-    scanTagSelectorSearchKeyword: '',
+    categories: [], //分类列表
+    boxes: [], //收藏夹列表
+    movies: [], //电影列表
+    currentCategory: '', //当前选择的分类
+    currentBox: '', //当前选择的电影收藏夹
+    currentSort: 'name-asc', //当前排序方式
+    searchKeyword: '', //搜索关键词
+    viewMode: 'grid', //视图模式(网格/列表)
+    settings: {}, //设置对象
+    selectedMovies: new Set(), //选中的电影集合
+    detailEditModeLocked: false, //详情编辑模式锁定状态
+    tags: [], //标签列表
+    selectedTags: new Set(), //选中的标签集合
+    sidebarSearchActive: false, //侧边栏搜索激活状态
+    currentTag: '', //当前选中的标签
+    movieFiles: [], //电影文件列表
+    selectedFileIndex: -1, //选中的文件索引
+    pendingFilePath: '', //待处理的文件路径
+    scanTempDir: '', //扫描临时目录
+    scanMovies: [], //扫描到的电影列表
+    currentEditMovie: null, //当前编辑的电影
+    actors: [], //演员列表
+    selectedActors: [], //选中的演员列表
+    currentActorFilter: [], //当前演员过滤条件
+    actorFilterModalVisible: false, //演员过滤模态窗可见性
+    actorSelectorSearchKeyword: '', //演员选择器搜索关键词
+    actorSelectorCurrentPage: 1, //演员选择器当前页码
+    actorSelectorPageSize: 10, //演员选择器每页大小
+    lazyLoader: null, //懒加载管理器
+    onlyNewMovies: false, //只显示新电影
+    newMovieHours: 72, //新电影小时数阈值
+    batchSearchResults: [], //批量搜索结果
+    batchSearchInProgress: false, //批量搜索进行中
+    isScanning: false, //是否正在执行电影扫描
+    scanAbortController: null, //扫描中断控制器
+    scanCancelledByUser: false, //用户取消扫描
+    isImporting: false, //是否正在执行电影导入
+    importAbortController: null, //导入中断控制器
+    importCancelledByUser: false, //用户主动中断导入标记
+    currentTagFilter: '', //当前标签过滤
+    tagFilterModalVisible: false, //标签过滤模态窗可见性
+    tagFilterSearchKeyword: '', //标签过滤搜索关键词
+    tempSelectedTag: null, //临时选中的标签
+    tagSelectorSearchKeyword: '', //标签选择器搜索关键词
+    scanTagSelectorSearchKeyword: '', //扫描标签选择器搜索关键词
+    
     // 电影收藏夹筛选状态
-    excludeBoxMode: false,
-    excludeBoxName: '',
-    excludedMovieIds: new Set()
+    excludeBoxMode: false, //排除收藏夹模式
+    excludeBoxName: '', //排除的收藏夹名称
+    excludedMovieIds: new Set() //已排除的电影ID集合
 };
 
 // DOM 元素
@@ -4560,11 +4562,16 @@ async function importAllScannedMovies() {
         console.error('Error importing scanned movies:', error);
         alert('导入失败: ' + error.message);
     } finally {
-        state.isImporting = false;
-        state.importAbortController = null;
-        elements.scanResultImport.disabled = false;
-        elements.scanResultImport.textContent = '导入全部';
-        elements.scanResultCancel.textContent = '取消';
+        // 只有非用户中断的情况下才重置UI状态
+        if (!state.importCancelledByUser) {
+            state.isImporting = false;
+            state.importAbortController = null;
+            elements.scanResultImport.disabled = false;
+            elements.scanResultImport.textContent = '导入全部';
+            elements.scanResultCancel.textContent = '取消';
+        }
+        // 重置用户中断标记
+        state.importCancelledByUser = false;
     }
 }
 
@@ -4580,15 +4587,18 @@ function handleScanResultCancel() {
             if (state.importAbortController) {
                 state.importAbortController.abort();
             }
-            // 重置导入状态
+            // 标记为用户主动中断，避免 finally 重复处理
+            state.importCancelledByUser = true;
+            // 退出导入状态
             state.isImporting = false;
             state.importAbortController = null;
-            // 关闭模态框
-            closeScanResultModal();
+            // 关闭模态框（不清空数据）
+            elements.scanResultModal.style.display = 'none';
             // 重置按钮状态
             elements.scanResultImport.disabled = false;
             elements.scanResultImport.textContent = '导入全部';
             elements.scanResultCancel.textContent = '取消';
+            elements.scanResultInfo.textContent = '导入已中断，可再次尝试';
         }
         // 点击"取消"则继续执行导入，不做任何操作
     } else {
@@ -4619,8 +4629,11 @@ async function cancelScan() {
  */
 function closeScanResultModal() {
     elements.scanResultModal.style.display = 'none';
-    state.scanTempDir = '';
-    state.scanMovies = [];
+    // 只有在非导入状态时才清空数据，保留扫描结果供再次导入
+    if (!state.isImporting && !state.importCancelledByUser) {
+        state.scanTempDir = '';
+        state.scanMovies = [];
+    }
     state.isImporting = false;
     state.importAbortController = null;
 }
@@ -4808,17 +4821,29 @@ function initBatchSearchEvents() {
 function openBatchSearchModal() {
     if (state.selectedMovies.size === 0) return;
     
-    const selectedMoviesData = state.movies.filter(m => state.selectedMovies.has(m.id));
-    state.batchSearchResults = selectedMoviesData.map(movie => ({
-        movie: movie,
-        status: 'pending',
-        searchResult: null
-    }));
+    // 只有在没有已有结果时才重新初始化
+    if (state.batchSearchResults.length === 0 || 
+        state.batchSearchResults.every(r => r.status === 'pending')) {
+        const selectedMoviesData = state.movies.filter(m => state.selectedMovies.has(m.id));
+        state.batchSearchResults = selectedMoviesData.map(movie => ({
+            movie: movie,
+            status: 'pending',
+            searchResult: null
+        }));
+    }
     
-    elements.batchSearchProgress.textContent = `准备搜索 ${selectedMoviesData.length} 部电影`;
-    elements.batchSearchStart.style.display = 'inline-block';
+    // 根据当前状态恢复按钮显示
+    const completedCount = state.batchSearchResults.filter(r => r.status === 'completed').length;
+    const hasCompleted = completedCount > 0;
+    
+    elements.batchSearchProgress.textContent = hasCompleted 
+        ? truncateText(`搜索完成: ${completedCount} 部找到`, 54)
+        : `准备搜索 ${state.batchSearchResults.length} 部电影`;
+    
+    elements.batchSearchStart.style.display = hasCompleted ? 'none' : 'inline-block';
     elements.batchSearchCancel.style.display = 'inline-block';
-    elements.batchSearchConfirm.style.display = 'none';
+    elements.batchSearchConfirm.style.display = hasCompleted ? 'inline-block' : 'none';
+    
     state.batchSearchInProgress = false;
     
     renderBatchSearchMoviesList();
@@ -4835,8 +4860,11 @@ function closeBatchSearchModal() {
         state.batchSearchInProgress = false;
     }
     elements.batchSearchModal.style.display = 'none';
-    state.batchSearchResults = [];
-    clearSelectedMovies();
+    // 只有在未进行操作时才清空数据，保留已搜索完成的数据
+    if (!state.batchSearchInProgress) {
+        state.batchSearchResults = [];
+        clearSelectedMovies();
+    }
 }
 
 function renderBatchSearchMoviesList() {
@@ -5028,6 +5056,9 @@ async function confirmBatchSearch() {
 
         if (result.error) {
             showToast('保存失败: ' + result.error);
+            // 保存失败时，保持确认按钮可用，允许再次尝试
+            elements.batchSearchConfirm.disabled = false;
+            elements.batchSearchConfirm.textContent = '保存';
         } else {
             saveSuccess = true;
             elements.batchSearchProgress.textContent = truncateText('完成电影保存', 54);
@@ -5037,6 +5068,9 @@ async function confirmBatchSearch() {
     } catch (error) {
         console.error('Batch save error:', error);
         showToast('保存失败: ' + error.message);
+        // 保存失败时，保持确认按钮可用，允许再次尝试
+        elements.batchSearchConfirm.disabled = false;
+        elements.batchSearchConfirm.textContent = '保存';
     }
 
     state.batchSearchInProgress = false;

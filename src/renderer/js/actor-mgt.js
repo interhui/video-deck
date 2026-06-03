@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const viewCardBtn = document.getElementById('view-card-btn');
     const viewTableBtn = document.getElementById('view-table-btn');
     const closeBtn = document.getElementById('close-btn');
+    const minimizeBtn = document.getElementById('minimize-btn');
 
     const cardView = document.getElementById('card-view');
     const tableView = document.getElementById('table-view');
@@ -121,6 +122,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 关闭窗口
     closeBtn.addEventListener('click', () => {
         window.close();
+    });
+
+    // 最小化窗口
+    minimizeBtn.addEventListener('click', () => {
+        window.electronAPI.minimizeWindow();
     });
 
     // 监听主题变化
@@ -551,9 +557,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateFavoriteDisplay();
     });
 
-    // 更新评分星星显示（编辑模态框）
-    function updateRatingDisplay() {
-        ratingSelector.querySelectorAll('.rating-star').forEach(star => {
+    // 更新评分星星显示
+    function updateRatingDisplay(container = ratingSelector) {
+        container.querySelectorAll('.rating-star').forEach(star => {
             const rating = parseInt(star.dataset.rating, 10);
             if (rating <= currentRating) {
                 star.textContent = '★';
@@ -565,14 +571,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // 更新收藏心形显示（编辑模态框）
-    function updateFavoriteDisplay() {
+    // 更新收藏心形显示
+    function updateFavoriteDisplay(heartElement = favoriteHeart, textElement = null) {
         if (currentFavorite) {
-            favoriteHeart.textContent = '❤';
-            favoriteHeart.classList.add('favorited');
+            heartElement.textContent = '❤';
+            heartElement.classList.add('favorited');
+            if (textElement) textElement.textContent = '已收藏';
         } else {
-            favoriteHeart.textContent = '♡';
-            favoriteHeart.classList.remove('favorited');
+            heartElement.textContent = '♡';
+            heartElement.classList.remove('favorited');
+            if (textElement) textElement.textContent = '未收藏';
         }
     }
 
@@ -589,8 +597,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentFavorite = actor.favorites || false;
 
         // 更新显示
-        updateRatingModalDisplay();
-        updateFavoriteModalDisplay();
+        updateRatingDisplay(ratingModalSelector);
+        updateFavoriteDisplay(favoriteHeartModal, favoriteText);
 
         actorRatingModal.style.display = 'flex';
     };
@@ -601,7 +609,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             e.stopPropagation();
             const rating = parseInt(star.dataset.rating, 10);
             currentRating = currentRating === rating ? 0 : rating;
-            updateRatingModalDisplay();
+            updateRatingDisplay(ratingModalSelector);
         });
     });
 
@@ -609,35 +617,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     favoriteHeartModal.addEventListener('click', (e) => {
         e.stopPropagation();
         currentFavorite = !currentFavorite;
-        updateFavoriteModalDisplay();
+        updateFavoriteDisplay(favoriteHeartModal, favoriteText);
     });
-
-    // 更新评分星星显示（评分模态框）
-    function updateRatingModalDisplay() {
-        ratingModalSelector.querySelectorAll('.rating-star').forEach(star => {
-            const rating = parseInt(star.dataset.rating, 10);
-            if (rating <= currentRating) {
-                star.textContent = '★';
-                star.classList.add('active');
-            } else {
-                star.textContent = '☆';
-                star.classList.remove('active');
-            }
-        });
-    }
-
-    // 更新收藏心形显示（评分模态框）
-    function updateFavoriteModalDisplay() {
-        if (currentFavorite) {
-            favoriteHeartModal.textContent = '❤';
-            favoriteHeartModal.classList.add('favorited');
-            favoriteText.textContent = '已收藏';
-        } else {
-            favoriteHeartModal.textContent = '♡';
-            favoriteHeartModal.classList.remove('favorited');
-            favoriteText.textContent = '未收藏';
-        }
-    }
 
     // 关闭评分模态框
     closeRatingModal.addEventListener('click', () => {
@@ -1329,15 +1310,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     function closeExtractActorModal() {
         extractActorModal.style.display = 'none';
         resetExtractActorForm();
-    }
-
-    /**
-     * 截断文本
-     */
-    function truncateText(text, maxLength = 40) {
-        if (!text) return '-';
-        if (text.length <= maxLength) return escapeHtml(text);
-        return escapeHtml(text.substring(0, maxLength)) + '...';
     }
 
     /**

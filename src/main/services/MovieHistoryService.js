@@ -36,7 +36,7 @@ class MovieHistoryService {
         return this.loadPromise;
     }
 
-    async addRecord(movieName) {
+    async addRecord(movieName, movieId) {
         await this.loadPromise;
 
         const now = new Date();
@@ -45,7 +45,8 @@ class MovieHistoryService {
 
         const newRecord = {
             time: time,
-            movie: movieName
+            movieName: movieName,
+            movieId: movieId || ''
         };
 
         const dateEntry = this.history.history.find(entry => entry.date === date);
@@ -106,7 +107,7 @@ class MovieHistoryService {
             filtered = filtered.map(entry => ({
                 date: entry.date,
                 records: entry.records.filter(record => 
-                    record.movie.toLowerCase().includes(movieName.toLowerCase())
+                    record.movieName.toLowerCase().includes(movieName.toLowerCase())
                 )
             })).filter(entry => entry.records.length > 0);
         }
@@ -150,6 +151,32 @@ class MovieHistoryService {
                 await this.saveHistory();
             }
         }
+    }
+
+    getHistoryDates() {
+        return this.history.history
+            .map(entry => entry.date)
+            .sort((a, b) => b.localeCompare(a));
+    }
+
+    async deleteRecordsByDateAndMovieIds(date, movieIds) {
+        await this.loadPromise;
+
+        const dateEntry = this.history.history.find(entry => entry.date === date);
+        if (!dateEntry) return;
+
+        dateEntry.records = dateEntry.records.filter(
+            record => !movieIds.includes(record.movieId)
+        );
+
+        if (dateEntry.records.length === 0) {
+            const dateIndex = this.history.history.findIndex(entry => entry.date === date);
+            if (dateIndex !== -1) {
+                this.history.history.splice(dateIndex, 1);
+            }
+        }
+
+        await this.saveHistory();
     }
 }
 

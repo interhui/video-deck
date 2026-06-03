@@ -132,14 +132,6 @@ getActorPhotoDir() {
         return this.settings.library.actorPhotoDir || '';
     }
 
-    setActorPhotoDir(dirPath) {
-        if (!this.settings.library) {
-            this.settings.library = {};
-        }
-        this.settings.library.actorPhotoDir = dirPath;
-        this.saveSettings(this.settings);
-    }
-
     getNewMovieHours() {
         return this.settings.library.newMovieHours || 72;
     }

@@ -5,6 +5,7 @@
 const https = require('https');
 const http = require('http');
 const zlib = require('zlib');
+const fsSync = require('fs');
 const { HttpsProxyAgent } = require('https-proxy-agent');
 
 let globalProxyAgent = null;
@@ -155,9 +156,51 @@ function checkUrlAccessible(url, timeout = 5000, proxyAgent = null) {
     });
 }
 
+/**
+ * 下载图片到本地文件
+ * @param {string} url - 图片URL
+ * @param {string} outputPath - 输出文件路径
+ * @returns {Promise<string>} 返回输出文件路径
+ */
+function downloadImage(url, outputPath) {
+    return new Promise((resolve, reject) => {
+        const protocol = url.startsWith('https') ? https : http;
+
+        const request = protocol.get(url, (response) => {
+            if (response.statusCode === 302 || response.statusCode === 301) {
+                const redirectUrl = response.headers.location;
+                downloadImage(redirectUrl, outputPath).then(resolve).catch(reject);
+                return;
+            }
+
+            if (response.statusCode !== 200) {
+                reject(new Error(`Failed to download image: HTTP ${response.statusCode}`));
+                return;
+            }
+
+            const file = fsSync.createWriteStream(outputPath);
+            response.pipe(file);
+            file.on('finish', () => {
+                file.close();
+                resolve(outputPath);
+            });
+            file.on('error', (err) => {
+                fsSync.unlink(outputPath, () => {});
+                reject(err);
+            });
+        });
+
+        request.on('error', (err) => {
+            fsSync.unlink(outputPath, () => {});
+            reject(err);
+        });
+    });
+}
+
 module.exports = {
     makeHttpRequest,
     checkUrlAccessible,
+    downloadImage,
     setGlobalProxy,
     getGlobalProxyAgent
 };

@@ -7,6 +7,7 @@ const HardCodeService = require('./HardCodeService');
 const MovieCacheService = require('./MovieCacheService');
 const IndexService = require('./IndexService');
 const VideoInfoService = require('./VideoInfoService');
+const { sortMovies } = require('../utils/MovieUtils');
 const path = require('path');
 const fs = require('fs');
 
@@ -653,51 +654,7 @@ class MovieService {
      * @returns {Array} 排序后的列表
      */
     sortMovies(movies, sortBy = 'name', sortOrder = 'asc') {
-        if (!sortBy) {
-            return movies;
-        }
-
-        const sorted = [...movies];
-
-        sorted.sort((a, b) => {
-            let valA, valB;
-
-            switch (sortBy) {
-                case 'name':
-                    valA = a.title.toLowerCase();
-                    valB = b.title.toLowerCase();
-                    break;
-                case 'rating':
-                    valA = a.userRating || 0;
-                    valB = b.userRating || 0;
-                    break;
-                case 'year':
-                    valA = a.year || 0;
-                    valB = b.year || 0;
-                    break;
-                case 'actor':
-                    valA = (a.actors && a.actors.length > 0) ? a.actors[0].toLowerCase() : '';
-                    valB = (b.actors && b.actors.length > 0) ? b.actors[0].toLowerCase() : '';
-                    break;
-                case 'releasedate':
-                    valA = a.year || 0;
-                    valB = b.year || 0;
-                    break;
-                case 'addtime':
-                    valA = a.update_time || 0;
-                    valB = b.update_time || 0;
-                    break;
-                default:
-                    valA = a.title.toLowerCase();
-                    valB = b.title.toLowerCase();
-            }
-
-            if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
-            if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
-            return 0;
-        });
-
-        return sorted;
+        return sortMovies(movies, sortBy, sortOrder);
     }
 
 

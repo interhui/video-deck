@@ -153,6 +153,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     resizeWindow: (width, height) => ipcRenderer.invoke('resize-window', width, height),
     setMinSize: (minWidth, minHeight) => ipcRenderer.invoke('set-min-size', minWidth, minHeight),
     minimizeWindow: () => ipcRenderer.invoke('minimize-window'),
+    maximizeWindow: () => ipcRenderer.invoke('maximize-window'),
 
     // 下载电影封面
     downloadMovieCover: (data) => ipcRenderer.invoke('download-movie-cover', data),
@@ -238,10 +239,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     deleteScreenshot: (movieId, movieFolderPath, number) => ipcRenderer.invoke('delete-screenshot', { movieId, movieFolderPath, number }),
 
     // 播放历史记录
-    addPlayHistory: (movieName) => ipcRenderer.invoke('add-play-history', movieName),
+    addPlayHistory: (movieName, movieId) => ipcRenderer.invoke('add-play-history', movieName, movieId),
     getPlayHistory: (movieName, date) => ipcRenderer.invoke('get-play-history', movieName, date),
     deletePlayHistory: (date, time) => ipcRenderer.invoke('delete-play-history', date, time),
     clearPlayHistory: () => ipcRenderer.invoke('clear-play-history'),
+    getHistoryDates: () => ipcRenderer.invoke('get-history-dates'),
+    deleteHistoryRecords: (date, movieIds) => ipcRenderer.invoke('delete-history-records', date, movieIds),
+    openHistoryWindow: () => ipcRenderer.invoke('open-history-window'),
 
     // 文件操作
     openFolder: (filePath) => ipcRenderer.invoke('open-folder', filePath),
