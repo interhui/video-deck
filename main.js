@@ -232,22 +232,14 @@ function createApplicationMenu() {
             label: '视图',
             submenu: [
                 {
-                    label: '重新加载',
+                    label: '刷新',
                     accelerator: 'CmdOrCtrl+R',
                     click: () => {
                         if (mainWindow) {
                             mainWindow.webContents.send('refresh-library');
                         }
                     }
-                },
-                { role: 'forceReload' },
-                { role: 'toggleDevTools' },
-                { type: 'separator' },
-                { role: 'resetZoom' },
-                { role: 'zoomIn' },
-                { role: 'zoomOut' },
-                { type: 'separator' },
-                { role: 'togglefullscreen' }
+                }
             ]
         },
         {

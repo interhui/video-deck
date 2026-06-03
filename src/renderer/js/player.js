@@ -364,7 +364,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             updatePlayPauseBtn();
             const movieName = item.title || basename(item.path);
             elements.playerTitle.textContent = movieName;
-            window.electronAPI.addPlayHistory(movieName).catch(err => {
+            window.electronAPI.addPlayHistory(movieName, item.movieId || '').catch(err => {
                 console.error('记录播放历史失败:', err);
             });
         }).catch(err => {
@@ -697,7 +697,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const recordDiv = document.createElement('div');
                 recordDiv.className = 'history-record';
                 recordDiv.innerHTML = `
-                    <span class="history-record-text">    ${record.time} ${record.movie}</span>
+                    <span class="history-record-text">    ${record.time} ${record.movieName}</span>
                     <button class="history-record-delete" title="删除此记录">✕</button>
                 `;
                 recordDiv.addEventListener('click', async (e) => {

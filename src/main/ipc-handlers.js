@@ -2074,9 +2074,9 @@ function setupIpcHandlers(services) {
         }
     });
 
-    ipcMain.handle('add-play-history', async (event, movieName) => {
+    ipcMain.handle('add-play-history', async (event, movieName, movieId) => {
         try {
-            await movieHistoryService.addRecord(movieName);
+            await movieHistoryService.addRecord(movieName, movieId);
             return { success: true };
         } catch (error) {
             console.error('Error adding play history:', error);

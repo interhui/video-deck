@@ -239,7 +239,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     deleteScreenshot: (movieId, movieFolderPath, number) => ipcRenderer.invoke('delete-screenshot', { movieId, movieFolderPath, number }),
 
     // 播放历史记录
-    addPlayHistory: (movieName) => ipcRenderer.invoke('add-play-history', movieName),
+    addPlayHistory: (movieName, movieId) => ipcRenderer.invoke('add-play-history', movieName, movieId),
     getPlayHistory: (movieName, date) => ipcRenderer.invoke('get-play-history', movieName, date),
     deletePlayHistory: (date, time) => ipcRenderer.invoke('delete-play-history', date, time),
     clearPlayHistory: () => ipcRenderer.invoke('clear-play-history'),

@@ -36,7 +36,7 @@ class MovieHistoryService {
         return this.loadPromise;
     }
 
-    async addRecord(movieName) {
+    async addRecord(movieName, movieId) {
         await this.loadPromise;
 
         const now = new Date();
@@ -45,7 +45,8 @@ class MovieHistoryService {
 
         const newRecord = {
             time: time,
-            movie: movieName
+            movieName: movieName,
+            movieId: movieId || ''
         };
 
         const dateEntry = this.history.history.find(entry => entry.date === date);
@@ -106,7 +107,7 @@ class MovieHistoryService {
             filtered = filtered.map(entry => ({
                 date: entry.date,
                 records: entry.records.filter(record => 
-                    record.movie.toLowerCase().includes(movieName.toLowerCase())
+                    record.movieName.toLowerCase().includes(movieName.toLowerCase())
                 )
             })).filter(entry => entry.records.length > 0);
         }
