@@ -2099,6 +2099,7 @@ function setupIpcHandlers(services) {
 
     ipcMain.handle('get-play-history', async (event, movieName, date) => {
         try {
+            await movieHistoryService.reloadHistory();
             const history = movieHistoryService.filterHistory(movieName, date);
             return history;
         } catch (error) {

@@ -117,6 +117,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onTagsUpdated: (callback) => {
         ipcRenderer.on('tags-updated', callback);
     },
+    onReloadHistory: (callback) => {
+        ipcRenderer.on('reload-history', callback);
+    },
     onCategoriesUpdated: (callback) => {
         ipcRenderer.on('categories-updated', callback);
     },

@@ -77,13 +77,41 @@
 }
 
 .history-sidebar h3 {
-    padding: 16px;
     font-size: 14px;
     font-weight: 600;
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin: 0;
+    margin: 0 0 12px 0;
+}
+
+.history-sidebar .sidebar-header {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.history-sidebar .search-box {
+    display: flex;
+    gap: 8px;
+}
+
+.history-sidebar .search-box input {
+    flex: 1;
+    padding: 8px 12px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-color);
+    font-size: 13px;
+}
+
+.history-sidebar .search-box input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.history-sidebar .search-box input::placeholder {
+    color: var(--text-secondary);
 }
 
 /* 时间轴列表 */
@@ -147,7 +175,7 @@
     align-items: center;
     gap: 12px;
     margin-bottom: 16px;
-    max-width: 300px;
+    max-width: 400px;
 }
 
 /* 历史记录内容区 */

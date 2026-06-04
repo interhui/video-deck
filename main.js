@@ -254,7 +254,16 @@ function createApplicationMenu() {
                     click: () => {
                         createBoxViewWindow();
                     }
-                }
+                },
+                { type: 'separator' },
+                { role: 'forceReload' },
+                { role: 'toggleDevTools' },
+                { type: 'separator' },
+                { role: 'resetZoom' },
+                { role: 'zoomIn' },
+                { role: 'zoomOut' },
+                { type: 'separator' },
+                { role: 'togglefullscreen' }
             ]
         },
         {
@@ -469,7 +478,7 @@ let historyWindow = null;
 
 function createHistoryWindow() {
     if (historyWindow) {
-        historyWindow.focus();
+        historyWindow.reload();
         return;
     }
 
