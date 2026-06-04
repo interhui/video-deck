@@ -213,6 +213,7 @@ function setupIpcHandlers(services) {
         getMainWindow,
         createMovieDetailWindow,
         createBoxWindow,
+        createBoxViewWindow,
         createActorManagementWindow,
         createCategoryManagementWindow,
         createHistoryWindow,
@@ -1213,6 +1214,17 @@ function setupIpcHandlers(services) {
             return { success: true };
         } catch (error) {
             console.error('Error opening box window:', error);
+            return { error: error.message };
+        }
+    });
+
+    // 打开收藏记录视图窗口
+    ipcMain.handle('open-box-view-window', async () => {
+        try {
+            createBoxViewWindow();
+            return { success: true };
+        } catch (error) {
+            console.error('Error opening box view window:', error);
             return { error: error.message };
         }
     });

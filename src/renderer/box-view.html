@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: file: https://image.tmdb.org https://pics.dmm.co.jp;">
+    <title>收藏记录</title>
+    <link rel="stylesheet" href="css/themes/dark.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/box.css">
+    <link rel="stylesheet" href="css/view.css">
+</head>
+<body>
+    <div id="app">
+        <header class="toolbar">
+            <div class="toolbar-left">
+                <h2 class="view-title">收藏记录</h2>
+            </div>
+            <div class="toolbar-right">
+                <button id="play-btn" class="btn btn-primary">播放</button>
+                <div class="search-box">
+                    <input type="text" id="search-input" placeholder="搜索电影...">
+                    <button id="search-btn" class="icon-btn">🔍</button>
+                    <button id="clear-search-btn" class="icon-btn clear-search-btn" style="display: none;">✕</button>
+                </div>
+                <button id="minimize-btn" class="titlebar-minimize-btn" title="最小化">─</button>
+                <button id="close-btn" class="titlebar-close-btn" title="关闭">&times;</button>
+            </div>
+        </header>
+
+        <main class="box-main-content">
+            <aside class="box-sidebar" id="box-sidebar">
+                <h3>收藏夹</h3>
+                <ul class="box-category-list" id="box-list">
+                </ul>
+            </aside>
+
+            <div class="splitter" id="box-splitter"></div>
+
+            <section class="box-movie-wall" id="box-movie-wall">
+                <div class="box-filter-bar">
+                    <select id="sort-select" class="filter-select">
+                        <option value="name-asc">名称 ↑</option>
+                        <option value="name-desc">名称 ↓</option>
+                        <option value="actor-asc">演员 ↑</option>
+                        <option value="actor-desc">演员 ↓</option>
+                        <option value="rating-desc">评分 ↓</option>
+                        <option value="rating-asc">评分 ↑</option>
+                        <option value="addtime-asc">添加时间 ↑</option>
+                        <option value="addtime-desc">添加时间 ↓</option>
+                    </select>
+                    <select id="category-filter" class="filter-select">
+                        <option value="">全部分类</option>
+                    </select>
+                    <select id="status-filter" class="filter-select">
+                        <option value="">全部状态</option>
+                        <option value="new">新电影</option>
+                        <option value="unwatched">未观看</option>
+                        <option value="watching">观看中</option>
+                        <option value="completed">已完成</option>
+                    </select>
+                    <select id="tag-filter" class="filter-select">
+                        <option value="">全部标签</option>
+                    </select>
+                    <select id="rating-filter" class="filter-select">
+                        <option value="">全部评分</option>
+                        <option value="5">⭐⭐⭐⭐⭐</option>
+                        <option value="4">⭐⭐⭐⭐</option>
+                        <option value="3">⭐⭐⭐</option>
+                        <option value="2">⭐⭐</option>
+                        <option value="1">⭐</option>
+                    </select>
+                </div>
+
+                <div class="box-movies-grid" id="movies-grid">
+                </div>
+                <div class="empty-state" id="empty-state" style="display: none;">
+                    <p>暂无电影</p>
+                    <p>请选择左侧收藏夹查看电影</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="tag-filter-modal" class="modal" style="display: none;">
+        <div class="modal-content tag-filter-modal-content">
+            <div class="modal-header">
+                <h2>标签筛选选择</h2>
+                <button class="close-btn" id="close-tag-filter">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="tag-filter-toolbar">
+                    <div class="tag-filter-right">
+                        <div class="search-box tag-filter-search">
+                            <input type="text" id="tag-filter-search-input" placeholder="搜索标签（ID、名称）...">
+                            <button id="tag-filter-search-btn" class="icon-btn">🔍</button>
+                            <button id="tag-filter-clear-btn" class="icon-btn clear-search-btn" style="display: none;">✕</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="tag-filter-list" id="tag-filter-list">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="confirm-tag-filter" class="btn btn-primary">确定</button>
+                <button id="cancel-tag-filter" class="btn btn-secondary">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/utils/common-utils.js"></script>
+    <script src="js/box-view.js"></script>
+</body>
+</html>

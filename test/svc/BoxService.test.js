@@ -191,7 +191,7 @@ describe('BoxService', () => {
             fs.writeFileSync(path.join(testDataDir, 'Box2.json'), JSON.stringify(box2));
 
             await expect(service.updateBox('Box1', 'Box2', '', testDataDir))
-                .rejects.toThrow('新收藏夹名称已存在');
+                .rejects.toThrow('电影收藏夹名称已存在');
         });
     });
 

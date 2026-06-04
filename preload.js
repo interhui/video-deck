@@ -61,6 +61,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getPendingMovieDetail: () => ipcRenderer.invoke('get-pending-movie-detail'),
     closeDetailWindow: () => ipcRenderer.invoke('close-detail-window'),
     openBoxWindow: (boxName) => ipcRenderer.invoke('open-box-window', boxName),
+    openBoxViewWindow: () => ipcRenderer.invoke('open-box-view-window'),
     setDetailEditMode: (isEditing) => ipcRenderer.invoke('set-detail-edit-mode', isEditing),
     filterByActor: (actorName) => ipcRenderer.invoke('filter-by-actor', actorName),
     filterByTag: (tagId) => ipcRenderer.invoke('filter-by-tag', tagId),
