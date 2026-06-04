@@ -5,6 +5,7 @@
 
 const state = {
     boxes: [],
+    boxSearchKeyword: '',
     currentBoxName: '',
     movies: [],
     categories: [],
@@ -23,6 +24,7 @@ const state = {
 
 const elements = {
     boxList: document.getElementById('box-list'),
+    boxSearchInput: document.getElementById('box-search-input'),
     playBtn: document.getElementById('play-btn'),
     minimizeBtn: document.getElementById('minimize-btn'),
     closeBtn: document.getElementById('close-btn'),
@@ -140,8 +142,22 @@ function renderBoxList() {
         return;
     }
 
+    let filteredBoxes = state.boxes;
+    if (state.boxSearchKeyword) {
+        const keyword = state.boxSearchKeyword.toLowerCase();
+        filteredBoxes = state.boxes.filter(box =>
+            (box.name && box.name.toLowerCase().includes(keyword)) ||
+            (box.description && box.description.toLowerCase().includes(keyword))
+        );
+    }
+
+    if (filteredBoxes.length === 0) {
+        elements.boxList.innerHTML = '<li class="box-category-item" style="color: var(--text-secondary); cursor: default; justify-content: center;">无匹配收藏夹</li>';
+        return;
+    }
+
     let html = '';
-    state.boxes.forEach(box => {
+    filteredBoxes.forEach(box => {
         const isActive = box.originalName === state.currentBoxName;
         html += `
             <li class="box-category-item ${isActive ? 'active' : ''}" data-box-name="${escapeHtml(box.originalName)}">
@@ -670,6 +686,18 @@ function initSplitter() {
 }
 
 function bindEvents() {
+    elements.boxSearchInput.addEventListener('input', () => {
+        state.boxSearchKeyword = elements.boxSearchInput.value.trim();
+        renderBoxList();
+    });
+
+    elements.boxSearchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            state.boxSearchKeyword = elements.boxSearchInput.value.trim();
+            renderBoxList();
+        }
+    });
+
     elements.minimizeBtn.addEventListener('click', () => {
         window.electronAPI.minimizeWindow();
     });
