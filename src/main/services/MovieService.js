@@ -1402,6 +1402,88 @@ class MovieService {
     }
 
     /**
+     * 获取演员关联的电影列表
+     * @param {string} actorName - 演员名称
+     * @param {string} moviesDir - 电影存储目录
+     * @param {object} options - 筛选和排序选项
+     * @returns {Promise<Array>} 该演员关联的电影列表
+     */
+    async getActorMovieList(actorName, moviesDir, options = {}) {
+        try {
+            if (!this.cacheService.isCacheInitialized()) {
+                await this.refreshCache(moviesDir);
+            }
+
+            const allMovies = this.cacheService.getAllMovies() || [];
+            const actorMovies = allMovies.filter(movie =>
+                movie.actors && Array.isArray(movie.actors) && movie.actors.includes(actorName)
+            );
+
+            const { sortBy, sortOrder } = options;
+            return this.sortMovies(actorMovies, sortBy, sortOrder);
+        } catch (error) {
+            console.error('Error getting actor movie list:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * 获取所有演员及其关联电影数量
+     * @param {string} moviesDir - 电影存储目录
+     * @returns {Promise<Array>} 演员列表 [{name, movieCount}]
+     */
+    async getActorMovieCountMap(moviesDir) {
+        try {
+            if (!this.cacheService.isCacheInitialized()) {
+                await this.refreshCache(moviesDir);
+            }
+
+            const allMovies = this.cacheService.getAllMovies() || [];
+            const actorMap = new Map();
+
+            for (const movie of allMovies) {
+                if (movie.actors && Array.isArray(movie.actors)) {
+                    for (const actorName of movie.actors) {
+                        if (actorName && typeof actorName === 'string') {
+                            const trimmed = actorName.trim();
+                            if (trimmed) {
+                                actorMap.set(trimmed, (actorMap.get(trimmed) || 0) + 1);
+                            }
+                        }
+                    }
+                }
+            }
+
+            let favoriteNames = new Set();
+            if (this.actorService) {
+                try {
+                    const actorData = this.actorService.getActors();
+                    if (Array.isArray(actorData)) {
+                        favoriteNames = new Set(
+                            actorData.filter(a => a.favorites).map(a => a.name)
+                        );
+                    }
+                } catch (e) {
+                    // ignore
+                }
+            }
+
+            const actors = Array.from(actorMap.entries()).map(([name, movieCount]) => ({
+                name,
+                movieCount,
+                favorites: favoriteNames.has(name)
+            }));
+
+            actors.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
+
+            return actors;
+        } catch (error) {
+            console.error('Error getting actor movie count map:', error);
+            throw error;
+        }
+    }
+
+    /**
      * 从电影列表中排除指定收藏夹中已收藏的电影
      * @param {Array} movies - 电影列表
      * @param {Array<string>} excludedMovieIds - 需要排除的电影ID列表

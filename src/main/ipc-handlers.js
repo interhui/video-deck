@@ -214,6 +214,7 @@ function setupIpcHandlers(services) {
         createMovieDetailWindow,
         createBoxWindow,
         createBoxViewWindow,
+        createActorViewWindow,
         createActorManagementWindow,
         createCategoryManagementWindow,
         createHistoryWindow,
@@ -1225,6 +1226,43 @@ function setupIpcHandlers(services) {
             return { success: true };
         } catch (error) {
             console.error('Error opening box view window:', error);
+            return { error: error.message };
+        }
+    });
+
+    // 打开演员视图窗口
+    ipcMain.handle('open-actor-view-window', async () => {
+        try {
+            createActorViewWindow();
+            return { success: true };
+        } catch (error) {
+            console.error('Error opening actor view window:', error);
+            return { error: error.message };
+        }
+    });
+
+    // 获取演员关联电影列表
+    ipcMain.handle('get-actor-movie-list', async (event, actorName) => {
+        try {
+            const settings = settingsService.getSettings();
+            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const movies = await movieService.getActorMovieList(actorName, moviesDir);
+            return movies;
+        } catch (error) {
+            console.error('Error getting actor movie list:', error);
+            return { error: error.message };
+        }
+    });
+
+    // 获取所有演员及其关联电影数量
+    ipcMain.handle('get-actor-movie-count-map', async () => {
+        try {
+            const settings = settingsService.getSettings();
+            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const actors = await movieService.getActorMovieCountMap(moviesDir);
+            return actors;
+        } catch (error) {
+            console.error('Error getting actor movie count map:', error);
             return { error: error.message };
         }
     });

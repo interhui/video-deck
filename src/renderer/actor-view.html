@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: file: https://image.tmdb.org https://pics.dmm.co.jp;">
-    <title>收藏记录</title>
+    <title>演员视图</title>
     <link rel="stylesheet" href="css/themes/dark.css">
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/box.css">
@@ -14,7 +14,7 @@
     <div id="app">
         <header class="toolbar">
             <div class="toolbar-left">
-                <h2 class="view-title">收藏记录</h2>
+                <h2 class="view-title">演员视图</h2>
             </div>
             <div class="toolbar-right">
                 <button id="play-btn" class="btn btn-primary">播放</button>
@@ -29,20 +29,20 @@
         </header>
 
         <main class="box-main-content">
-            <aside class="box-sidebar" id="box-sidebar">
+            <aside class="box-sidebar" id="actor-sidebar">
                 <div class="box-sidebar-header">
-                    <h3>收藏夹</h3>
+                    <h3>演员列表</h3>
                     <div class="search-box box-search-box">
-                        <input type="text" id="box-search-input" placeholder="搜索收藏夹...">
+                        <input type="text" id="actor-search-input" placeholder="搜索演员...">
                     </div>
                 </div>
-                <ul class="box-category-list" id="box-list">
+                <ul class="box-category-list" id="actor-list">
                 </ul>
             </aside>
 
-            <div class="splitter" id="box-splitter"></div>
+            <div class="splitter" id="actor-splitter"></div>
 
-            <section class="box-movie-wall" id="box-movie-wall">
+            <section class="box-movie-wall" id="actor-movie-wall">
                 <div class="box-filter-bar">
                     <div class="filter-group">
                         <select id="sort-select" class="filter-select">
@@ -50,8 +50,6 @@
                             <option value="name-desc">名称 ↓</option>
                             <option value="actor-asc">演员 ↑</option>
                             <option value="actor-desc">演员 ↓</option>
-                            <option value="rating-desc">评分 ↓</option>
-                            <option value="rating-asc">评分 ↑</option>
                             <option value="addtime-asc">添加时间 ↑</option>
                             <option value="addtime-desc">添加时间 ↓</option>
                         </select>
@@ -62,28 +60,15 @@
                         </select>
                     </div>
                     <div class="filter-group">
-                        <select id="status-filter" class="filter-select">
-                            <option value="">全部状态</option>
-                            <option value="new">新电影</option>
-                            <option value="unwatched">未观看</option>
-                            <option value="watching">观看中</option>
-                            <option value="completed">已完成</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
                         <select id="tag-filter" class="filter-select">
                             <option value="">全部标签</option>
                         </select>
                     </div>
                     <div class="filter-group">
-                        <select id="rating-filter" class="filter-select">
-                            <option value="">全部评分</option>
-                            <option value="5">⭐⭐⭐⭐⭐</option>
-                            <option value="4">⭐⭐⭐⭐</option>
-                            <option value="3">⭐⭐⭐</option>
-                            <option value="2">⭐⭐</option>
-                            <option value="1">⭐</option>
-                        </select>
+                        <label class="filter-checkbox-label">
+                            <input type="checkbox" id="favorite-filter">
+                            <span>仅显示收藏演员</span>
+                        </label>
                     </div>
                 </div>
 
@@ -91,7 +76,7 @@
                 </div>
                 <div class="empty-state" id="empty-state" style="display: none;">
                     <p>暂无电影</p>
-                    <p>请选择左侧收藏夹查看电影</p>
+                    <p>请选择左侧演员查看关联电影</p>
                 </div>
             </section>
         </main>
@@ -124,6 +109,6 @@
     </div>
 
     <script src="js/utils/common-utils.js"></script>
-    <script src="js/box-view.js"></script>
+    <script src="js/actor-view.js"></script>
 </body>
 </html>

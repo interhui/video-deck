@@ -249,10 +249,17 @@ function createApplicationMenu() {
                     }
                 },
                 {
-                    label: '收藏记录',
+                    label: '收藏视图',
                     accelerator: 'CmdOrCtrl+F',
                     click: () => {
                         createBoxViewWindow();
+                    }
+                },
+                {
+                    label: '演员视图',
+                    accelerator: 'CmdOrCtrl+G',
+                    click: () => {
+                        createActorViewWindow();
                     }
                 },
                 { type: 'separator' },
@@ -548,6 +555,43 @@ function createBoxViewWindow() {
     });
 }
 
+let actorViewWindow = null;
+
+function createActorViewWindow() {
+    if (actorViewWindow) {
+        actorViewWindow.focus();
+        return;
+    }
+
+    actorViewWindow = new BrowserWindow({
+        width: 1280,
+        height: 800,
+        minWidth: 800,
+        minHeight: 600,
+        title: '演员视图',
+        frame: false,
+        autoHideMenuBar: true,
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
+            contextIsolation: true,
+            nodeIntegration: false,
+            sandbox: false
+        },
+        show: false
+    });
+
+    actorViewWindow.loadFile(path.join(__dirname, 'src', 'renderer', 'actor-view.html'));
+
+    actorViewWindow.once('ready-to-show', () => {
+        actorViewWindow.show();
+        actorViewWindow.maximize();
+    });
+
+    actorViewWindow.on('closed', () => {
+        actorViewWindow = null;
+    });
+}
+
 // 播放器窗口
 let playerWindow = null;
 
@@ -632,6 +676,7 @@ app.whenReady().then(async () => {
         createMovieDetailWindow,
         createBoxWindow,
         createBoxViewWindow,
+        createActorViewWindow,
         createActorManagementWindow,
         createCategoryManagementWindow,
         createHistoryWindow,

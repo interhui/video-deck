@@ -94,7 +94,7 @@
 
 .box-filter-bar label {
     color: var(--text-secondary);
-    font-size: 14px;
+    font-size: 13px;
 }
 
 /* 收藏夹主内容区：分栏布局 */
@@ -178,7 +178,7 @@
 }
 
 .box-category-item .category-name {
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .box-category-item .movie-count {
