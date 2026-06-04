@@ -67,7 +67,7 @@ async function initializeServices() {
     indexService = new IndexService();
     dbService = new DatabaseService(path.join(userDataPath, 'database', 'movies.db'));
     settingsService = new SettingsService(path.join(__dirname, 'config', 'settings.json'));
-    boxService = new BoxService();
+    boxService = new BoxService(path.join(__dirname, 'config', 'boxes.json'));
     tagService = new TagService(path.join(__dirname, 'config', 'tags.json'));
     categoryService = new CategoryService(path.join(__dirname, 'config', 'categories.json'));
     actorService = new ActorService(path.join(__dirname, 'config', 'actor.json'));

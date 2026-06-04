@@ -19,7 +19,7 @@ const baseDir = path.join(__dirname, '..', '..', '..');
  * @param {string} categoryConfigPath - Category config file path
  * @returns {object} Loaded services
  */
-function loadServices(moviesDir, movieboxDir, settingsPath, tagsPath, categoryConfigPath) {
+function loadServices(moviesDir, movieboxDir, settingsPath, tagsPath, categoryConfigPath, boxesConfigPath) {
     const MovieService = require(path.join(baseDir, 'src', 'main', 'services', 'MovieService'));
     const BoxService = require(path.join(baseDir, 'src', 'main', 'services', 'BoxService'));
     const TagService = require(path.join(baseDir, 'src', 'main', 'services', 'TagService'));
@@ -38,7 +38,7 @@ function loadServices(moviesDir, movieboxDir, settingsPath, tagsPath, categoryCo
     movieService.setCacheService(movieCacheService);
 
     const settingsService = new SettingsService(settingsPath);
-    const boxService = new BoxService();
+    const boxService = new BoxService(boxesConfigPath);
     const tagService = new TagService(tagsPath);
 
     return {
@@ -72,6 +72,7 @@ async function initializeServices(options = {}) {
     const settingsPath = options.settingsPath || path.join(configDir, 'settings.json');
     const tagsPath = options.tagsPath || path.join(configDir, 'tags.json');
     const categoryConfigPath = options.categoryConfigPath || path.join(configDir, 'categories.json');
+    const boxesConfigPath = options.boxesConfigPath || path.join(configDir, 'boxes.json');
 
     // Create default settings if not exists
     if (!fs.existsSync(settingsPath)) {
@@ -120,7 +121,7 @@ async function initializeServices(options = {}) {
     const moviesDir = options.moviesDir || settings.library.moviesDir || path.join(baseDir, 'movies');
     const movieboxDir = options.movieboxDir || settings.moviebox.movieboxDir || path.join(baseDir, 'boxes');
 
-    return loadServices(moviesDir, movieboxDir, settingsPath, tagsPath, categoryConfigPath);
+    return loadServices(moviesDir, movieboxDir, settingsPath, tagsPath, categoryConfigPath, boxesConfigPath);
 }
 
 module.exports = {
