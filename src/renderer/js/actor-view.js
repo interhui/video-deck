@@ -50,37 +50,16 @@ let categoriesCache = [];
 let tagsCache = [];
 
 async function loadCategories() {
-    try {
-        const categories = await window.electronAPI.getCategoriesFromCache();
-        if (Array.isArray(categories)) {
-            categoriesCache = categories;
-        }
-    } catch (error) {
-        console.error('Error loading categories:', error);
-    }
+    categoriesCache = await loadCategoriesCache();
 }
 
 async function loadTags() {
-    try {
-        const tags = await window.electronAPI.getTags();
-        if (Array.isArray(tags)) {
-            tagsCache = tags;
-            updateTagFilter();
-        }
-    } catch (error) {
-        console.error('Error loading tags:', error);
-    }
+    tagsCache = await loadTagsCache();
+    _updateTagFilter();
 }
 
-function updateTagFilter() {
-    elements.tagFilter.innerHTML = '<option value="">全部标签</option><option value="select">选择标签</option>';
-    const displayTags = tagsCache.slice(0, 10);
-    displayTags.forEach(tag => {
-        const option = document.createElement('option');
-        option.value = tag.id;
-        option.textContent = tag.name;
-        elements.tagFilter.appendChild(option);
-    });
+function _updateTagFilter() {
+    updateTagFilter({ selectEl: elements.tagFilter, tags: tagsCache, showSelectOption: true, maxDisplay: 10 });
 }
 
 async function init() {
@@ -149,6 +128,8 @@ function renderActorList() {
         return;
     }
 
+    filteredActors.sort((a, b) => (b.movieCount || 0) - (a.movieCount || 0));
+
     let html = '';
     filteredActors.forEach(actor => {
         const isActive = actor.name === state.currentActorName;
@@ -196,7 +177,7 @@ async function loadActorMovies() {
         const movies = await window.electronAPI.getActorMovieList(state.currentActorName);
         state.movies = movies || [];
         state.categories = [...new Set(state.movies.map(m => m.category).filter(Boolean))];
-        updateCategoryFilter();
+        _updateCategoryFilter();
         renderMovies();
     } catch (error) {
         console.error('Error loading actor movies:', error);
@@ -206,77 +187,12 @@ async function loadActorMovies() {
     }
 }
 
-function updateCategoryFilter() {
-    elements.categoryFilter.innerHTML = '<option value="">全部分类</option>';
-    state.categories.forEach(category => {
-        const count = state.movies.filter(m => m.category === category).length;
-        const name = getCategoryName(category, categoriesCache);
-        const option = document.createElement('option');
-        option.value = category;
-        option.textContent = `${name} (${count})`;
-        elements.categoryFilter.appendChild(option);
-    });
-}
-
-function getFilteredMovies(movies) {
-    let filteredMovies = movies;
-
-    if (state.currentCategory) {
-        filteredMovies = filteredMovies.filter(m => m.category === state.currentCategory);
-    }
-
-    if (state.currentTag) {
-        filteredMovies = filteredMovies.filter(m =>
-            m.tags && m.tags.includes(state.currentTag)
-        );
-    }
-
-    if (state.searchKeyword) {
-        const keyword = state.searchKeyword.toLowerCase();
-        filteredMovies = filteredMovies.filter(m =>
-            m.name.toLowerCase().includes(keyword) ||
-            (m.description && m.description.toLowerCase().includes(keyword)) ||
-            (m.tags && m.tags.some(tag => tag.toLowerCase().includes(keyword)))
-        );
-    }
-
-    return filteredMovies;
-}
-
-function sortMovies(movies, sortBy = 'name', sortOrder = 'asc') {
-    const sorted = [...movies];
-
-    sorted.sort((a, b) => {
-        let valA, valB;
-
-        switch (sortBy) {
-            case 'name':
-                valA = a.name.toLowerCase();
-                valB = b.name.toLowerCase();
-                break;
-            case 'actor':
-                valA = (a.actors && a.actors.length > 0) ? a.actors[0].toLowerCase() : '';
-                valB = (b.actors && b.actors.length > 0) ? b.actors[0].toLowerCase() : '';
-                break;
-            case 'addtime':
-                valA = a.update_time || 0;
-                valB = b.update_time || 0;
-                break;
-            default:
-                valA = a.name.toLowerCase();
-                valB = b.name.toLowerCase();
-        }
-
-        if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
-        if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
-        return 0;
-    });
-
-    return sorted;
+function _updateCategoryFilter() {
+    updateCategoryFilter({ selectEl: elements.categoryFilter, categories: state.categories, movies: state.movies, categoriesCache });
 }
 
 function renderMovies() {
-    let filteredMovies = getFilteredMovies(state.movies);
+    let filteredMovies = getFilteredMovies(state.movies, { category: state.currentCategory, tag: state.currentTag, searchKeyword: state.searchKeyword });
 
     const [sortBy, sortOrder] = state.currentSort.split('-');
     filteredMovies = sortMovies(filteredMovies, sortBy, sortOrder);
@@ -382,7 +298,7 @@ async function playActorMovies() {
 
     try {
         const playlist = [];
-        const allMovies = getFilteredMovies(state.movies);
+        const allMovies = getFilteredMovies(state.movies, { category: state.currentCategory, tag: state.currentTag, searchKeyword: state.searchKeyword });
 
         for (const movie of allMovies) {
             const movieDetail = await window.electronAPI.getMovieDetail(movie.id);
@@ -446,7 +362,7 @@ function openTagFilterModal() {
     state.tagFilterSearchKeyword = '';
     elements.tagFilterSearchInput.value = '';
     state.tempSelectedTag = state.currentTagFilter || null;
-    renderTagFilterList();
+    _renderTagFilterList();
     elements.tagFilterModal.style.display = 'flex';
 }
 
@@ -457,7 +373,7 @@ function closeTagFilterModal() {
 function confirmTagFilter() {
     state.currentTagFilter = state.tempSelectedTag;
     state.currentTag = state.currentTagFilter || '';
-    updateTagFilterDisplay();
+    _updateTagFilterDisplay();
     closeTagFilterModal();
     renderMovies();
 }
@@ -466,93 +382,33 @@ function cancelTagFilter() {
     state.currentTagFilter = '';
     state.currentTag = '';
     state.tempSelectedTag = null;
-    updateTagFilterDisplay();
+    _updateTagFilterDisplay();
     closeTagFilterModal();
     renderMovies();
 }
 
-function renderTagFilterList() {
-    const searchKeyword = state.tagFilterSearchKeyword || '';
+function _renderTagFilterList() {
+    renderTagFilterList({ tags: tagsCache, searchKeyword: state.tagFilterSearchKeyword, selectedTag: state.tempSelectedTag, listEl: elements.tagFilterList, onToggleTag: _toggleTagSelection });
+}
 
-    let filteredTags = tagsCache.filter(tag => {
-        if (!searchKeyword) return true;
-        const keyword = searchKeyword.toLowerCase();
-        const idMatch = tag.id && tag.id.toLowerCase().includes(keyword);
-        const nameMatch = tag.name && tag.name.toLowerCase().includes(keyword);
-        return idMatch || nameMatch;
-    });
-
-    filteredTags.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-
-    if (filteredTags.length === 0) {
-        elements.tagFilterList.innerHTML = '<div class="tag-filter-empty">暂无标签</div>';
-        return;
-    }
-
-    elements.tagFilterList.innerHTML = filteredTags.map(tag => {
-        const isSelected = state.tempSelectedTag === tag.id;
-        return `
-            <div class="tag-filter-item ${isSelected ? 'selected' : ''}" data-id="${escapeHtml(tag.id)}">
-                <div class="tag-filter-radio ${isSelected ? 'checked' : ''}" data-tag-id="${escapeHtml(tag.id)}"></div>
-                <div class="tag-filter-info">
-                    <div class="tag-filter-name">${escapeHtml(tag.name)}</div>
-                </div>
-            </div>
-        `;
-    }).join('');
-
-    elements.tagFilterList.querySelectorAll('.tag-filter-item').forEach(item => {
-        item.addEventListener('click', () => {
-            toggleTagSelection(item.dataset.id);
-        });
-    });
-
-    elements.tagFilterList.querySelectorAll('.tag-filter-radio').forEach(radio => {
-        radio.addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleTagSelection(radio.dataset.tagId);
-        });
+function _toggleTagSelection(tagId) {
+    toggleTagSelection(tagId, {
+        currentSelected: state.tempSelectedTag,
+        listEl: elements.tagFilterList,
+        onStateChanged: (newSelected) => { state.tempSelectedTag = newSelected; }
     });
 }
 
-function toggleTagSelection(tagId) {
-    state.tempSelectedTag = state.tempSelectedTag === tagId ? null : tagId;
-
-    elements.tagFilterList.querySelectorAll('.tag-filter-item').forEach(item => {
-        const isSelected = item.dataset.id === state.tempSelectedTag;
-        item.classList.toggle('selected', isSelected);
-        const radio = item.querySelector('.tag-filter-radio');
-        radio.classList.toggle('checked', isSelected);
-    });
+function _updateTagFilterDisplay() {
+    updateTagFilterDisplay({ selectEl: elements.tagFilter, currentTagFilter: state.currentTagFilter, tags: tagsCache });
 }
 
-function updateTagFilterDisplay() {
-    if (!state.currentTagFilter) {
-        elements.tagFilter.value = '';
-    } else {
-        const existingOption = elements.tagFilter.querySelector(`option[value="${state.currentTagFilter}"]`);
-        if (existingOption) {
-            elements.tagFilter.value = state.currentTagFilter;
-        } else {
-            elements.tagFilter.innerHTML = `
-                <option value="">全部标签</option>
-                <option value="select">选择标签</option>
-                <option value="${state.currentTagFilter}" selected>${state.currentTagFilter}</option>
-            `;
-            tagsCache.slice(0, 10).forEach(tag => {
-                if (tag.id !== state.currentTagFilter) {
-                    const option = document.createElement('option');
-                    option.value = tag.id;
-                    option.textContent = tag.name;
-                    elements.tagFilter.appendChild(option);
-                }
-            });
-        }
-    }
+function _updateTagFilterClearButton() {
+    updateTagFilterClearButton(elements.tagFilterClearBtn, state.tagFilterSearchKeyword);
 }
 
-function updateTagFilterClearButton() {
-    elements.tagFilterClearBtn.style.display = state.tagFilterSearchKeyword ? 'block' : 'none';
+function _updateClearButtonVisibility() {
+    updateClearButtonVisibility(elements.clearSearchBtn, state.searchKeyword);
 }
 
 function initSplitter() {
@@ -625,14 +481,14 @@ function bindEvents() {
     elements.searchBtn.addEventListener('click', () => {
         state.searchKeyword = elements.searchInput.value.trim();
         renderMovies();
-        updateClearButtonVisibility();
+        _updateClearButtonVisibility();
     });
 
     elements.searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             state.searchKeyword = e.target.value.trim();
             renderMovies();
-            updateClearButtonVisibility();
+            _updateClearButtonVisibility();
         }
     });
 
@@ -640,7 +496,7 @@ function bindEvents() {
         elements.searchInput.value = '';
         state.searchKeyword = '';
         renderMovies();
-        updateClearButtonVisibility();
+        _updateClearButtonVisibility();
     });
 
     elements.sortSelect.addEventListener('change', (e) => {
@@ -680,29 +536,29 @@ function bindEvents() {
 
     elements.tagFilterSearchBtn.addEventListener('click', () => {
         state.tagFilterSearchKeyword = elements.tagFilterSearchInput.value.trim();
-        updateTagFilterClearButton();
-        renderTagFilterList();
+        _updateTagFilterClearButton();
+        _renderTagFilterList();
     });
 
     elements.tagFilterSearchInput.addEventListener('input', () => {
         state.tagFilterSearchKeyword = elements.tagFilterSearchInput.value.trim();
-        updateTagFilterClearButton();
-        renderTagFilterList();
+        _updateTagFilterClearButton();
+        _renderTagFilterList();
     });
 
     elements.tagFilterSearchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             state.tagFilterSearchKeyword = elements.tagFilterSearchInput.value.trim();
-            updateTagFilterClearButton();
-            renderTagFilterList();
+            _updateTagFilterClearButton();
+            _renderTagFilterList();
         }
     });
 
     elements.tagFilterClearBtn.addEventListener('click', () => {
         elements.tagFilterSearchInput.value = '';
         state.tagFilterSearchKeyword = '';
-        updateTagFilterClearButton();
-        renderTagFilterList();
+        _updateTagFilterClearButton();
+        _renderTagFilterList();
     });
 
     document.addEventListener('keydown', (e) => {
@@ -711,10 +567,6 @@ function bindEvents() {
             elements.searchInput.focus();
         }
     });
-}
-
-function updateClearButtonVisibility() {
-    elements.clearSearchBtn.style.display = state.searchKeyword ? 'block' : 'none';
 }
 
 document.addEventListener('DOMContentLoaded', init);

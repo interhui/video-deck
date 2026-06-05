@@ -378,34 +378,13 @@ function initSplitter() {
     });
 }
 
-/**
- * 加载标签缓存
- */
 async function loadTags() {
-    try {
-        const tags = await window.electronAPI.getTags();
-        if (Array.isArray(tags)) {
-            state.tags = tags;
-            updateTagFilter();
-        }
-    } catch (error) {
-        console.error('Error loading tags:', error);
-    }
+    state.tags = await loadTagsCache();
+    _updateTagFilter();
 }
 
-/**
- * 更新标签筛选下拉框
- */
-function updateTagFilter() {
-    elements.tagFilter.innerHTML = '<option value="">全部标签</option><option value="select">选择标签</option>';
-    
-    const displayTags = state.tags.slice(0, 10);
-    displayTags.forEach(tag => {
-        const option = document.createElement('option');
-        option.value = tag.id;
-        option.textContent = tag.name;
-        elements.tagFilter.appendChild(option);
-    });
+function _updateTagFilter() {
+    updateTagFilter({ selectEl: elements.tagFilter, tags: state.tags, showSelectOption: true, maxDisplay: 10 });
 }
 
 /**
@@ -639,7 +618,7 @@ async function openTagFilterModal() {
     elements.tagFilterSearchInput.value = '';
     await loadTags();
     state.tempSelectedTag = state.currentTagFilter || null;
-    renderTagFilterList();
+    _renderTagFilterList();
     elements.tagFilterModal.style.display = 'flex';
 }
 
@@ -657,7 +636,7 @@ function closeTagFilterModal() {
 function confirmTagFilter() {
     state.currentTagFilter = state.tempSelectedTag;
     state.currentTag = state.tempSelectedTag || '';
-    updateTagFilterDisplay();
+    _updateTagFilterDisplay();
     closeTagFilterModal();
     loadMovies();
 }
@@ -669,7 +648,7 @@ function cancelTagFilter() {
     state.currentTagFilter = '';
     state.currentTag = '';
     state.tempSelectedTag = null;
-    updateTagFilterDisplay();
+    _updateTagFilterDisplay();
     closeTagFilterModal();
     loadMovies();
 }
@@ -677,106 +656,24 @@ function cancelTagFilter() {
 /**
  * 渲染标签过滤列表
  */
-function renderTagFilterList() {
-    const searchKeyword = state.tagFilterSearchKeyword || '';
-    
-    let filteredTags = state.tags.filter(tag => {
-        if (!searchKeyword) return true;
-        const keyword = searchKeyword.toLowerCase();
-        const idMatch = tag.id && tag.id.toLowerCase().includes(keyword);
-        const nameMatch = tag.name && tag.name.toLowerCase().includes(keyword);
-        return idMatch || nameMatch;
-    });
-    
-    filteredTags.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-    
-    if (filteredTags.length === 0) {
-        elements.tagFilterList.innerHTML = '<div class="tag-filter-empty">暂无标签</div>';
-        return;
-    }
-    
-    elements.tagFilterList.innerHTML = filteredTags.map(tag => {
-        const isSelected = state.tempSelectedTag === tag.id;
-        
-        return `
-            <div class="tag-filter-item ${isSelected ? 'selected' : ''}" data-id="${escapeHtml(tag.id)}">
-                <div class="tag-filter-radio ${isSelected ? 'checked' : ''}" data-tag-id="${escapeHtml(tag.id)}"></div>
-                <div class="tag-filter-info">
-                    <div class="tag-filter-name">${escapeHtml(tag.name)}</div>
-                </div>
-            </div>
-        `;
-    }).join('');
-    
-    elements.tagFilterList.querySelectorAll('.tag-filter-item').forEach(item => {
-        item.addEventListener('click', () => {
-            const tagId = item.dataset.id;
-            toggleTagSelection(tagId);
-        });
-    });
-    
-    elements.tagFilterList.querySelectorAll('.tag-filter-radio').forEach(radio => {
-        radio.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const tagId = radio.dataset.tagId;
-            toggleTagSelection(tagId);
-        });
+function _renderTagFilterList() {
+    renderTagFilterList({ tags: state.tags, searchKeyword: state.tagFilterSearchKeyword, selectedTag: state.tempSelectedTag, listEl: elements.tagFilterList, onToggleTag: _toggleTagSelection });
+}
+
+function _toggleTagSelection(tagId) {
+    toggleTagSelection(tagId, {
+        currentSelected: state.tempSelectedTag,
+        listEl: elements.tagFilterList,
+        onStateChanged: (newSelected) => { state.tempSelectedTag = newSelected; }
     });
 }
 
-/**
- * 切换标签选中状态（单选）
- */
-function toggleTagSelection(tagId) {
-    state.tempSelectedTag = state.tempSelectedTag === tagId ? null : tagId;
-    
-    elements.tagFilterList.querySelectorAll('.tag-filter-item').forEach(item => {
-        const isSelected = item.dataset.id === state.tempSelectedTag;
-        item.classList.toggle('selected', isSelected);
-        const radio = item.querySelector('.tag-filter-radio');
-        radio.classList.toggle('checked', isSelected);
-    });
+function _updateTagFilterDisplay() {
+    updateTagFilterDisplay({ selectEl: elements.tagFilter, currentTagFilter: state.currentTagFilter, tags: state.tags });
 }
 
-/**
- * 更新标签过滤下拉框显示
- */
-function updateTagFilterDisplay() {
-    if (!state.currentTagFilter) {
-        elements.tagFilter.value = '';
-    } else {
-        // 检查当前选中的标签是否已在下拉框中
-        const existingOption = elements.tagFilter.querySelector(`option[value="${state.currentTagFilter}"]`);
-        if (existingOption) {
-            elements.tagFilter.value = state.currentTagFilter;
-        } else {
-            // 标签不在下拉框中，需要重建innerHTML
-            elements.tagFilter.innerHTML = `
-                <option value="">全部标签</option>
-                <option value="select">选择标签</option>
-                <option value="${state.currentTagFilter}" selected>${state.currentTagFilter}</option>
-            `;
-            state.tags.slice(0, 10).forEach(tag => {
-                if (tag.id !== state.currentTagFilter) {
-                    const option = document.createElement('option');
-                    option.value = tag.id;
-                    option.textContent = tag.name;
-                    elements.tagFilter.appendChild(option);
-                }
-            });
-        }
-    }
-}
-
-/**
- * 更新标签过滤搜索清除按钮可见性
- */
-function updateTagFilterClearButton() {
-    if (state.tagFilterSearchKeyword) {
-        elements.tagFilterClearBtn.style.display = 'block';
-    } else {
-        elements.tagFilterClearBtn.style.display = 'none';
-    }
+function _updateTagFilterClearButton() {
+    updateTagFilterClearButton(elements.tagFilterClearBtn, state.tagFilterSearchKeyword);
 }
 
 /**
@@ -1905,23 +1802,23 @@ function bindEvents() {
     elements.tagFilterSearchBtn.addEventListener('click', () => {
         const keyword = elements.tagFilterSearchInput.value.trim();
         state.tagFilterSearchKeyword = keyword;
-        updateTagFilterClearButton();
-        renderTagFilterList();
+        _updateTagFilterClearButton();
+        _renderTagFilterList();
     });
 
     elements.tagFilterSearchInput.addEventListener('input', () => {
         const keyword = elements.tagFilterSearchInput.value.trim();
         state.tagFilterSearchKeyword = keyword;
-        updateTagFilterClearButton();
-        renderTagFilterList();
+        _updateTagFilterClearButton();
+        _renderTagFilterList();
     });
 
     elements.tagFilterSearchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             const keyword = e.target.value.trim();
             state.tagFilterSearchKeyword = keyword;
-            updateTagFilterClearButton();
-            renderTagFilterList();
+            _updateTagFilterClearButton();
+            _renderTagFilterList();
         }
     });
 
@@ -1929,8 +1826,8 @@ function bindEvents() {
     elements.tagFilterClearBtn.addEventListener('click', () => {
         elements.tagFilterSearchInput.value = '';
         state.tagFilterSearchKeyword = '';
-        updateTagFilterClearButton();
-        renderTagFilterList();
+        _updateTagFilterClearButton();
+        _renderTagFilterList();
     });
 
     // 演员筛选
@@ -2014,33 +1911,23 @@ function bindEvents() {
     elements.searchBtn.addEventListener('click', () => {
         state.searchKeyword = elements.searchInput.value.trim();
         loadMovies();
-        updateClearButtonVisibility();
+        updateClearButtonVisibility(elements.clearSearchBtn, state.searchKeyword);
     });
 
     elements.searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             state.searchKeyword = e.target.value.trim();
             loadMovies();
-            updateClearButtonVisibility();
+            updateClearButtonVisibility(elements.clearSearchBtn, state.searchKeyword);
         }
     });
 
-    // 清除搜索
     elements.clearSearchBtn.addEventListener('click', () => {
         elements.searchInput.value = '';
         state.searchKeyword = '';
         loadMovies();
-        updateClearButtonVisibility();
+        updateClearButtonVisibility(elements.clearSearchBtn, state.searchKeyword);
     });
-
-    // 更新清除按钮可见性
-    function updateClearButtonVisibility() {
-        if (state.searchKeyword) {
-            elements.clearSearchBtn.style.display = 'block';
-        } else {
-            elements.clearSearchBtn.style.display = 'none';
-        }
-    }
 
     // 视图切换
     function switchView(view) {
@@ -2256,7 +2143,7 @@ function bindEvents() {
         // 设置当前标签过滤
         state.currentTag = tagId;
         state.currentTagFilter = tagId;
-        updateTagFilterDisplay();
+        _updateTagFilterDisplay();
         // 关闭详情窗口
         window.electronAPI.closeDetailWindow();
         // 加载电影列表

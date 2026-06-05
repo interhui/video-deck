@@ -463,16 +463,6 @@ function confirmActorSelection() {
 }
 
 /**
- * HTML转义，防止XSS
- */
-function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-/**
  * 根据标签ID获取标签名称
  */
 function getTagNameById(tagId) {

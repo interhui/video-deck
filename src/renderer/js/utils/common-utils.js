@@ -246,3 +246,219 @@ function applyPosterSizeSettings(layout) {
     document.documentElement.style.setProperty('--photo-min-width', getPosterMinSize(posterSize, 'vertical'));
     document.documentElement.style.setProperty('--photo-max-width', getPosterMaxSize(posterSize, 'vertical'));
 }
+
+async function loadCategoriesCache() {
+    try {
+        const categories = await window.electronAPI.getCategoriesFromCache();
+        if (Array.isArray(categories)) {
+            return categories;
+        }
+    } catch (error) {
+        console.error('Error loading categories:', error);
+    }
+    return [];
+}
+
+async function loadTagsCache() {
+    try {
+        const tags = await window.electronAPI.getTags();
+        if (Array.isArray(tags)) {
+            return tags;
+        }
+    } catch (error) {
+        console.error('Error loading tags:', error);
+    }
+    return [];
+}
+
+function updateTagFilter({ selectEl, tags, showSelectOption = true, maxDisplay = 0 }) {
+    selectEl.innerHTML = '<option value="">全部标签</option>';
+    if (showSelectOption) {
+        selectEl.innerHTML += '<option value="select">选择标签</option>';
+    }
+    const displayTags = maxDisplay > 0 ? tags.slice(0, maxDisplay) : tags;
+    displayTags.forEach(tag => {
+        const option = document.createElement('option');
+        option.value = tag.id;
+        option.textContent = tag.name;
+        selectEl.appendChild(option);
+    });
+}
+
+function updateCategoryFilter({ selectEl, categories, movies, categoriesCache = [] }) {
+    selectEl.innerHTML = '<option value="">全部分类</option>';
+    categories.forEach(category => {
+        const count = movies.filter(m => m.category === category).length;
+        const name = getCategoryName(category, categoriesCache);
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = `${name} (${count})`;
+        selectEl.appendChild(option);
+    });
+}
+
+function sortMovies(movies, sortBy = 'name', sortOrder = 'asc') {
+    const sorted = [...movies];
+
+    sorted.sort((a, b) => {
+        let valA, valB;
+
+        switch (sortBy) {
+            case 'name':
+                valA = a.name.toLowerCase();
+                valB = b.name.toLowerCase();
+                break;
+            case 'actor':
+                valA = (a.actors && a.actors.length > 0) ? a.actors[0].toLowerCase() : '';
+                valB = (b.actors && b.actors.length > 0) ? b.actors[0].toLowerCase() : '';
+                break;
+            case 'rating':
+                valA = a.boxRating || 0;
+                valB = b.boxRating || 0;
+                break;
+            case 'addtime':
+                valA = a.update_time || 0;
+                valB = b.update_time || 0;
+                break;
+            default:
+                valA = a.name.toLowerCase();
+                valB = b.name.toLowerCase();
+        }
+
+        if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+        if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    return sorted;
+}
+
+function getFilteredMovies(movies, { category = '', tag = '', status = '', rating = '', searchKeyword = '' } = {}) {
+    let filteredMovies = movies;
+
+    if (category) {
+        filteredMovies = filteredMovies.filter(m => m.category === category);
+    }
+
+    if (status) {
+        filteredMovies = filteredMovies.filter(m => m.boxStatus === status);
+    }
+
+    if (tag) {
+        filteredMovies = filteredMovies.filter(m =>
+            m.tags && m.tags.includes(tag)
+        );
+    }
+
+    if (rating) {
+        const ratingVal = parseInt(rating, 10);
+        if (!isNaN(ratingVal)) {
+            filteredMovies = filteredMovies.filter(m =>
+                m.boxRating !== undefined && m.boxRating === ratingVal
+            );
+        }
+    }
+
+    if (searchKeyword) {
+        const keyword = searchKeyword.toLowerCase();
+        filteredMovies = filteredMovies.filter(m =>
+            m.name.toLowerCase().includes(keyword) ||
+            (m.description && m.description.toLowerCase().includes(keyword)) ||
+            (m.tags && m.tags.some(tag => tag.toLowerCase().includes(keyword)))
+        );
+    }
+
+    return filteredMovies;
+}
+
+function renderTagFilterList({ tags, searchKeyword, selectedTag, listEl, onToggleTag }) {
+    const keyword = searchKeyword || '';
+
+    let filteredTags = tags.filter(tag => {
+        if (!keyword) return true;
+        const kw = keyword.toLowerCase();
+        const idMatch = tag.id && tag.id.toLowerCase().includes(kw);
+        const nameMatch = tag.name && tag.name.toLowerCase().includes(kw);
+        return idMatch || nameMatch;
+    });
+
+    filteredTags.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+    if (filteredTags.length === 0) {
+        listEl.innerHTML = '<div class="tag-filter-empty">暂无标签</div>';
+        return;
+    }
+
+    listEl.innerHTML = filteredTags.map(tag => {
+        const isSelected = selectedTag === tag.id;
+        return `
+            <div class="tag-filter-item ${isSelected ? 'selected' : ''}" data-id="${escapeHtml(tag.id)}">
+                <div class="tag-filter-radio ${isSelected ? 'checked' : ''}" data-tag-id="${escapeHtml(tag.id)}"></div>
+                <div class="tag-filter-info">
+                    <div class="tag-filter-name">${escapeHtml(tag.name)}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    listEl.querySelectorAll('.tag-filter-item').forEach(item => {
+        item.addEventListener('click', () => {
+            onToggleTag(item.dataset.id);
+        });
+    });
+
+    listEl.querySelectorAll('.tag-filter-radio').forEach(radio => {
+        radio.addEventListener('click', (e) => {
+            e.stopPropagation();
+            onToggleTag(radio.dataset.tagId);
+        });
+    });
+}
+
+function toggleTagSelection(tagId, { currentSelected, listEl, onStateChanged }) {
+    const newSelected = currentSelected === tagId ? null : tagId;
+
+    listEl.querySelectorAll('.tag-filter-item').forEach(item => {
+        const isSelected = item.dataset.id === newSelected;
+        item.classList.toggle('selected', isSelected);
+        const radio = item.querySelector('.tag-filter-radio');
+        radio.classList.toggle('checked', isSelected);
+    });
+
+    if (onStateChanged) {
+        onStateChanged(newSelected);
+    }
+}
+
+function updateTagFilterDisplay({ selectEl, currentTagFilter, tags, maxDisplay = 10 }) {
+    if (!currentTagFilter) {
+        selectEl.value = '';
+    } else {
+        const existingOption = selectEl.querySelector(`option[value="${currentTagFilter}"]`);
+        if (existingOption) {
+            selectEl.value = currentTagFilter;
+        } else {
+            selectEl.innerHTML = `
+                <option value="">全部标签</option>
+                <option value="select">选择标签</option>
+                <option value="${currentTagFilter}" selected>${currentTagFilter}</option>
+            `;
+            tags.slice(0, maxDisplay).forEach(tag => {
+                if (tag.id !== currentTagFilter) {
+                    const option = document.createElement('option');
+                    option.value = tag.id;
+                    option.textContent = tag.name;
+                    selectEl.appendChild(option);
+                }
+            });
+        }
+    }
+}
+
+function updateTagFilterClearButton(clearBtn, searchKeyword) {
+    clearBtn.style.display = searchKeyword ? 'block' : 'none';
+}
+
+function updateClearButtonVisibility(clearBtn, searchKeyword) {
+    clearBtn.style.display = searchKeyword ? 'block' : 'none';
+}

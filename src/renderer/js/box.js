@@ -18,7 +18,8 @@ const state = {
     currentTag: '', //当前选中的标签筛选
     currentRating: '', //当前选中的评分筛选
     lazyLoader: null, //懒加载管理器
-    settings: {}, //设置对象
+    settings: {},
+    newMovieHours: 72,
     currentTagFilter: '', //当前标签过滤(用于模态窗)
     tagFilterModalVisible: false, //标签过滤模态窗可见性
     tagFilterSearchKeyword: '', //标签过滤搜索关键词
@@ -81,51 +82,19 @@ let currentEditingRating = 0;
 // 分类缓存
 let categoriesCache = [];
 
-/**
- * 加载分类缓存
- */
 async function loadCategories() {
-    try {
-        const categories = await window.electronAPI.getCategoriesFromCache();
-        if (Array.isArray(categories)) {
-            categoriesCache = categories;
-        }
-    } catch (error) {
-        console.error('Error loading categories:', error);
-    }
+    categoriesCache = await loadCategoriesCache();
 }
 
-// 标签缓存
 let tagsCache = [];
 
-/**
- * 加载标签
- */
 async function loadTags() {
-    try {
-        const tags = await window.electronAPI.getTags();
-        if (Array.isArray(tags)) {
-            tagsCache = tags;
-            updateTagFilter();
-        }
-    } catch (error) {
-        console.error('Error loading tags:', error);
-    }
+    tagsCache = await loadTagsCache();
+    _updateTagFilter();
 }
 
-/**
- * 更新标签筛选下拉框
- */
-function updateTagFilter() {
-    elements.tagFilter.innerHTML = '<option value="">全部标签</option><option value="select">选择标签</option>';
-    
-    const displayTags = tagsCache.slice(0, 10);
-    displayTags.forEach(tag => {
-        const option = document.createElement('option');
-        option.value = tag.id;
-        option.textContent = tag.name;
-        elements.tagFilter.appendChild(option);
-    });
+function _updateTagFilter() {
+    updateTagFilter({ selectEl: elements.tagFilter, tags: tagsCache, showSelectOption: true, maxDisplay: 10 });
 }
 
 /**
@@ -137,7 +106,7 @@ async function openTagFilterModal() {
     elements.tagFilterSearchInput.value = '';
     await loadTags();
     state.tempSelectedTag = state.currentTagFilter || null;
-    renderTagFilterList();
+    _renderTagFilterList();
     elements.tagFilterModal.style.display = 'flex';
 }
 
@@ -158,9 +127,9 @@ function closeTagFilterModal() {
 function confirmTagFilter() {
     state.currentTagFilter = state.tempSelectedTag;
     state.currentTag = state.currentTagFilter || '';
-    updateTagFilterDisplay();
+    _updateTagFilterDisplay();
     closeTagFilterModal();
-    const filteredMovies = getFilteredMovies(state.movies);
+    const filteredMovies = getFilteredMovies(state.movies, { category: state.currentCategory, tag: state.currentTag, status: state.currentStatus, rating: state.currentRating, searchKeyword: state.searchKeyword });
     updateCategoryListWithFilteredMovies(filteredMovies);
     renderMovies(state.movies);
 }
@@ -172,116 +141,31 @@ function cancelTagFilter() {
     state.currentTagFilter = '';
     state.currentTag = '';
     state.tempSelectedTag = null;
-    updateTagFilterDisplay();
+    _updateTagFilterDisplay();
     closeTagFilterModal();
-    const filteredMovies = getFilteredMovies(state.movies);
+    const filteredMovies = getFilteredMovies(state.movies, { category: state.currentCategory, tag: state.currentTag, status: state.currentStatus, rating: state.currentRating, searchKeyword: state.searchKeyword });
     updateCategoryListWithFilteredMovies(filteredMovies);
     renderMovies(state.movies);
 }
 
-/**
- * 渲染标签过滤列表
- */
-function renderTagFilterList() {
-    const searchKeyword = state.tagFilterSearchKeyword || '';
-    
-    let filteredTags = tagsCache.filter(tag => {
-        if (!searchKeyword) return true;
-        const keyword = searchKeyword.toLowerCase();
-        const idMatch = tag.id && tag.id.toLowerCase().includes(keyword);
-        const nameMatch = tag.name && tag.name.toLowerCase().includes(keyword);
-        return idMatch || nameMatch;
-    });
-    
-    filteredTags.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-    
-    if (filteredTags.length === 0) {
-        elements.tagFilterList.innerHTML = '<div class="tag-filter-empty">暂无标签</div>';
-        return;
-    }
-    
-    elements.tagFilterList.innerHTML = filteredTags.map(tag => {
-        const isSelected = state.tempSelectedTag === tag.id;
-        
-        return `
-            <div class="tag-filter-item ${isSelected ? 'selected' : ''}" data-id="${escapeHtml(tag.id)}">
-                <div class="tag-filter-radio ${isSelected ? 'checked' : ''}" data-tag-id="${escapeHtml(tag.id)}"></div>
-                <div class="tag-filter-info">
-                    <div class="tag-filter-name">${escapeHtml(tag.name)}</div>
-                </div>
-            </div>
-        `;
-    }).join('');
-    
-    elements.tagFilterList.querySelectorAll('.tag-filter-item').forEach(item => {
-        item.addEventListener('click', () => {
-            const tagId = item.dataset.id;
-            toggleTagSelection(tagId);
-        });
-    });
-    
-    elements.tagFilterList.querySelectorAll('.tag-filter-radio').forEach(radio => {
-        radio.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const tagId = radio.dataset.tagId;
-            toggleTagSelection(tagId);
-        });
+function _renderTagFilterList() {
+    renderTagFilterList({ tags: tagsCache, searchKeyword: state.tagFilterSearchKeyword, selectedTag: state.tempSelectedTag, listEl: elements.tagFilterList, onToggleTag: _toggleTagSelection });
+}
+
+function _toggleTagSelection(tagId) {
+    toggleTagSelection(tagId, {
+        currentSelected: state.tempSelectedTag,
+        listEl: elements.tagFilterList,
+        onStateChanged: (newSelected) => { state.tempSelectedTag = newSelected; }
     });
 }
 
-/**
- * 切换标签选中状态（单选）
- */
-function toggleTagSelection(tagId) {
-    state.tempSelectedTag = state.tempSelectedTag === tagId ? null : tagId;
-    
-    elements.tagFilterList.querySelectorAll('.tag-filter-item').forEach(item => {
-        const isSelected = item.dataset.id === state.tempSelectedTag;
-        item.classList.toggle('selected', isSelected);
-        const radio = item.querySelector('.tag-filter-radio');
-        radio.classList.toggle('checked', isSelected);
-    });
+function _updateTagFilterDisplay() {
+    updateTagFilterDisplay({ selectEl: elements.tagFilter, currentTagFilter: state.currentTagFilter, tags: tagsCache });
 }
 
-/**
- * 更新标签过滤下拉框显示
- */
-function updateTagFilterDisplay() {
-    if (!state.currentTagFilter) {
-        elements.tagFilter.value = '';
-    } else {
-        // 检查当前选中的标签是否已在下拉框中
-        const existingOption = elements.tagFilter.querySelector(`option[value="${state.currentTagFilter}"]`);
-        if (existingOption) {
-            elements.tagFilter.value = state.currentTagFilter;
-        } else {
-            // 标签不在下拉框中，需要重建innerHTML
-            elements.tagFilter.innerHTML = `
-                <option value="">全部标签</option>
-                <option value="select">选择标签</option>
-                <option value="${state.currentTagFilter}" selected>${state.currentTagFilter}</option>
-            `;
-            tagsCache.slice(0, 10).forEach(tag => {
-                if (tag.id !== state.currentTagFilter) {
-                    const option = document.createElement('option');
-                    option.value = tag.id;
-                    option.textContent = tag.name;
-                    elements.tagFilter.appendChild(option);
-                }
-            });
-        }
-    }
-}
-
-/**
- * 更新标签过滤搜索清除按钮可见性
- */
-function updateTagFilterClearButton() {
-    if (state.tagFilterSearchKeyword) {
-        elements.tagFilterClearBtn.style.display = 'block';
-    } else {
-        elements.tagFilterClearBtn.style.display = 'none';
-    }
+function _updateTagFilterClearButton() {
+    updateTagFilterClearButton(elements.tagFilterClearBtn, state.tagFilterSearchKeyword);
 }
 
 /**
@@ -308,6 +192,11 @@ async function init() {
         onLayoutLoaded: (layout) => {
             applyPosterSizeSettings(layout);
             state.settings.layout = layout;
+        },
+        onThemeLoaded: (settings) => {
+            if (settings && settings.library) {
+                state.newMovieHours = settings.library.newMovieHours || 72;
+            }
         }
     });
 
@@ -410,19 +299,19 @@ function bindEvents() {
     // 搜索
     elements.searchBtn.addEventListener('click', () => {
         state.searchKeyword = elements.searchInput.value.trim();
-        const filteredMovies = getFilteredMovies(state.movies);
+        const filteredMovies = getFilteredMovies(state.movies, { category: state.currentCategory, tag: state.currentTag, status: state.currentStatus, rating: state.currentRating, searchKeyword: state.searchKeyword });
         updateCategoryListWithFilteredMovies(filteredMovies);
         renderMovies(state.movies);
-        updateClearButtonVisibility();
+        updateClearButtonVisibility(elements.clearSearchBtn, state.searchKeyword);
     });
 
     elements.searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             state.searchKeyword = e.target.value.trim();
-            const filteredMovies = getFilteredMovies(state.movies);
+            const filteredMovies = getFilteredMovies(state.movies, { category: state.currentCategory, tag: state.currentTag, status: state.currentStatus, rating: state.currentRating, searchKeyword: state.searchKeyword });
             updateCategoryListWithFilteredMovies(filteredMovies);
             renderMovies(state.movies);
-            updateClearButtonVisibility();
+            updateClearButtonVisibility(elements.clearSearchBtn, state.searchKeyword);
         }
     });
 
@@ -432,16 +321,10 @@ function bindEvents() {
         state.searchKeyword = '';
         updateCategoryList();
         renderMovies(state.movies);
-        updateClearButtonVisibility();
+        updateClearButtonVisibility(elements.clearSearchBtn, state.searchKeyword);
     });
 
-    function updateClearButtonVisibility() {
-        if (state.searchKeyword) {
-            elements.clearSearchBtn.style.display = 'block';
-        } else {
-            elements.clearSearchBtn.style.display = 'none';
-        }
-    }
+    updateClearButtonVisibility(elements.clearSearchBtn, state.searchKeyword);
 
     function switchView(view) {
         state.viewMode = view;
@@ -473,7 +356,7 @@ function bindEvents() {
     // 状态筛选
     elements.statusFilter.addEventListener('change', (e) => {
         state.currentStatus = e.target.value;
-        const filteredMovies = getFilteredMovies(state.movies);
+        const filteredMovies = getFilteredMovies(state.movies, { category: state.currentCategory, tag: state.currentTag, status: state.currentStatus, rating: state.currentRating, searchKeyword: state.searchKeyword });
         updateCategoryListWithFilteredMovies(filteredMovies);
         renderMovies(state.movies);
     });
@@ -490,7 +373,7 @@ function bindEvents() {
         if (value === '') {
             state.currentTag = '';
             state.currentTagFilter = '';
-            const filteredMovies = getFilteredMovies(state.movies);
+            const filteredMovies = getFilteredMovies(state.movies, { category: state.currentCategory, tag: state.currentTag, status: state.currentStatus, rating: state.currentRating, searchKeyword: state.searchKeyword });
             updateCategoryListWithFilteredMovies(filteredMovies);
             renderMovies(state.movies);
         } else if (value === 'select') {
@@ -498,7 +381,7 @@ function bindEvents() {
         } else {
             state.currentTag = value;
             state.currentTagFilter = value;
-            const filteredMovies = getFilteredMovies(state.movies);
+            const filteredMovies = getFilteredMovies(state.movies, { category: state.currentCategory, tag: state.currentTag, status: state.currentStatus, rating: state.currentRating, searchKeyword: state.searchKeyword });
             updateCategoryListWithFilteredMovies(filteredMovies);
             renderMovies(state.movies);
         }
@@ -520,23 +403,23 @@ function bindEvents() {
     elements.tagFilterSearchBtn.addEventListener('click', () => {
         const keyword = elements.tagFilterSearchInput.value.trim();
         state.tagFilterSearchKeyword = keyword;
-        updateTagFilterClearButton();
-        renderTagFilterList();
+        _updateTagFilterClearButton();
+        _renderTagFilterList();
     });
 
     elements.tagFilterSearchInput.addEventListener('input', () => {
         const keyword = elements.tagFilterSearchInput.value.trim();
         state.tagFilterSearchKeyword = keyword;
-        updateTagFilterClearButton();
-        renderTagFilterList();
+        _updateTagFilterClearButton();
+        _renderTagFilterList();
     });
 
     elements.tagFilterSearchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             const keyword = e.target.value.trim();
             state.tagFilterSearchKeyword = keyword;
-            updateTagFilterClearButton();
-            renderTagFilterList();
+            _updateTagFilterClearButton();
+            _renderTagFilterList();
         }
     });
 
@@ -544,14 +427,14 @@ function bindEvents() {
     elements.tagFilterClearBtn.addEventListener('click', () => {
         elements.tagFilterSearchInput.value = '';
         state.tagFilterSearchKeyword = '';
-        updateTagFilterClearButton();
-        renderTagFilterList();
+        _updateTagFilterClearButton();
+        _renderTagFilterList();
     });
 
     // 评分筛选
     elements.ratingFilter.addEventListener('change', (e) => {
         state.currentRating = e.target.value;
-        const filteredMovies = getFilteredMovies(state.movies);
+        const filteredMovies = getFilteredMovies(state.movies, { category: state.currentCategory, tag: state.currentTag, status: state.currentStatus, rating: state.currentRating, searchKeyword: state.searchKeyword });
         updateCategoryListWithFilteredMovies(filteredMovies);
         renderMovies(state.movies);
     });
@@ -621,17 +504,6 @@ function bindEvents() {
             closeExportModal();
         }
     });
-}
-
-/**
- * 更新清除按钮可见性
- */
-function updateClearButtonVisibility() {
-    if (state.searchKeyword) {
-        elements.clearSearchBtn.style.display = 'block';
-    } else {
-        elements.clearSearchBtn.style.display = 'none';
-    }
 }
 
 /**
@@ -731,9 +603,16 @@ async function loadMoviesFromBoxAll(boxMovieIds, boxMovieMap) {
                 const boxInfo = boxMovieMap.get(matchedBoxId);
                 if (boxInfo) {
                     categoriesSet.add(movie.category);
+                    let boxStatus = boxInfo.boxStatus;
+                    if (boxStatus === 'new') {
+                        const hoursDiff = movie.update_time ? (Date.now() - movie.update_time) / (60 * 60 * 1000) : Infinity;
+                        if (hoursDiff >= state.newMovieHours) {
+                            boxStatus = 'unwatched';
+                        }
+                    }
                     movies.push({
                         ...movie,
-                        boxStatus: boxInfo.boxStatus,
+                        boxStatus,
                         boxRating: boxInfo.boxRating,
                         boxComment: boxInfo.boxComment
                     });
@@ -762,7 +641,7 @@ async function loadMoviesFromBoxAll(boxMovieIds, boxMovieMap) {
         updateCategoryList();
 
         // 更新分类筛选下拉框
-        updateCategoryFilter();
+        _updateCategoryFilter();
 
         // 渲染电影
         renderMovies(movies, false);
@@ -845,7 +724,7 @@ async function initBoxLazyLoader(boxMovieIds, boxMovieMap) {
             renderMovies(movies, isAppend);
             // 更新分类列表
             updateCategoryList();
-            updateCategoryFilter();
+            _updateCategoryFilter();
         },
         onComplete: () => {
             console.log('All box movies loaded');
@@ -927,62 +806,8 @@ function updateCategoryListWithFilteredMovies(filteredMovies) {
     });
 }
 
-/**
- * 获取过滤后的电影列表
- * @param {Array} movies - 原始电影列表
- * @returns {Array} 过滤后的电影列表
- */
-function getFilteredMovies(movies) {
-    let filteredMovies = movies;
-
-    if (state.currentCategory) {
-        filteredMovies = filteredMovies.filter(m => m.category === state.currentCategory);
-    }
-
-    if (state.currentStatus) {
-        filteredMovies = filteredMovies.filter(m => m.boxStatus === state.currentStatus);
-    }
-
-    if (state.currentTag) {
-        filteredMovies = filteredMovies.filter(m =>
-            m.tags && m.tags.includes(state.currentTag)
-        );
-    }
-
-    if (state.currentRating) {
-        const rating = parseInt(state.currentRating, 10);
-        if (!isNaN(rating)) {
-            filteredMovies = filteredMovies.filter(m =>
-                m.boxRating !== undefined && m.boxRating === rating
-            );
-        }
-    }
-
-    if (state.searchKeyword) {
-        const keyword = state.searchKeyword.toLowerCase();
-        filteredMovies = filteredMovies.filter(m =>
-            m.name.toLowerCase().includes(keyword) ||
-            (m.description && m.description.toLowerCase().includes(keyword)) ||
-            (m.tags && m.tags.some(tag => tag.toLowerCase().includes(keyword)))
-        );
-    }
-
-    return filteredMovies;
-}
-
-/**
- * 更新分类筛选下拉框
- */
-function updateCategoryFilter() {
-    elements.categoryFilter.innerHTML = '<option value="">全部分类</option>';
-    state.categories.forEach(category => {
-        const count = state.movies.filter(m => m.category === category).length;
-        const name = getCategoryName(category);
-        const option = document.createElement('option');
-        option.value = category;
-        option.textContent = `${name} (${count})`;
-        elements.categoryFilter.appendChild(option);
-    });
+function _updateCategoryFilter() {
+    updateCategoryFilter({ selectEl: elements.categoryFilter, categories: state.categories, movies: state.movies, categoriesCache });
 }
 
 /**
@@ -1216,45 +1041,6 @@ function updateSelectAllState() {
         const allChecked = Array.from(checkboxes).every(cb => cb.checked);
         selectAllCheckbox.checked = allChecked;
     }
-}
-
-/**
- * 对电影列表进行排序
- */
-function sortMovies(movies, sortBy = 'name', sortOrder = 'asc') {
-    const sorted = [...movies];
-
-    sorted.sort((a, b) => {
-        let valA, valB;
-
-        switch (sortBy) {
-            case 'name':
-                valA = a.name.toLowerCase();
-                valB = b.name.toLowerCase();
-                break;
-            case 'actor':
-                valA = (a.actors && a.actors.length > 0) ? a.actors[0].toLowerCase() : '';
-                valB = (b.actors && b.actors.length > 0) ? b.actors[0].toLowerCase() : '';
-                break;
-            case 'rating':
-                valA = a.boxRating || 0;
-                valB = b.boxRating || 0;
-                break;
-            case 'addtime':
-                valA = a.update_time || 0;
-                valB = b.update_time || 0;
-                break;
-            default:
-                valA = a.name.toLowerCase();
-                valB = b.name.toLowerCase();
-        }
-
-        if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
-        if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
-        return 0;
-    });
-
-    return sorted;
 }
 
 /**
@@ -1521,7 +1307,7 @@ async function confirmExport() {
         }
 
         const exportPath = result.filePath;
-        const allMovies = getFilteredMovies(state.movies);
+        const allMovies = getFilteredMovies(state.movies, { category: state.currentCategory, tag: state.currentTag, status: state.currentStatus, rating: state.currentRating, searchKeyword: state.searchKeyword });
         
         let moviesToExport = allMovies;
         let videoCount = 0;
@@ -1559,7 +1345,7 @@ async function confirmExport() {
 async function playBoxMovies() {
     try {
         const playlist = [];
-        const allMovies = getFilteredMovies(state.movies);
+        const allMovies = getFilteredMovies(state.movies, { category: state.currentCategory, tag: state.currentTag, status: state.currentStatus, rating: state.currentRating, searchKeyword: state.searchKeyword });
 
         for (const movie of allMovies) {
             const movieIdToUse = movie.id;

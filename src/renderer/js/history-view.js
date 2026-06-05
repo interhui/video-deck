@@ -54,36 +54,16 @@ async function init() {
 }
 
 async function loadCategories() {
-    try {
-        const categories = await window.electronAPI.getCategoriesFromCache();
-        if (Array.isArray(categories)) {
-            state.categoriesCache = categories;
-        }
-    } catch (error) {
-        console.error('Error loading categories:', error);
-    }
+    state.categoriesCache = await loadCategoriesCache();
 }
 
 async function loadTags() {
-    try {
-        const tags = await window.electronAPI.getTags();
-        if (Array.isArray(tags)) {
-            state.tagsCache = tags;
-            updateTagFilter();
-        }
-    } catch (error) {
-        console.error('Error loading tags:', error);
-    }
+    state.tagsCache = await loadTagsCache();
+    _updateTagFilter();
 }
 
-function updateTagFilter() {
-    elements.tagFilter.innerHTML = '<option value="">全部标签</option>';
-    state.tagsCache.forEach(tag => {
-        const option = document.createElement('option');
-        option.value = tag.id;
-        option.textContent = tag.name;
-        elements.tagFilter.appendChild(option);
-    });
+function _updateTagFilter() {
+    updateTagFilter({ selectEl: elements.tagFilter, tags: state.tagsCache, showSelectOption: false, maxDisplay: 0 });
 }
 
 function updateCategoryFilter() {
@@ -158,14 +138,14 @@ function bindEvents() {
     elements.searchBtn.addEventListener('click', () => {
         state.searchKeyword = elements.searchInput.value.trim();
         renderHistoryContent();
-        updateClearButtonVisibility();
+        updateClearButtonVisibility(elements.clearSearchBtn, state.searchKeyword);
     });
 
     elements.searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             state.searchKeyword = e.target.value.trim();
             renderHistoryContent();
-            updateClearButtonVisibility();
+            updateClearButtonVisibility(elements.clearSearchBtn, state.searchKeyword);
         }
     });
 
@@ -173,7 +153,7 @@ function bindEvents() {
         elements.searchInput.value = '';
         state.searchKeyword = '';
         renderHistoryContent();
-        updateClearButtonVisibility();
+        updateClearButtonVisibility(elements.clearSearchBtn, state.searchKeyword);
     });
 
     elements.categoryFilter.addEventListener('change', (e) => {
@@ -200,10 +180,6 @@ function bindEvents() {
         renderTimeline();
         renderHistoryContent();
     });
-}
-
-function updateClearButtonVisibility() {
-    elements.clearSearchBtn.style.display = state.searchKeyword ? 'block' : 'none';
 }
 
 async function loadHistoryData() {
