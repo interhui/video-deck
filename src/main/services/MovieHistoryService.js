@@ -26,7 +26,7 @@ class MovieHistoryService {
             }
             return this.history;
         } catch (error) {
-            console.error('Error loading history:', error);
+            console.error('Error loading history:', error.message || error);
             this.history = { history: [] };
             return this.history;
         }
@@ -87,7 +87,7 @@ class MovieHistoryService {
         try {
             await this.fileService.writeJson(this.historyFilePath, this.history);
         } catch (error) {
-            console.error('Error saving history:', error);
+            console.error('Error saving history:', error.message || error);
             throw error;
         }
     }

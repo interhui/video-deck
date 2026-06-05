@@ -234,7 +234,7 @@ function setupIpcHandlers(services) {
             const stats = await movieService.getCategoryStats(categories, moviesDir);
             return stats;
         } catch (error) {
-            console.error('Error getting categories:', error);
+            console.error('Error getting categories:', error.message || error);
             return { error: error.message };
         }
     });
@@ -249,7 +249,7 @@ function setupIpcHandlers(services) {
             const movies = await movieService.getMoviesByCategory(categoryFilter, moviesDir, { status, sortBy, sortOrder, tagId, rating, actors });
             return movies;
         } catch (error) {
-            console.error('Error getting movies by category:', error);
+            console.error('Error getting movies by category:', error.message || error);
             return { error: error.message };
         }
     });
@@ -263,7 +263,7 @@ function setupIpcHandlers(services) {
             const movies = await movieService.searchMovies(keyword, moviesDir, filters);
             return movies;
         } catch (error) {
-            console.error('Error searching movies:', error);
+            console.error('Error searching movies:', error.message || error);
             return { error: error.message };
         }
     });
@@ -277,7 +277,7 @@ function setupIpcHandlers(services) {
             const movies = await movieService.getAllMovies(moviesDir, { sortBy, sortOrder, tagId, rating, actors });
             return movies;
         } catch (error) {
-            console.error('Error getting all movies:', error);
+            console.error('Error getting all movies:', error.message || error);
             return { error: error.message };
         }
     });
@@ -291,7 +291,7 @@ function setupIpcHandlers(services) {
             const movies = await movieService.getAllMoviesFromIndex(moviesDir, { sortBy, sortOrder });
             return movies;
         } catch (error) {
-            console.error('Error getting all movies from index:', error);
+            console.error('Error getting all movies from index:', error.message || error);
             return { error: error.message };
         }
     });
@@ -314,7 +314,7 @@ function setupIpcHandlers(services) {
             });
             return result;
         } catch (error) {
-            console.error('Error getting movies paginated:', error);
+            console.error('Error getting movies paginated:', error.message || error);
             return { error: error.message };
         }
     });
@@ -333,7 +333,7 @@ function setupIpcHandlers(services) {
             });
             return result;
         } catch (error) {
-            console.error('Error getting movies paginated from index:', error);
+            console.error('Error getting movies paginated from index:', error.message || error);
             return { error: error.message };
         }
     });
@@ -353,7 +353,7 @@ function setupIpcHandlers(services) {
             });
             return result;
         } catch (error) {
-            console.error('Error getting movies by category paginated:', error);
+            console.error('Error getting movies by category paginated:', error.message || error);
             return { error: error.message };
         }
     });
@@ -368,7 +368,7 @@ function setupIpcHandlers(services) {
             const movies = await movieService.getMoviesByCategoryFromIndex(categoryFilter, moviesDir, { sortBy, sortOrder });
             return movies;
         } catch (error) {
-            console.error('Error getting movies by category from index:', error);
+            console.error('Error getting movies by category from index:', error.message || error);
             return { error: error.message };
         }
     });
@@ -381,7 +381,7 @@ function setupIpcHandlers(services) {
             const detail = await movieService.getMovieDetail(movieId, moviesDir);
             return detail;
         } catch (error) {
-            console.error('Error getting movie detail:', error);
+            console.error('Error getting movie detail:', error.message || error);
             return { error: error.message };
         }
     });
@@ -398,7 +398,7 @@ function setupIpcHandlers(services) {
             });
             return { success: true, cacheInfo };
         } catch (error) {
-            console.error('Error refreshing movie library:', error);
+            console.error('Error refreshing movie library:', error.message || error);
             return { error: error.message };
         }
     });
@@ -410,7 +410,7 @@ function setupIpcHandlers(services) {
             const cacheInfo = movieCacheService.getCacheInfo();
             return { isInitialized, cacheInfo };
         } catch (error) {
-            console.error('Error getting cache status:', error);
+            console.error('Error getting cache status:', error.message || error);
             return { error: error.message };
         }
     });
@@ -424,7 +424,7 @@ function setupIpcHandlers(services) {
             await dbService.saveMovieState(movieId, { status, playTime });
             return { success: true };
         } catch (error) {
-            console.error('Error updating movie status:', error);
+            console.error('Error updating movie status:', error.message || error);
             return { error: error.message };
         }
     });
@@ -439,7 +439,7 @@ function setupIpcHandlers(services) {
             await dbService.saveUserRating(movieId, rating, comment);
             return { success: true };
         } catch (error) {
-            console.error('Error saving rating:', error);
+            console.error('Error saving rating:', error.message || error);
             return { error: error.message };
         }
     });
@@ -460,7 +460,7 @@ function setupIpcHandlers(services) {
             stats.totalCategoryCount = totalCategoryCount;
             return stats;
         } catch (error) {
-            console.error('Error getting movie stats:', error);
+            console.error('Error getting movie stats:', error.message || error);
             return { error: error.message };
         }
     });
@@ -473,7 +473,7 @@ function setupIpcHandlers(services) {
             const settings = settingsService.getSettings();
             return settings;
         } catch (error) {
-            console.error('Error getting settings:', error);
+            console.error('Error getting settings:', error.message || error);
             return { error: error.message };
         }
     });
@@ -497,7 +497,7 @@ function setupIpcHandlers(services) {
 
             return { success: true };
         } catch (error) {
-            console.error('Error saving settings:', error);
+            console.error('Error saving settings:', error.message || error);
             return { error: error.message };
         }
     });
@@ -508,7 +508,7 @@ function setupIpcHandlers(services) {
             const actors = await actorService.loadActors();
             return { actors };
         } catch (error) {
-            console.error('Error getting actors:', error);
+            console.error('Error getting actors:', error.message || error);
             return { error: error.message, actors: [] };
         }
     });
@@ -531,7 +531,7 @@ function setupIpcHandlers(services) {
             broadcastActorsUpdated();
             return { success: true };
         } catch (error) {
-            console.error('Error creating actor:', error);
+            console.error('Error creating actor:', error.message || error);
             return { error: error.message };
         }
     });
@@ -543,7 +543,7 @@ function setupIpcHandlers(services) {
             broadcastActorsUpdated();
             return { success: true };
         } catch (error) {
-            console.error('Error updating actor:', error);
+            console.error('Error updating actor:', error.message || error);
             return { error: error.message };
         }
     });
@@ -555,7 +555,7 @@ function setupIpcHandlers(services) {
             broadcastActorsUpdated();
             return { success: true };
         } catch (error) {
-            console.error('Error deleting actor:', error);
+            console.error('Error deleting actor:', error.message || error);
             return { error: error.message };
         }
     });
@@ -566,7 +566,7 @@ function setupIpcHandlers(services) {
             const dirPath = settingsService.getActorPhotoDir();
             return { dirPath };
         } catch (error) {
-            console.error('Error getting actor photo dir:', error);
+            console.error('Error getting actor photo dir:', error.message || error);
             return { error: error.message, dirPath: '' };
         }
     });
@@ -584,7 +584,7 @@ function setupIpcHandlers(services) {
             await fileService.writeFile(filePath, buffer);
             return { success: true, filePath };
         } catch (error) {
-            console.error('Error saving actor photo:', error);
+            console.error('Error saving actor photo:', error.message || error);
             return { error: error.message };
         }
     });
@@ -615,7 +615,7 @@ function setupIpcHandlers(services) {
 
             return { success: true, filePath, fileName, base64 };
         } catch (error) {
-            console.error('Error downloading actor photo:', error);
+            console.error('Error downloading actor photo:', error.message || error);
             return { error: error.message };
         }
     });
@@ -626,7 +626,7 @@ function setupIpcHandlers(services) {
             settingsService.setMoviesDir(dirPath);
             return { success: true, dirPath };
         } catch (error) {
-            console.error('Error updating movies dir:', error);
+            console.error('Error updating movies dir:', error.message || error);
             return { error: error.message };
         }
     });
@@ -637,7 +637,7 @@ function setupIpcHandlers(services) {
             const dir = settingsService.getMoviesDir();
             return { dirPath: dir };
         } catch (error) {
-            console.error('Error getting movies dir:', error);
+            console.error('Error getting movies dir:', error.message || error);
             return { error: error.message };
         }
     });
@@ -652,7 +652,7 @@ function setupIpcHandlers(services) {
             });
             return { success: true, theme };
         } catch (error) {
-            console.error('Error setting theme:', error);
+            console.error('Error setting theme:', error.message || error);
             return { error: error.message };
         }
     });
@@ -663,7 +663,7 @@ function setupIpcHandlers(services) {
             const config = await fileService.getCategoryConfig();
             return config;
         } catch (error) {
-            console.error('Error getting category config:', error);
+            console.error('Error getting category config:', error.message || error);
             return { error: error.message };
         }
     });
@@ -674,7 +674,7 @@ function setupIpcHandlers(services) {
             const categories = await categoryService.loadCategories();
             return categories;
         } catch (error) {
-            console.error('Error getting categories from cache:', error);
+            console.error('Error getting categories from cache:', error.message || error);
             return { error: error.message };
         }
     });
@@ -685,7 +685,7 @@ function setupIpcHandlers(services) {
             const name = categoryService.getCategoryName(categoryId);
             return name || categoryId;
         } catch (error) {
-            console.error('Error getting category name:', error);
+            console.error('Error getting category name:', error.message || error);
             return categoryId;
         }
     });
@@ -696,7 +696,7 @@ function setupIpcHandlers(services) {
             const shortName = categoryService.getCategoryShortName(categoryId);
             return shortName || categoryId;
         } catch (error) {
-            console.error('Error getting category short name:', error);
+            console.error('Error getting category short name:', error.message || error);
             return categoryId;
         }
     });
@@ -711,7 +711,7 @@ function setupIpcHandlers(services) {
             const result = await movieService.batchDeleteMovies(movieIds, moviesDir);
             return result;
         } catch (error) {
-            console.error('Error batch deleting movies:', error);
+            console.error('Error batch deleting movies:', error.message || error);
             return { error: error.message };
         }
     });
@@ -812,7 +812,7 @@ function setupIpcHandlers(services) {
 
             return { success: true };
         } catch (error) {
-            console.error('Error saving movie edit:', error);
+            console.error('Error saving movie edit:', error.message || error);
             return { error: error.message };
         }
     });
@@ -838,7 +838,7 @@ function setupIpcHandlers(services) {
 
             return { success: true, path: coverPath };
         } catch (error) {
-            console.error('Error downloading movie cover:', error);
+            console.error('Error downloading movie cover:', error.message || error);
             return { error: error.message };
         }
     });
@@ -891,7 +891,7 @@ function setupIpcHandlers(services) {
 
             return { success: true };
         } catch (error) {
-            console.error('Error deleting movie:', error);
+            console.error('Error deleting movie:', error.message || error);
             return { error: error.message };
         }
     });
@@ -904,7 +904,7 @@ function setupIpcHandlers(services) {
             const results = await tmdbMovieAdapterService.searchMovie(keyword);
             return results;
         } catch (error) {
-            console.error('Error searching TMDB movie:', error);
+            console.error('Error searching TMDB movie:', error.message || error);
             return { error: error.message };
         }
     });
@@ -915,7 +915,7 @@ function setupIpcHandlers(services) {
             const movie = await tmdbMovieAdapterService.getMovie(searchId);
             return movie;
         } catch (error) {
-            console.error('Error getting TMDB movie:', error);
+            console.error('Error getting TMDB movie:', error.message || error);
             return { error: error.message };
         }
     });
@@ -926,7 +926,7 @@ function setupIpcHandlers(services) {
             const results = await tmdbMovieAdapterService.searchPerson(actorName);
             return results;
         } catch (error) {
-            console.error('Error searching TMDB person:', error);
+            console.error('Error searching TMDB person:', error.message || error);
             return { error: error.message };
         }
     });
@@ -937,7 +937,7 @@ function setupIpcHandlers(services) {
             const person = await tmdbMovieAdapterService.getPerson(personId);
             return person;
         } catch (error) {
-            console.error('Error getting TMDB person:', error);
+            console.error('Error getting TMDB person:', error.message || error);
             return { error: error.message };
         }
     });
@@ -949,7 +949,7 @@ function setupIpcHandlers(services) {
             const results = await r18AdapterService.searchMovie(keyword);
             return results;
         } catch (error) {
-            console.error('Error searching R18 movie:', error);
+            console.error('Error searching R18 movie:', error.message || error);
             return { error: error.message };
         }
     });
@@ -959,7 +959,7 @@ function setupIpcHandlers(services) {
             const movie = await r18AdapterService.getMovie(searchId);
             return movie;
         } catch (error) {
-            console.error('Error getting R18 movie:', error);
+            console.error('Error getting R18 movie:', error.message || error);
             return { error: error.message };
         }
     });
@@ -969,7 +969,7 @@ function setupIpcHandlers(services) {
             const results = await r18AdapterService.searchPerson(actorName);
             return results;
         } catch (error) {
-            console.error('Error searching R18 person:', error);
+            console.error('Error searching R18 person:', error.message || error);
             return { error: error.message };
         }
     });
@@ -994,7 +994,7 @@ function setupIpcHandlers(services) {
             const boxes = await boxService.getAllBoxes(movieboxDir);
             return boxes;
         } catch (error) {
-            console.error('Error getting all boxes:', error);
+            console.error('Error getting all boxes:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1015,7 +1015,7 @@ function setupIpcHandlers(services) {
             notifyBoxUpdated();
             return result;
         } catch (error) {
-            console.error('Error creating box:', error);
+            console.error('Error creating box:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1029,7 +1029,7 @@ function setupIpcHandlers(services) {
             notifyBoxUpdated();
             return result;
         } catch (error) {
-            console.error('Error updating box:', error);
+            console.error('Error updating box:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1043,7 +1043,7 @@ function setupIpcHandlers(services) {
             notifyBoxUpdated();
             return result;
         } catch (error) {
-            console.error('Error deleting box:', error);
+            console.error('Error deleting box:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1056,7 +1056,7 @@ function setupIpcHandlers(services) {
             const result = await boxService.getBoxDetail(boxName, movieboxDir);
             return result;
         } catch (error) {
-            console.error('Error getting box detail:', error);
+            console.error('Error getting box detail:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1071,7 +1071,7 @@ function setupIpcHandlers(services) {
             notifyBoxUpdated();
             return result;
         } catch (error) {
-            console.error('Error adding movie to box:', error);
+            console.error('Error adding movie to box:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1086,7 +1086,7 @@ function setupIpcHandlers(services) {
             notifyBoxUpdated();
             return result;
         } catch (error) {
-            console.error('Error removing movie from box:', error);
+            console.error('Error removing movie from box:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1101,7 +1101,7 @@ function setupIpcHandlers(services) {
             notifyBoxUpdated();
             return result;
         } catch (error) {
-            console.error('Error cleaning box:', error);
+            console.error('Error cleaning box:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1116,7 +1116,7 @@ function setupIpcHandlers(services) {
             notifyBoxUpdated();
             return result;
         } catch (error) {
-            console.error('Error updating movie in box:', error);
+            console.error('Error updating movie in box:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1129,7 +1129,7 @@ function setupIpcHandlers(services) {
             createMovieDetailWindow(movieData);
             return { success: true };
         } catch (error) {
-            console.error('Error opening movie detail:', error);
+            console.error('Error opening movie detail:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1141,7 +1141,7 @@ function setupIpcHandlers(services) {
             clearPendingDetailMovieData();
             return movieData;
         } catch (error) {
-            console.error('Error getting pending movie detail:', error);
+            console.error('Error getting pending movie detail:', error.message || error);
             return null;
         }
     });
@@ -1160,7 +1160,7 @@ function setupIpcHandlers(services) {
             }
             return { success: true };
         } catch (error) {
-            console.error('Error closing detail window:', error);
+            console.error('Error closing detail window:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1175,7 +1175,7 @@ function setupIpcHandlers(services) {
             }
             return { success: true };
         } catch (error) {
-            console.error('Error setting detail edit mode:', error);
+            console.error('Error setting detail edit mode:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1189,7 +1189,7 @@ function setupIpcHandlers(services) {
             }
             return { success: true };
         } catch (error) {
-            console.error('Error sending filter-by-actor:', error);
+            console.error('Error sending filter-by-actor:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1203,7 +1203,7 @@ function setupIpcHandlers(services) {
             }
             return { success: true };
         } catch (error) {
-            console.error('Error sending filter-by-tag:', error);
+            console.error('Error sending filter-by-tag:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1214,7 +1214,7 @@ function setupIpcHandlers(services) {
             createBoxWindow(boxName);
             return { success: true };
         } catch (error) {
-            console.error('Error opening box window:', error);
+            console.error('Error opening box window:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1225,7 +1225,7 @@ function setupIpcHandlers(services) {
             createBoxViewWindow();
             return { success: true };
         } catch (error) {
-            console.error('Error opening box view window:', error);
+            console.error('Error opening box view window:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1236,7 +1236,7 @@ function setupIpcHandlers(services) {
             createActorViewWindow();
             return { success: true };
         } catch (error) {
-            console.error('Error opening actor view window:', error);
+            console.error('Error opening actor view window:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1249,7 +1249,7 @@ function setupIpcHandlers(services) {
             const movies = await movieService.getActorMovieList(actorName, moviesDir);
             return movies;
         } catch (error) {
-            console.error('Error getting actor movie list:', error);
+            console.error('Error getting actor movie list:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1262,7 +1262,7 @@ function setupIpcHandlers(services) {
             const actors = await movieService.getActorMovieCountMap(moviesDir);
             return actors;
         } catch (error) {
-            console.error('Error getting actor movie count map:', error);
+            console.error('Error getting actor movie count map:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1273,7 +1273,7 @@ function setupIpcHandlers(services) {
             createActorManagementWindow();
             return { success: true };
         } catch (error) {
-            console.error('Error opening actor management:', error);
+            console.error('Error opening actor management:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1284,7 +1284,7 @@ function setupIpcHandlers(services) {
             createCategoryManagementWindow();
             return { success: true };
         } catch (error) {
-            console.error('Error opening category management:', error);
+            console.error('Error opening category management:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1296,7 +1296,7 @@ function setupIpcHandlers(services) {
             playerService.openPlayerWindow(movieData, mainWindow, createPlayerWindow, startTime);
             return { success: true };
         } catch (error) {
-            console.error('Error opening player window:', error);
+            console.error('Error opening player window:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1314,7 +1314,7 @@ function setupIpcHandlers(services) {
             }
             return { canceled: false, path: result.filePaths[0] };
         } catch (error) {
-            console.error('Error selecting directory:', error);
+            console.error('Error selecting directory:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1336,11 +1336,11 @@ function setupIpcHandlers(services) {
                 const stats = fs.statSync(filePath);
                 fileSize = stats.size;
             } catch (e) {
-                console.error('Error getting file stats:', e);
+                console.error('Error getting file stats:', e.message || e);
             }
             return { canceled: false, path: filePath, name: fileName, size: fileSize };
         } catch (error) {
-            console.error('Error selecting file:', error);
+            console.error('Error selecting file:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1354,7 +1354,7 @@ function setupIpcHandlers(services) {
             }
             return { success: true };
         } catch (error) {
-            console.error('Error resizing window:', error);
+            console.error('Error resizing window:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1368,7 +1368,7 @@ function setupIpcHandlers(services) {
             }
             return { success: true };
         } catch (error) {
-            console.error('Error minimizing window:', error);
+            console.error('Error minimizing window:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1386,7 +1386,7 @@ function setupIpcHandlers(services) {
             }
             return { success: true };
         } catch (error) {
-            console.error('Error maximizing window:', error);
+            console.error('Error maximizing window:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1438,7 +1438,7 @@ function setupIpcHandlers(services) {
 
             return result;
         } catch (error) {
-            console.error('Error adding movie:', error);
+            console.error('Error adding movie:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1465,7 +1465,7 @@ function setupIpcHandlers(services) {
             );
             return result;
         } catch (error) {
-            console.error('Error scanning movie directory:', error);
+            console.error('Error scanning movie directory:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1511,7 +1511,7 @@ function setupIpcHandlers(services) {
 
             return result;
         } catch (error) {
-            console.error('Error updating temp movie:', error);
+            console.error('Error updating temp movie:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1538,7 +1538,7 @@ function setupIpcHandlers(services) {
 
             return result;
         } catch (error) {
-            console.error('Error importing scanned movies:', error);
+            console.error('Error importing scanned movies:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1549,7 +1549,7 @@ function setupIpcHandlers(services) {
             const movies = await movieService.getTempScannedMovies(tempDir);
             return movies;
         } catch (error) {
-            console.error('Error getting temp scanned movies:', error);
+            console.error('Error getting temp scanned movies:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1560,7 +1560,7 @@ function setupIpcHandlers(services) {
             const result = await movieService.deleteTempScanDir(tempDir);
             return result;
         } catch (error) {
-            console.error('Error deleting temp scan dir:', error);
+            console.error('Error deleting temp scan dir:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1571,7 +1571,7 @@ function setupIpcHandlers(services) {
             const exists = await fileService.fileExists(filePath);
             return exists;
         } catch (error) {
-            console.error('Error checking file exists:', error);
+            console.error('Error checking file exists:', error.message || error);
             return false;
         }
     });
@@ -1590,7 +1590,7 @@ function setupIpcHandlers(services) {
             }
             return { canceled: false, path: result.filePaths[0] };
         } catch (error) {
-            console.error('Error selecting image:', error);
+            console.error('Error selecting image:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1604,7 +1604,7 @@ function setupIpcHandlers(services) {
             }
             return { success: true };
         } catch (error) {
-            console.error('Error setting min size:', error);
+            console.error('Error setting min size:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1617,7 +1617,7 @@ function setupIpcHandlers(services) {
             const tags = await tagService.loadTags();
             return tags;
         } catch (error) {
-            console.error('Error getting tags:', error);
+            console.error('Error getting tags:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1641,7 +1641,7 @@ function setupIpcHandlers(services) {
             broadcastTagsUpdated();
             return { success: true };
         } catch (error) {
-            console.error('Error creating tag:', error);
+            console.error('Error creating tag:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1659,7 +1659,7 @@ function setupIpcHandlers(services) {
             broadcastTagsUpdated();
             return { success: true };
         } catch (error) {
-            console.error('Error updating tag:', error);
+            console.error('Error updating tag:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1677,7 +1677,7 @@ function setupIpcHandlers(services) {
             broadcastTagsUpdated();
             return { success: true };
         } catch (error) {
-            console.error('Error deleting tag:', error);
+            console.error('Error deleting tag:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1693,7 +1693,7 @@ function setupIpcHandlers(services) {
             
             return { success: true, newTags };
         } catch (error) {
-            console.error('Error extracting tags:', error);
+            console.error('Error extracting tags:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1705,7 +1705,7 @@ function setupIpcHandlers(services) {
             broadcastTagsUpdated();
             return result;
         } catch (error) {
-            console.error('Error batch creating tags:', error);
+            console.error('Error batch creating tags:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1721,7 +1721,7 @@ function setupIpcHandlers(services) {
             
             return { success: true, movies };
         } catch (error) {
-            console.error('Error getting movies by tag:', error);
+            console.error('Error getting movies by tag:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1747,7 +1747,7 @@ function setupIpcHandlers(services) {
             broadcastCategoriesUpdated();
             return { success: true };
         } catch (error) {
-            console.error('Error creating category:', error);
+            console.error('Error creating category:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1771,7 +1771,7 @@ function setupIpcHandlers(services) {
             broadcastCategoriesUpdated();
             return { success: true };
         } catch (error) {
-            console.error('Error updating category:', error);
+            console.error('Error updating category:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1789,7 +1789,7 @@ function setupIpcHandlers(services) {
             broadcastCategoriesUpdated();
             return { success: true };
         } catch (error) {
-            console.error('Error deleting category:', error);
+            console.error('Error deleting category:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1804,7 +1804,7 @@ function setupIpcHandlers(services) {
             });
             return result;
         } catch (error) {
-            console.error('Error showing save dialog:', error);
+            console.error('Error showing save dialog:', error.message || error);
             return { canceled: true, error: error.message };
         }
     });
@@ -1818,7 +1818,7 @@ function setupIpcHandlers(services) {
             const result = await exportService.exportBox(exportType, movies, moviesDir, exportPath, boxName);
             return result;
         } catch (error) {
-            console.error('Error exporting box:', error);
+            console.error('Error exporting box:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1829,7 +1829,7 @@ function setupIpcHandlers(services) {
             playerService.openBatchPlayerWindow(playlistData, mainWindow, createPlayerWindow);
             return { success: true };
         } catch (error) {
-            console.error('Error opening batch player window:', error);
+            console.error('Error opening batch player window:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1868,7 +1868,7 @@ function setupIpcHandlers(services) {
                 formattedDuration: videoInfoService.formatDuration(videoInfo.duration)
             };
         } catch (error) {
-            console.error('Error getting video info:', error);
+            console.error('Error getting video info:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1885,7 +1885,7 @@ function setupIpcHandlers(services) {
             
             return { success: true, results };
         } catch (error) {
-            console.error('Error in batch search:', error);
+            console.error('Error in batch search:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1907,7 +1907,7 @@ function setupIpcHandlers(services) {
             
             return { success: true, savedResults };
         } catch (error) {
-            console.error('Error in batch save:', error);
+            console.error('Error in batch save:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1917,7 +1917,7 @@ function setupIpcHandlers(services) {
             batchSearchService.cancel();
             return { success: true };
         } catch (error) {
-            console.error('Error cancelling batch search:', error);
+            console.error('Error cancelling batch search:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1934,7 +1934,7 @@ function setupIpcHandlers(services) {
 
             return { success: true, results };
         } catch (error) {
-            console.error('Error in batch actor search:', error);
+            console.error('Error in batch actor search:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1952,7 +1952,7 @@ function setupIpcHandlers(services) {
 
             return { success: true, savedResults };
         } catch (error) {
-            console.error('Error in batch actor save:', error);
+            console.error('Error in batch actor save:', error.message || error);
             return { error: error.message };
         }
     });
@@ -1962,7 +1962,7 @@ function setupIpcHandlers(services) {
             batchActorSearchService.cancel();
             return { success: true };
         } catch (error) {
-            console.error('Error cancelling batch actor search:', error);
+            console.error('Error cancelling batch actor search:', error.message || error);
             return { error: error.message };
         }
     });
@@ -2005,7 +2005,7 @@ function setupIpcHandlers(services) {
 
             return { actors: newActorNames };
         } catch (error) {
-            console.error('Error extracting new actors from movies:', error);
+            console.error('Error extracting new actors from movies:', error.message || error);
             return { error: error.message, actors: [] };
         }
     });
@@ -2048,7 +2048,7 @@ function setupIpcHandlers(services) {
 
             return screenshotsWithPaths;
         } catch (error) {
-            console.error('Error getting screenshots:', error);
+            console.error('Error getting screenshots:', error.message || error);
             return { error: error.message };
         }
     });
@@ -2085,7 +2085,7 @@ function setupIpcHandlers(services) {
             const result = await screenshotService.saveScreenshot(targetFolderPath, imageData, screenshotNumber);
             return result;
         } catch (error) {
-            console.error('Error saving screenshot:', error);
+            console.error('Error saving screenshot:', error.message || error);
             return { success: false, error: error.message };
         }
     });
@@ -2120,7 +2120,7 @@ function setupIpcHandlers(services) {
             const result = await screenshotService.deleteScreenshot(targetFolderPath, number);
             return result;
         } catch (error) {
-            console.error('Error deleting screenshot:', error);
+            console.error('Error deleting screenshot:', error.message || error);
             return { success: false, error: error.message };
         }
     });
@@ -2130,7 +2130,7 @@ function setupIpcHandlers(services) {
             await movieHistoryService.addRecord(movieName, movieId);
             return { success: true };
         } catch (error) {
-            console.error('Error adding play history:', error);
+            console.error('Error adding play history:', error.message || error);
             return { success: false, error: error.message };
         }
     });
@@ -2141,7 +2141,7 @@ function setupIpcHandlers(services) {
             const history = movieHistoryService.filterHistory(movieName, date);
             return history;
         } catch (error) {
-            console.error('Error getting play history:', error);
+            console.error('Error getting play history:', error.message || error);
             return { history: [] };
         }
     });
@@ -2151,7 +2151,7 @@ function setupIpcHandlers(services) {
             await movieHistoryService.deleteRecord(date, time);
             return { success: true };
         } catch (error) {
-            console.error('Error deleting play history:', error);
+            console.error('Error deleting play history:', error.message || error);
             return { success: false, error: error.message };
         }
     });
@@ -2161,7 +2161,7 @@ function setupIpcHandlers(services) {
             await movieHistoryService.clearHistory();
             return { success: true };
         } catch (error) {
-            console.error('Error clearing play history:', error);
+            console.error('Error clearing play history:', error.message || error);
             return { success: false, error: error.message };
         }
     });
@@ -2171,7 +2171,7 @@ function setupIpcHandlers(services) {
             const dates = movieHistoryService.getHistoryDates();
             return { dates };
         } catch (error) {
-            console.error('Error getting history dates:', error);
+            console.error('Error getting history dates:', error.message || error);
             return { dates: [] };
         }
     });
@@ -2181,7 +2181,7 @@ function setupIpcHandlers(services) {
             await movieHistoryService.deleteRecordsByDateAndMovieIds(date, movieIds);
             return { success: true };
         } catch (error) {
-            console.error('Error deleting history records:', error);
+            console.error('Error deleting history records:', error.message || error);
             return { success: false, error: error.message };
         }
     });
@@ -2191,7 +2191,7 @@ function setupIpcHandlers(services) {
             createHistoryWindow();
             return { success: true };
         } catch (error) {
-            console.error('Error opening history window:', error);
+            console.error('Error opening history window:', error.message || error);
             return { error: error.message };
         }
     });
@@ -2203,7 +2203,7 @@ function setupIpcHandlers(services) {
             await shell.openPath(folderPath);
             return { success: true };
         } catch (error) {
-            console.error('Error opening folder:', error);
+            console.error('Error opening folder:', error.message || error);
             return { success: false, error: error.message };
         }
     });
@@ -2214,7 +2214,7 @@ function setupIpcHandlers(services) {
             clipboard.writeText(text);
             return { success: true };
         } catch (error) {
-            console.error('Error copying to clipboard:', error);
+            console.error('Error copying to clipboard:', error.message || error);
             return { success: false, error: error.message };
         }
     });
@@ -2225,7 +2225,7 @@ function setupIpcHandlers(services) {
             await shell.openPath(filePath);
             return { success: true };
         } catch (error) {
-            console.error('Error playing with system player:', error);
+            console.error('Error playing with system player:', error.message || error);
             return { success: false, error: error.message };
         }
     });
@@ -2235,7 +2235,7 @@ function setupIpcHandlers(services) {
             const subtitleFiles = await playerService.findSubtitleFiles(videoPath);
             return subtitleFiles;
         } catch (error) {
-            console.error('Error finding subtitle files:', error);
+            console.error('Error finding subtitle files:', error.message || error);
             return [];
         }
     });
@@ -2245,7 +2245,7 @@ function setupIpcHandlers(services) {
             const subtitle = await playerService.getAutoSubtitle(videoPath);
             return subtitle;
         } catch (error) {
-            console.error('Error getting auto subtitle:', error);
+            console.error('Error getting auto subtitle:', error.message || error);
             return null;
         }
     });
@@ -2255,7 +2255,7 @@ function setupIpcHandlers(services) {
             const subtitles = await playerService.loadSubtitle(subtitlePath);
             return subtitles;
         } catch (error) {
-            console.error('Error loading subtitle:', error);
+            console.error('Error loading subtitle:', error.message || error);
             return [];
         }
     });

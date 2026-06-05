@@ -79,7 +79,7 @@ class R18AdapterService {
             const result = await pool.query(sql);
             return result.rows;
         } catch (error) {
-            console.error('[R18AdapterService] Database query error:', error);
+            console.error('[R18AdapterService] Database query error:', error.message || error);
             console.error('[R18AdapterService] Error details:', error.message);
             throw error;
         }
@@ -369,7 +369,7 @@ class R18AdapterService {
                         profile_url: tmdbPerson.profile_url || profileUrl
                     };
                 } catch (error) {
-                    console.error('Error fetching TMDB person:', error);
+                    console.error('Error fetching TMDB person:', error.message || error);
                 }
             }
 

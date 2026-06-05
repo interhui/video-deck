@@ -82,7 +82,7 @@ async function loadTheme(options = {}) {
             options.onLayoutLoaded(settings.layout);
         }
     } catch (error) {
-        console.error('Error loading theme:', error);
+        console.error('Error loading theme:', error.message || error);
     }
 }
 
@@ -254,7 +254,7 @@ async function loadCategoriesCache() {
             return categories;
         }
     } catch (error) {
-        console.error('Error loading categories:', error);
+        console.error('Error loading categories:', error.message || error);
     }
     return [];
 }
@@ -266,7 +266,7 @@ async function loadTagsCache() {
             return tags;
         }
     } catch (error) {
-        console.error('Error loading tags:', error);
+        console.error('Error loading tags:', error.message || error);
     }
     return [];
 }

@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             renderTagList();
         } catch (error) {
-            console.error('Error loading tags:', error);
+            console.error('Error loading tags:', error.message || error);
             tags = [];
             renderTagList();
         }
@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             tagMovies = result.movies || [];
             renderTagMovies();
         } catch (error) {
-            console.error('Error loading tag movies:', error);
+            console.error('Error loading tag movies:', error.message || error);
         }
     }
 
@@ -211,7 +211,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
         } catch (error) {
-            console.error('Error opening movie detail:', error);
+            console.error('Error opening movie detail:', error.message || error);
         }
     }
 
@@ -273,7 +273,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             resetForm();
             hideForm();
         } catch (error) {
-            console.error('Error saving tag:', error);
+            console.error('Error saving tag:', error.message || error);
             alert('保存失败: ' + error.message);
         }
     }
@@ -297,7 +297,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             resetForm();
             hideForm();
         } catch (error) {
-            console.error('Error deleting tag:', error);
+            console.error('Error deleting tag:', error.message || error);
             alert('删除失败: ' + error.message);
         }
     }
@@ -379,7 +379,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             extractModalFooter.style.display = 'flex';
         } catch (error) {
-            console.error('Error extracting tags:', error);
+            console.error('Error extracting tags:', error.message || error);
             alert('提取标签失败: ' + error.message);
             closeExtractModal();
         }
@@ -416,7 +416,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             alert(`成功添加 ${result.addedCount} 个标签`);
             closeExtractModal();
         } catch (error) {
-            console.error('Error saving extracted tags:', error);
+            console.error('Error saving extracted tags:', error.message || error);
             alert('保存标签失败: ' + error.message);
         }
     });

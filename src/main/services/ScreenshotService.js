@@ -38,7 +38,7 @@ class ScreenshotService {
             screenshots.sort((a, b) => a.number - b.number);
             return screenshots;
         } catch (error) {
-            console.error('Error getting screenshots:', error);
+            console.error('Error getting screenshots:', error.message || error);
             return [];
         }
     }
@@ -87,7 +87,7 @@ class ScreenshotService {
                 number: number
             };
         } catch (error) {
-            console.error('Error saving screenshot:', error);
+            console.error('Error saving screenshot:', error.message || error);
             throw error;
         }
     }
@@ -109,7 +109,7 @@ class ScreenshotService {
             await fs.unlink(filePath);
             return { success: true };
         } catch (error) {
-            console.error('Error deleting screenshot:', error);
+            console.error('Error deleting screenshot:', error.message || error);
             return { success: false, error: error.message };
         }
     }
@@ -145,7 +145,7 @@ class ScreenshotService {
             const buffer = fsSync.readFileSync(filePath);
             return `data:image/jpeg;base64,${buffer.toString('base64')}`;
         } catch (error) {
-            console.error('Error reading screenshot:', error);
+            console.error('Error reading screenshot:', error.message || error);
             return null;
         }
     }
@@ -167,7 +167,7 @@ class ScreenshotService {
             const buffer = await fs.readFile(filePath);
             return `data:image/jpeg;base64,${buffer.toString('base64')}`;
         } catch (error) {
-            console.error('Error reading screenshot:', error);
+            console.error('Error reading screenshot:', error.message || error);
             return null;
         }
     }

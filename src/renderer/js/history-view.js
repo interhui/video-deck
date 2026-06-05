@@ -212,7 +212,7 @@ async function loadHistoryData() {
         updateCategoryFilter();
         renderHistoryContent();
     } catch (error) {
-        console.error('Error loading history data:', error);
+        console.error('Error loading history data:', error.message || error);
     }
 }
 
@@ -502,7 +502,7 @@ async function deleteHistoryRecord(date, time) {
             alert('删除失败');
         }
     } catch (error) {
-        console.error('Error deleting history record:', error);
+        console.error('Error deleting history record:', error.message || error);
         alert('删除失败: ' + error.message);
     }
 }
@@ -514,7 +514,7 @@ async function openMovieDetail(movieId) {
             await window.electronAPI.openMovieDetail(movieDetail);
         }
     } catch (error) {
-        console.error('Error opening movie detail:', error);
+        console.error('Error opening movie detail:', error.message || error);
     }
 }
 
@@ -528,7 +528,7 @@ async function playMovie(movieId) {
 
         await window.electronAPI.openPlayerWindow(movieDetail, 0);
     } catch (error) {
-        console.error('Error playing movie:', error);
+        console.error('Error playing movie:', error.message || error);
         alert('播放失败: ' + error.message);
     }
 }
@@ -586,7 +586,7 @@ async function playSelectedMovies() {
 
         await window.electronAPI.openBatchPlayerWindow(playlist);
     } catch (error) {
-        console.error('Error playing selected movies:', error);
+        console.error('Error playing selected movies:', error.message || error);
         alert('播放失败: ' + error.message);
     }
 }

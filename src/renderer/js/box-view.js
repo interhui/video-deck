@@ -115,7 +115,7 @@ async function loadBoxList() {
             await selectBox(state.boxes[0].originalName);
         }
     } catch (error) {
-        console.error('Error loading box list:', error);
+        console.error('Error loading box list:', error.message || error);
         state.boxes = [];
         renderBoxList();
     }
@@ -201,7 +201,7 @@ async function loadBoxData() {
 
         await loadMoviesFromBox(boxDetail.data);
     } catch (error) {
-        console.error('Error loading box data:', error);
+        console.error('Error loading box data:', error.message || error);
     }
 }
 
@@ -264,7 +264,7 @@ async function loadMoviesFromBox(boxData) {
         _updateCategoryFilter();
         renderMovies();
     } catch (error) {
-        console.error('Error loading movies from box:', error);
+        console.error('Error loading movies from box:', error.message || error);
     }
 }
 
@@ -358,7 +358,7 @@ async function openMovieDetail(movieId) {
             });
         }
     } catch (error) {
-        console.error('Error opening movie detail:', error);
+        console.error('Error opening movie detail:', error.message || error);
     }
 }
 
@@ -372,7 +372,7 @@ async function playBoxMovie(movieId) {
 
         await window.electronAPI.openPlayerWindow(movieDetail, 0);
     } catch (error) {
-        console.error('Error playing box movie:', error);
+        console.error('Error playing box movie:', error.message || error);
         alert('播放失败: ' + error.message);
     }
 }
@@ -440,7 +440,7 @@ async function playBoxMovies() {
 
         await window.electronAPI.openBatchPlayerWindow(playlist);
     } catch (error) {
-        console.error('Error playing box movies:', error);
+        console.error('Error playing box movies:', error.message || error);
         alert('播放失败: ' + error.message);
     }
 }

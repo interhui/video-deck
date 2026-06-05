@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             renderActors();
         } catch (error) {
-            console.error('Error loading actors:', error);
+            console.error('Error loading actors:', error.message || error);
             actors = [];
             renderActors();
         }
@@ -395,7 +395,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             await loadActors();
             hideModal();
         } catch (error) {
-            console.error('Error deleting actor:', error);
+            console.error('Error deleting actor:', error.message || error);
             alert('删除失败: ' + error.message);
         }
     }
@@ -446,7 +446,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             photoPreview.innerHTML = `<img src="${base64}" alt="照片预览">`;
             removePhotoBtn.style.display = 'block';
         } catch (error) {
-            console.error('Error reading file:', error);
+            console.error('Error reading file:', error.message || error);
             alert('读取照片失败');
         }
     });
@@ -516,7 +516,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             await loadActors();
             hideModal();
         } catch (error) {
-            console.error('Error saving actor:', error);
+            console.error('Error saving actor:', error.message || error);
             alert('保存失败: ' + error.message);
         }
     }
@@ -661,7 +661,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentRatingModalActor = null;
             await loadActors();
         } catch (error) {
-            console.error('Error updating actor rating:', error);
+            console.error('Error updating actor rating:', error.message || error);
             alert('修改失败: ' + error.message);
         }
     });
@@ -786,7 +786,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             renderActorSearchResults(actorSearchResultsList);
 
         } catch (error) {
-            console.error('Error searching actors:', error);
+            console.error('Error searching actors:', error.message || error);
             actorSearchLoading.style.display = 'none';
             actorSearchError.textContent = '搜索失败: ' + error.message;
             actorSearchError.style.display = 'block';
@@ -905,7 +905,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             closeActorSearchModal();
 
         } catch (error) {
-            console.error('Error getting actor detail:', error);
+            console.error('Error getting actor detail:', error.message || error);
             alert('获取演员详情失败: ' + error.message);
         } finally {
             confirmActorSearchBtn.disabled = false;
@@ -1157,7 +1157,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (error) {
             isBatchSearching = false;
             batchActorCloseBtn.textContent = '关闭';
-            console.error('Error in batch actor search:', error);
+            console.error('Error in batch actor search:', error.message || error);
             alert('批量搜索失败: ' + error.message);
         }
     }
@@ -1216,7 +1216,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (error) {
             isBatchSaving = false;
             batchActorCloseBtn.textContent = '关闭';
-            console.error('Error in batch actor save:', error);
+            console.error('Error in batch actor save:', error.message || error);
             alert('批量保存失败: ' + error.message);
         }
     }
@@ -1433,7 +1433,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (error) {
             isExtracting = false;
             extractActorScanBtn.style.display = 'inline-block';
-            console.error('Error in extract actor scan:', error);
+            console.error('Error in extract actor scan:', error.message || error);
             alert('扫描失败: ' + error.message);
         }
     }
@@ -1508,7 +1508,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (error) {
             isExtractSearching = false;
             extractActorCloseBtn.textContent = '关闭';
-            console.error('Error in extract actor search:', error);
+            console.error('Error in extract actor search:', error.message || error);
             alert('批量搜索失败: ' + error.message);
             extractActorSearchBtn.style.display = 'inline-block';
         }
@@ -1586,7 +1586,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (error) {
             isExtractSaving = false;
             extractActorCloseBtn.textContent = '关闭';
-            console.error('Error in extract actor save:', error);
+            console.error('Error in extract actor save:', error.message || error);
             alert('批量保存失败: ' + error.message);
         }
     }

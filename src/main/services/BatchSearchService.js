@@ -264,7 +264,7 @@ class BatchSearchService {
                     });
                 }
             } catch (error) {
-                console.error('Error saving movie:', error);
+                console.error('Error saving movie:', error.message || error);
                 savedResults.push({
                     movie: item.movie,
                     success: false,

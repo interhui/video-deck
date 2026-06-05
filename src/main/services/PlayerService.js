@@ -193,7 +193,7 @@ class PlayerService {
 
             return subtitleFiles.sort((a, b) => a.filename.localeCompare(b.filename));
         } catch (error) {
-            console.error('查找字幕文件失败:', error);
+            console.error('查找字幕文件失败:', error.message || error);
             return [];
         }
     }
@@ -303,7 +303,7 @@ class PlayerService {
             
             return subtitles;
         } catch (error) {
-            console.error('解析SRT字幕失败:', error);
+            console.error('解析SRT字幕失败:', error.message || error);
             return [];
         }
     }
@@ -350,7 +350,7 @@ class PlayerService {
             
             return subtitles.sort((a, b) => a.startTime - b.startTime);
         } catch (error) {
-            console.error('解析ASS字幕失败:', error);
+            console.error('解析ASS字幕失败:', error.message || error);
             return [];
         }
     }

@@ -39,7 +39,7 @@ class TagService {
 
             return this.tagsCache;
         } catch (error) {
-            console.error('Error loading tags:', error);
+            console.error('Error loading tags:', error.message || error);
             this.tagsCache = this.hardCodeService.getDefaultTags();
             return this.tagsCache;
         }
@@ -62,7 +62,7 @@ class TagService {
                     this.tagsCache = this.hardCodeService.getDefaultTags();
                 }
             } catch (error) {
-                console.error('Error reading tags synchronously:', error);
+                console.error('Error reading tags synchronously:', error.message || error);
                 this.tagsCache = this.hardCodeService.getDefaultTags();
             }
         }
@@ -103,7 +103,7 @@ class TagService {
             await this.fileService.writeJson(this.tagsPath, tags);
             this.tagsCache = tags;
         } catch (error) {
-            console.error('Error saving tags:', error);
+            console.error('Error saving tags:', error.message || error);
             throw error;
         }
     }
@@ -167,7 +167,7 @@ class TagService {
             await this.saveTags(existingTags);
             return { success: true, addedCount: addedTags.length };
         } catch (error) {
-            console.error('Error batch adding tags:', error);
+            console.error('Error batch adding tags:', error.message || error);
             throw error;
         }
     }

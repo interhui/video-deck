@@ -45,7 +45,7 @@ class SettingsService {
 
             return this.settings;
         } catch (error) {
-            console.error('Error loading settings:', error);
+            console.error('Error loading settings:', error.message || error);
             this.settings = this.hardCodeService.getDefaultSettings();
             return this.settings;
         }
@@ -60,7 +60,7 @@ class SettingsService {
             this.settings = { ...this.settings, ...newSettings };
             this.fileService.writeJson(this.settingsPath, this.settings);
         } catch (error) {
-            console.error('Error saving settings:', error);
+            console.error('Error saving settings:', error.message || error);
             throw error;
         }
     }
@@ -336,7 +336,7 @@ getActorPhotoDir() {
             const imported = JSON.parse(jsonString);
             this.saveSettings(imported);
         } catch (error) {
-            console.error('Error importing settings:', error);
+            console.error('Error importing settings:', error.message || error);
             throw error;
         }
     }

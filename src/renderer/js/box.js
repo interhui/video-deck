@@ -558,7 +558,7 @@ async function loadBoxData() {
         // 获取所有电影详情
         await loadMoviesFromBox(boxDetail.data);
     } catch (error) {
-        console.error('Error loading box data:', error);
+        console.error('Error loading box data:', error.message || error);
     }
 }
 
@@ -582,7 +582,7 @@ async function loadMoviesFromBox(boxData) {
         // 收藏夹电影使用一次性加载（收藏夹通常不会太大，且需要完整的电影数据进行筛选）
         await loadMoviesFromBoxAll(boxMovieIds, boxMovieMap);
     } catch (error) {
-        console.error('Error loading movies from box:', error);
+        console.error('Error loading movies from box:', error.message || error);
     }
 }
 
@@ -649,7 +649,7 @@ async function loadMoviesFromBoxAll(boxMovieIds, boxMovieMap) {
         // 更新统计
         updateStats(movies);
     } catch (error) {
-        console.error('Error loading all box movies:', error);
+        console.error('Error loading all box movies:', error.message || error);
     }
 }
 
@@ -731,7 +731,7 @@ async function initBoxLazyLoader(boxMovieIds, boxMovieMap) {
             updateStats(state.movies);
         },
         onError: (error) => {
-            console.error('Box LazyLoader error:', error);
+            console.error('Box LazyLoader error:', error.message || error);
         }
     });
 }
@@ -1068,7 +1068,7 @@ async function removeMovieFromBox(movieId) {
             alert('移除失败: ' + result.error);
         }
     } catch (error) {
-        console.error('Error removing movie from box:', error);
+        console.error('Error removing movie from box:', error.message || error);
         alert('移除失败: ' + error.message);
     }
 }
@@ -1119,7 +1119,7 @@ async function batchRemoveMovies() {
         // 重新加载收藏夹数据
         await loadBoxData();
     } catch (error) {
-        console.error('Error batch removing movies from box:', error);
+        console.error('Error batch removing movies from box:', error.message || error);
         alert('批量移除失败: ' + error.message);
     }
 }
@@ -1215,7 +1215,7 @@ async function confirmStatusChange() {
             alert('修改失败: ' + result.error);
         }
     } catch (error) {
-        console.error('Error updating movie:', error);
+        console.error('Error updating movie:', error.message || error);
         alert('修改失败: ' + error.message);
     }
 }
@@ -1237,7 +1237,7 @@ async function openMovieDetail(movieId) {
             });
         }
     } catch (error) {
-        console.error('Error opening movie detail:', error);
+        console.error('Error opening movie detail:', error.message || error);
     }
 }
 
@@ -1337,7 +1337,7 @@ async function confirmExport() {
             alert('导出失败: ' + exportResult.error);
         }
     } catch (error) {
-        console.error('Error exporting box:', error);
+        console.error('Error exporting box:', error.message || error);
         alert('导出失败: ' + error.message);
     }
 }
@@ -1401,7 +1401,7 @@ async function playBoxMovies() {
 
         await window.electronAPI.openBatchPlayerWindow(playlist);
     } catch (error) {
-        console.error('Error playing box movies:', error);
+        console.error('Error playing box movies:', error.message || error);
         alert('播放失败: ' + error.message);
     }
 }
@@ -1453,7 +1453,7 @@ async function playBoxMovie(movieId) {
 
         await window.electronAPI.openPlayerWindow(movieDetail, 0);
     } catch (error) {
-        console.error('Error playing box movie:', error);
+        console.error('Error playing box movie:', error.message || error);
         alert('播放失败: ' + error.message);
     }
 }

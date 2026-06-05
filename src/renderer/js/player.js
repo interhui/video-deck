@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
         } catch (error) {
-            console.error('Failed to apply subtitle settings:', error);
+            console.error('Failed to apply subtitle settings:', error.message || error);
         }
     }
 
@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 elements.subtitleDisplay.style.display = 'none';
             }
         } catch (error) {
-            console.error('自动加载字幕失败:', error);
+            console.error('自动加载字幕失败:', error.message || error);
             currentSubtitles = [];
             elements.subtitleDisplay.style.display = 'none';
         }
@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             elements.subtitleInfo.textContent = `当前视频: ${basename(videoPath)}`;
             elements.subtitleModal.style.display = 'flex';
         } catch (error) {
-            console.error('加载字幕列表失败:', error);
+            console.error('加载字幕列表失败:', error.message || error);
             showScreenshotToast('加载字幕列表失败');
         }
     }
@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 await applySubtitleSettings();
                 showScreenshotToast(`已加载字幕: ${selectedFile.filename}`);
             } catch (error) {
-                console.error('加载字幕失败:', error);
+                console.error('加载字幕失败:', error.message || error);
                 showScreenshotToast('加载字幕失败');
             }
         }
@@ -365,10 +365,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             const movieName = item.title || basename(item.path);
             elements.playerTitle.textContent = movieName;
             window.electronAPI.addPlayHistory(movieName, item.movieId || '').catch(err => {
-                console.error('记录播放历史失败:', err);
+                console.error('记录播放历史失败:', err.message || err);
             });
         }).catch(err => {
-            console.error('播放失败:', err);
+            console.error('播放失败:', err.message || err);
         });
     }
 
@@ -804,7 +804,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             showScreenshotToast(`已添加 ${addedCount} 个电影到 ${boxName}`);
             elements.addToBoxModal.style.display = 'none';
         } catch (error) {
-            console.error('Error adding playlist to box:', error);
+            console.error('Error adding playlist to box:', error.message || error);
             showScreenshotToast('添加失败: ' + error.message);
         }
     });

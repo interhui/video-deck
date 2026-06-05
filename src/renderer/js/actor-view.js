@@ -100,7 +100,7 @@ async function loadActorList() {
             await selectActor(state.actors[0].name);
         }
     } catch (error) {
-        console.error('Error loading actor list:', error);
+        console.error('Error loading actor list:', error.message || error);
         state.actors = [];
         renderActorList();
     }
@@ -180,7 +180,7 @@ async function loadActorMovies() {
         _updateCategoryFilter();
         renderMovies();
     } catch (error) {
-        console.error('Error loading actor movies:', error);
+        console.error('Error loading actor movies:', error.message || error);
         state.movies = [];
         state.categories = [];
         renderMovies();
@@ -271,7 +271,7 @@ async function openMovieDetail(movieId) {
             await window.electronAPI.openMovieDetail(movie);
         }
     } catch (error) {
-        console.error('Error opening movie detail:', error);
+        console.error('Error opening movie detail:', error.message || error);
     }
 }
 
@@ -285,7 +285,7 @@ async function playMovie(movieId) {
 
         await window.electronAPI.openPlayerWindow(movieDetail, 0);
     } catch (error) {
-        console.error('Error playing movie:', error);
+        console.error('Error playing movie:', error.message || error);
         alert('播放失败: ' + error.message);
     }
 }
@@ -353,7 +353,7 @@ async function playActorMovies() {
 
         await window.electronAPI.openBatchPlayerWindow(playlist);
     } catch (error) {
-        console.error('Error playing actor movies:', error);
+        console.error('Error playing actor movies:', error.message || error);
         alert('播放失败: ' + error.message);
     }
 }

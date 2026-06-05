@@ -102,7 +102,7 @@ class FileService {
 
             return folders;
         } catch (error) {
-            console.error('Error getting category folders:', error);
+            console.error('Error getting category folders:', error.message || error);
             throw error;
         }
     }
@@ -131,7 +131,7 @@ class FileService {
 
             return movieFolders;
         } catch (error) {
-            console.error('Error getting movie folders:', error);
+            console.error('Error getting movie folders:', error.message || error);
             throw error;
         }
     }
@@ -154,7 +154,7 @@ class FileService {
             const content = await fs.readFile(movieNfoPath, 'utf-8');
             return await this.parseMovieNfo(content);
         } catch (error) {
-            console.error('Error reading movie.nfo:', error);
+            console.error('Error reading movie.nfo:', error.message || error);
             throw error;
         }
     }
@@ -496,7 +496,7 @@ class FileService {
             const xmlContent = this.generateMovieNfo(movieData);
             await fs.writeFile(movieNfoPath, xmlContent, 'utf-8');
         } catch (error) {
-            console.error('Error writing movie.nfo:', error);
+            console.error('Error writing movie.nfo:', error.message || error);
             throw error;
         }
     }
@@ -792,7 +792,7 @@ class FileService {
             }
             return await fs.readdir(dirPath);
         } catch (error) {
-            console.error('Error reading directory:', error);
+            console.error('Error reading directory:', error.message || error);
             throw error;
         }
     }
@@ -805,7 +805,7 @@ class FileService {
         try {
             await fs.mkdir(dirPath, { recursive: true });
         } catch (error) {
-            console.error('Error creating directory:', error);
+            console.error('Error creating directory:', error.message || error);
             throw error;
         }
     }
@@ -820,7 +820,7 @@ class FileService {
         } catch (error) {
             // 忽略目录已存在的错误
             if (error.code !== 'EEXIST') {
-                console.error('Error ensuring directory:', error);
+                console.error('Error ensuring directory:', error.message || error);
                 throw error;
             }
         }
@@ -835,7 +835,7 @@ class FileService {
         try {
             return await fs.readFile(filePath, 'utf-8');
         } catch (error) {
-            console.error('Error reading file:', error);
+            console.error('Error reading file:', error.message || error);
             throw error;
         }
     }
@@ -851,7 +851,7 @@ class FileService {
                 await fs.unlink(filePath);
             }
         } catch (error) {
-            console.error('Error deleting file:', error);
+            console.error('Error deleting file:', error.message || error);
             throw error;
         }
     }
@@ -867,7 +867,7 @@ class FileService {
                 await fs.rm(dirPath, { recursive: true, force: true });
             }
         } catch (error) {
-            console.error('Error deleting directory:', error);
+            console.error('Error deleting directory:', error.message || error);
             throw error;
         }
     }
@@ -886,7 +886,7 @@ class FileService {
             const content = await fs.readFile(filePath, 'utf-8');
             return JSON.parse(content);
         } catch (error) {
-            console.error('Error reading JSON file:', error);
+            console.error('Error reading JSON file:', error.message || error);
             throw error;
         }
     }
@@ -902,7 +902,7 @@ class FileService {
             await this.createDir(dir);
             await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
         } catch (error) {
-            console.error('Error writing JSON file:', error);
+            console.error('Error writing JSON file:', error.message || error);
             throw error;
         }
     }
@@ -959,7 +959,7 @@ class FileService {
             const mimeType = this.getMimeType(ext);
             return `data:${mimeType};base64,${buffer.toString('base64')}`;
         } catch (error) {
-            console.error('Error reading image:', error);
+            console.error('Error reading image:', error.message || error);
             return null;
         }
     }
@@ -1001,7 +1001,7 @@ class FileService {
 
             return folders;
         } catch (error) {
-            console.error('Error scanning directory for movies:', error);
+            console.error('Error scanning directory for movies:', error.message || error);
             throw error;
         }
     }
@@ -1027,7 +1027,7 @@ class FileService {
                 }
             }
         } catch (error) {
-            console.error('Error copying directory:', error);
+            console.error('Error copying directory:', error.message || error);
             throw error;
         }
     }
@@ -1052,7 +1052,7 @@ class FileService {
                 await this.copyDir(srcPath, destPath);
                 await this.deleteDir(srcPath);
             } else {
-                console.error('Error moving directory:', error);
+                console.error('Error moving directory:', error.message || error);
                 throw error;
             }
         }
@@ -1119,7 +1119,7 @@ class FileService {
                     }
                 }
             } catch (error) {
-                console.error('Error scanning directory recursively:', error);
+                console.error('Error scanning directory recursively:', error.message || error);
             }
         }
 
@@ -1167,7 +1167,7 @@ class FileService {
                 }
             }
         } catch (error) {
-            console.error('Error finding movie poster:', error);
+            console.error('Error finding movie poster:', error.message || error);
         }
 
         return { posterPath: null, posterExt: null };
@@ -1213,7 +1213,7 @@ class FileService {
             // 按文件名排序
             videoFiles.sort((a, b) => a.fileName.localeCompare(b.fileName, undefined, { numeric: true }));
         } catch (error) {
-            console.error('Error scanning directory for video files:', error);
+            console.error('Error scanning directory for video files:', error.message || error);
         }
 
         return videoFiles;
@@ -1300,7 +1300,7 @@ class FileService {
                 }
             }
         } catch (error) {
-            console.error('Error parsing CSV file:', error);
+            console.error('Error parsing CSV file:', error.message || error);
         }
 
         return movies;
@@ -1362,7 +1362,7 @@ class FileService {
             await fs.copyFile(srcPath, destPath);
             return destPath;
         } catch (error) {
-            console.error('Error copying file:', error);
+            console.error('Error copying file:', error.message || error);
             throw error;
         }
     }
@@ -1377,7 +1377,7 @@ class FileService {
             await this.ensureDir(path.dirname(filePath));
             await fs.writeFile(filePath, content, 'utf-8');
         } catch (error) {
-            console.error('Error writing file:', error);
+            console.error('Error writing file:', error.message || error);
             throw error;
         }
     }

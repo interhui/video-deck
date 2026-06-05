@@ -18,7 +18,7 @@ class LazyLoader {
         this.loadPage = options.loadPage;
         this.onRender = options.onRender;
         this.onComplete = options.onComplete || (() => {});
-        this.onError = options.onError || ((error) => console.error('LazyLoader error:', error));
+        this.onError = options.onError || ((error) => console.error('LazyLoader error:', error.message || error));
         this.pageSize = options.pageSize || 100;
         this.scrollContainer = options.scrollContainer || window;
         this.threshold = options.threshold || 200;
@@ -49,7 +49,7 @@ class LazyLoader {
             console.debug('LazyLoader: loadPage returned', result);
             this.handleLoadResult(result, false);
         } catch (error) {
-            console.error('LazyLoader: loadPage error', error);
+            console.error('LazyLoader: loadPage error', error.message || error);
             this.onError(error);
         } finally {
             this.isLoading = false;
@@ -74,7 +74,7 @@ class LazyLoader {
             console.debug('LazyLoader: loadPage returned', result);
             this.handleLoadResult(result, true);
         } catch (error) {
-            console.error('LazyLoader: loadPage error', error);
+            console.error('LazyLoader: loadPage error', error.message || error);
             this.currentPage--;
             this.onError(error);
         } finally {
