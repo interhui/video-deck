@@ -67,7 +67,7 @@ async function initializeServices() {
     indexService = new IndexService();
     dbService = new DatabaseService(path.join(userDataPath, 'database', 'movies.db'));
     settingsService = new SettingsService(path.join(__dirname, 'config', 'settings.json'));
-    boxService = new BoxService();
+    boxService = new BoxService(path.join(__dirname, 'config', 'boxes.json'));
     tagService = new TagService(path.join(__dirname, 'config', 'tags.json'));
     categoryService = new CategoryService(path.join(__dirname, 'config', 'categories.json'));
     actorService = new ActorService(path.join(__dirname, 'config', 'actor.json'));
@@ -247,7 +247,30 @@ function createApplicationMenu() {
                     click: () => {
                         createHistoryWindow();
                     }
-                }
+                },
+                {
+                    label: '收藏视图',
+                    accelerator: 'CmdOrCtrl+F',
+                    click: () => {
+                        createBoxViewWindow();
+                    }
+                },
+                {
+                    label: '演员视图',
+                    accelerator: 'CmdOrCtrl+G',
+                    click: () => {
+                        createActorViewWindow();
+                    }
+                },
+                { type: 'separator' },
+                { role: 'forceReload' },
+                { role: 'toggleDevTools' },
+                { type: 'separator' },
+                { role: 'resetZoom' },
+                { role: 'zoomIn' },
+                { role: 'zoomOut' },
+                { type: 'separator' },
+                { role: 'togglefullscreen' }
             ]
         },
         {
@@ -462,7 +485,7 @@ let historyWindow = null;
 
 function createHistoryWindow() {
     if (historyWindow) {
-        historyWindow.focus();
+        historyWindow.reload();
         return;
     }
 
@@ -492,6 +515,80 @@ function createHistoryWindow() {
 
     historyWindow.on('closed', () => {
         historyWindow = null;
+    });
+}
+
+let boxViewWindow = null;
+
+function createBoxViewWindow() {
+    if (boxViewWindow) {
+        boxViewWindow.focus();
+        return;
+    }
+
+    boxViewWindow = new BrowserWindow({
+        width: 1280,
+        height: 800,
+        minWidth: 800,
+        minHeight: 600,
+        title: '收藏记录',
+        frame: false,
+        autoHideMenuBar: true,
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
+            contextIsolation: true,
+            nodeIntegration: false,
+            sandbox: false
+        },
+        show: false
+    });
+
+    boxViewWindow.loadFile(path.join(__dirname, 'src', 'renderer', 'box-view.html'));
+
+    boxViewWindow.once('ready-to-show', () => {
+        boxViewWindow.show();
+        boxViewWindow.maximize();
+    });
+
+    boxViewWindow.on('closed', () => {
+        boxViewWindow = null;
+    });
+}
+
+let actorViewWindow = null;
+
+function createActorViewWindow() {
+    if (actorViewWindow) {
+        actorViewWindow.focus();
+        return;
+    }
+
+    actorViewWindow = new BrowserWindow({
+        width: 1280,
+        height: 800,
+        minWidth: 800,
+        minHeight: 600,
+        title: '演员视图',
+        frame: false,
+        autoHideMenuBar: true,
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
+            contextIsolation: true,
+            nodeIntegration: false,
+            sandbox: false
+        },
+        show: false
+    });
+
+    actorViewWindow.loadFile(path.join(__dirname, 'src', 'renderer', 'actor-view.html'));
+
+    actorViewWindow.once('ready-to-show', () => {
+        actorViewWindow.show();
+        actorViewWindow.maximize();
+    });
+
+    actorViewWindow.on('closed', () => {
+        actorViewWindow = null;
     });
 }
 
@@ -578,6 +675,8 @@ app.whenReady().then(async () => {
         getMainWindow: () => mainWindow,
         createMovieDetailWindow,
         createBoxWindow,
+        createBoxViewWindow,
+        createActorViewWindow,
         createActorManagementWindow,
         createCategoryManagementWindow,
         createHistoryWindow,

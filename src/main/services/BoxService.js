@@ -6,8 +6,49 @@ const FileService = require('./FileService');
 const path = require('path');
 
 class BoxService {
-    constructor() {
+    constructor(boxesConfigPath) {
         this.fileService = new FileService();
+        this.boxesConfigPath = boxesConfigPath || null;
+        this.boxesConfigCache = null;
+    }
+
+    async loadBoxesConfig() {
+        if (this.boxesConfigCache !== null) {
+            return this.boxesConfigCache;
+        }
+        if (!this.boxesConfigPath) {
+            return { boxes: [] };
+        }
+        try {
+            const config = await this.fileService.readJson(this.boxesConfigPath);
+            if (config && Array.isArray(config.boxes)) {
+                this.boxesConfigCache = config;
+                return config;
+            }
+            const defaultConfig = { boxes: [] };
+            await this.saveBoxesConfig(defaultConfig);
+            return defaultConfig;
+        } catch (error) {
+            console.error('Error loading boxes config:', error);
+            return { boxes: [] };
+        }
+    }
+
+    async saveBoxesConfig(config) {
+        if (!this.boxesConfigPath) {
+            return;
+        }
+        try {
+            await this.fileService.writeJson(this.boxesConfigPath, config);
+            this.boxesConfigCache = config;
+        } catch (error) {
+            console.error('Error saving boxes config:', error);
+            throw error;
+        }
+    }
+
+    clearBoxesConfigCache() {
+        this.boxesConfigCache = null;
     }
 
     /**
@@ -134,6 +175,11 @@ class BoxService {
             };
             await this.fileService.writeFile(boxPath, JSON.stringify(newBox, null, 2));
 
+            // 更新 boxes.json
+            const config = await this.loadBoxesConfig();
+            config.boxes.push({ name: boxName, description: description || '' });
+            await this.saveBoxesConfig(config);
+
             return { success: true, name: boxName };
         } catch (error) {
             console.error('Error creating box:', error);
@@ -169,6 +215,11 @@ class BoxService {
 
             // 删除原文件
             await this.fileService.deleteFile(boxPath);
+
+            // 更新 boxes.json
+            const config = await this.loadBoxesConfig();
+            config.boxes = config.boxes.filter(b => b.name !== boxName);
+            await this.saveBoxesConfig(config);
 
             return { success: true, backupPath: backupPath };
         } catch (error) {
@@ -235,6 +286,16 @@ class BoxService {
             if (newName !== boxName) {
                 await this.fileService.deleteFile(oldBoxPath);
             }
+
+            // 更新 boxes.json
+            const config = await this.loadBoxesConfig();
+            const idx = config.boxes.findIndex(b => b.name === boxName);
+            if (idx >= 0) {
+                config.boxes[idx] = { name: newName, description: description || '' };
+            } else {
+                config.boxes.push({ name: newName, description: description || '' });
+            }
+            await this.saveBoxesConfig(config);
 
             return { success: true, name: newName };
         } catch (error) {

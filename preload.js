@@ -61,10 +61,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getPendingMovieDetail: () => ipcRenderer.invoke('get-pending-movie-detail'),
     closeDetailWindow: () => ipcRenderer.invoke('close-detail-window'),
     openBoxWindow: (boxName) => ipcRenderer.invoke('open-box-window', boxName),
+    openBoxViewWindow: () => ipcRenderer.invoke('open-box-view-window'),
     setDetailEditMode: (isEditing) => ipcRenderer.invoke('set-detail-edit-mode', isEditing),
     filterByActor: (actorName) => ipcRenderer.invoke('filter-by-actor', actorName),
     filterByTag: (tagId) => ipcRenderer.invoke('filter-by-tag', tagId),
     openActorManagement: () => ipcRenderer.invoke('open-actor-management'),
+    openActorViewWindow: () => ipcRenderer.invoke('open-actor-view-window'),
+    getActorMovieList: (actorName) => ipcRenderer.invoke('get-actor-movie-list', actorName),
+    getActorMovieCountMap: () => ipcRenderer.invoke('get-actor-movie-count-map'),
     openCategoryManagement: () => ipcRenderer.invoke('open-category-management'),
     openPlayerWindow: (movieData, startTime) => ipcRenderer.invoke('open-player-window', movieData, startTime),
     openBatchPlayerWindow: (playlistData) => ipcRenderer.invoke('open-batch-player-window', playlistData),
@@ -115,6 +119,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     },
     onTagsUpdated: (callback) => {
         ipcRenderer.on('tags-updated', callback);
+    },
+    onReloadHistory: (callback) => {
+        ipcRenderer.on('reload-history', callback);
     },
     onCategoriesUpdated: (callback) => {
         ipcRenderer.on('categories-updated', callback);

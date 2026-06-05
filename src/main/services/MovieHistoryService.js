@@ -115,6 +115,11 @@ class MovieHistoryService {
         return { history: filtered };
     }
 
+    async reloadHistory() {
+        await this.loadHistory();
+        return this.history;
+    }
+
     formatDate(date) {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');

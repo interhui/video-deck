@@ -6,8 +6,10 @@ const state = {
     historyData: { history: [] },
     selectedDate: '',
     searchKeyword: '',
+    dateSearchKeyword: '',
     currentCategory: '',
     currentTag: '',
+    filterDuplicates: false,
     selectedMovies: new Set(),
     categoriesCache: [],
     tagsCache: [],
@@ -26,7 +28,9 @@ const elements = {
     categoryFilter: document.getElementById('category-filter'),
     tagFilter: document.getElementById('tag-filter'),
     batchActions: document.getElementById('batch-actions'),
-    batchPlayBtn: document.getElementById('batch-play-btn')
+    batchPlayBtn: document.getElementById('batch-play-btn'),
+    dateSearchInput: document.getElementById('date-search-input'),
+    filterDuplicatesCheckbox: document.getElementById('filter-duplicates-checkbox')
 };
 
 async function init() {
@@ -185,6 +189,17 @@ function bindEvents() {
     elements.batchPlayBtn.addEventListener('click', async () => {
         await playSelectedMovies();
     });
+
+    elements.dateSearchInput.addEventListener('input', (e) => {
+        state.dateSearchKeyword = e.target.value.trim();
+        renderTimeline();
+    });
+
+    elements.filterDuplicatesCheckbox.addEventListener('change', (e) => {
+        state.filterDuplicates = e.target.checked;
+        renderTimeline();
+        renderHistoryContent();
+    });
 }
 
 function updateClearButtonVisibility() {
@@ -248,7 +263,29 @@ function deduplicateHistoryRecords() {
 }
 
 function renderTimeline() {
-    const dates = state.historyData.history.map(entry => entry.date);
+    let dates = state.historyData.history.map(entry => entry.date);
+
+    if (state.dateSearchKeyword) {
+        const keyword = state.dateSearchKeyword.toLowerCase();
+        dates = dates.filter(date => date.toLowerCase().includes(keyword));
+    }
+
+    let filteredHistory = state.historyData.history;
+    if (state.filterDuplicates) {
+        const seenMovies = new Set();
+        filteredHistory = filteredHistory.map(entry => {
+            if (!dates.includes(entry.date)) return entry;
+            return {
+                ...entry,
+                records: entry.records.filter(record => {
+                    const key = record.movieId || record.movieName;
+                    if (seenMovies.has(key)) return false;
+                    seenMovies.add(key);
+                    return true;
+                })
+            };
+        });
+    }
 
     if (dates.length === 0) {
         elements.timelineList.innerHTML = '<li class="timeline-empty">暂无记录</li>';
@@ -256,9 +293,11 @@ function renderTimeline() {
     }
 
     elements.timelineList.innerHTML = dates.map(date => {
-        const entry = state.historyData.history.find(e => e.date === date);
-        const count = entry ? entry.records.length : 0;
+        const originalEntry = state.historyData.history.find(e => e.date === date);
+        const filteredEntry = filteredHistory.find(e => e.date === date);
+        const count = filteredEntry ? filteredEntry.records.length : 0;
         const isActive = date === state.selectedDate;
+        if (count === 0 && state.filterDuplicates) return '';
         return `
             <li class="timeline-item ${isActive ? 'active' : ''}" data-date="${date}">
                 <span class="timeline-date">${date}</span>
@@ -313,6 +352,19 @@ function renderHistoryContent() {
             records: entry.records.filter(record =>
                 record.movieData && record.movieData.tags && record.movieData.tags.includes(state.currentTag)
             )
+        })).filter(entry => entry.records.length > 0);
+    }
+
+    if (state.filterDuplicates) {
+        const seenMovies = new Set();
+        filteredHistory = filteredHistory.map(entry => ({
+            ...entry,
+            records: entry.records.filter(record => {
+                const key = record.movieId || record.movieName;
+                if (seenMovies.has(key)) return false;
+                seenMovies.add(key);
+                return true;
+            })
         })).filter(entry => entry.records.length > 0);
     }
 

@@ -31,7 +31,12 @@
 
         <main class="history-main-content">
             <aside class="history-sidebar" id="history-sidebar">
-                <h3>时间轴</h3>
+                <div class="sidebar-header">
+                    <h3>时间轴</h3>
+                    <div class="search-box">
+                        <input type="text" id="date-search-input" placeholder="搜索日期...">
+                    </div>
+                </div>
                 <ul class="history-timeline-list" id="timeline-list">
                 </ul>
             </aside>
@@ -40,12 +45,22 @@
 
             <section class="history-movie-area" id="history-movie-area">
                 <div class="history-filter-bar">
-                    <select id="category-filter" class="filter-select">
-                        <option value="">全部分类</option>
-                    </select>
-                    <select id="tag-filter" class="filter-select">
-                        <option value="">全部标签</option>
-                    </select>
+                    <div class="filter-group">
+                        <select id="category-filter" class="filter-select">
+                            <option value="">全部分类</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <select id="tag-filter" class="filter-select">
+                            <option value="">全部标签</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="filter-duplicates-checkbox">
+                            <span>过滤重复电影</span>
+                        </label>
+                    </div>
                 </div>
 
                 <div class="history-content" id="history-content">

@@ -857,6 +857,136 @@ csv-movie-001,CSV电影,CSV描述,CSV电影,演员A|演员B,CSV导演,2024,CSV�
         });
     });
 
+    describe('getActorMovieList', () => {
+        test('SVC-MOVIE-068: 返回指定演员的电影列表', async () => {
+            await service.refreshCache(moviesDir);
+            const result = await service.getActorMovieList('Actor 1', moviesDir);
+            expect(result).toBeDefined();
+            expect(Array.isArray(result)).toBe(true);
+        });
+
+        test('SVC-MOVIE-069: 不存在的演员返回空列表', async () => {
+            await service.refreshCache(moviesDir);
+            const result = await service.getActorMovieList('不存在的演员', moviesDir);
+            expect(result).toEqual([]);
+        });
+
+        test('SVC-MOVIE-070: 支持排序参数', async () => {
+            await service.refreshCache(moviesDir);
+            const result = await service.getActorMovieList('Actor 1', moviesDir, { sortBy: 'name', sortOrder: 'asc' });
+            expect(result).toBeDefined();
+        });
+
+        test('SVC-MOVIE-071: 缓存未初始化时自动初始化', async () => {
+            expect(service.getCacheService().isCacheInitialized()).toBe(false);
+            const result = await service.getActorMovieList('Actor 1', moviesDir);
+            expect(service.getCacheService().isCacheInitialized()).toBe(true);
+        });
+
+        test('SVC-MOVIE-072: 多部电影含同一演员时全部返回', async () => {
+            const movieDir2 = path.join(moviesDir, 'movie', 'test-movie-2');
+            fs.mkdirSync(movieDir2, { recursive: true });
+            const movieNfo2 = `<?xml version="1.0"?>
+<movie>
+    <id>movie-2</id>
+    <title>Test Movie 2</title>
+    <actor><name>Actor 1</name></actor>
+</movie>`;
+            fs.writeFileSync(path.join(movieDir2, 'movie.nfo'), movieNfo2);
+            fs.writeFileSync(path.join(movieDir2, 'poster.jpg'), Buffer.from([0xFF, 0xD8]));
+
+            await service.refreshCache(moviesDir);
+            const result = await service.getActorMovieList('Actor 1', moviesDir);
+            expect(result.length).toBeGreaterThanOrEqual(2);
+            result.forEach(m => {
+                expect(m.actors).toContain('Actor 1');
+            });
+        });
+    });
+
+    describe('getActorMovieCountMap', () => {
+        test('SVC-MOVIE-073: 返回演员及其电影数量', async () => {
+            await service.refreshCache(moviesDir);
+            const result = await service.getActorMovieCountMap(moviesDir);
+            expect(result).toBeDefined();
+            expect(Array.isArray(result)).toBe(true);
+        });
+
+        test('SVC-MOVIE-074: 每个演员对象包含name和movieCount', async () => {
+            await service.refreshCache(moviesDir);
+            const result = await service.getActorMovieCountMap(moviesDir);
+            if (result.length > 0) {
+                expect(result[0]).toHaveProperty('name');
+                expect(result[0]).toHaveProperty('movieCount');
+                expect(typeof result[0].name).toBe('string');
+                expect(typeof result[0].movieCount).toBe('number');
+            }
+        });
+
+        test('SVC-MOVIE-075: 演员按名称排序', async () => {
+            const movieDir2 = path.join(moviesDir, 'movie', 'actor-sort-movie');
+            fs.mkdirSync(movieDir2, { recursive: true });
+            const movieNfo2 = `<?xml version="1.0"?>
+<movie>
+    <id>actor-sort-1</id>
+    <title>Actor Sort Movie</title>
+    <actor><name>张三</name></actor>
+    <actor><name>李四</name></actor>
+    <actor><name>王五</name></actor>
+</movie>`;
+            fs.writeFileSync(path.join(movieDir2, 'movie.nfo'), movieNfo2);
+
+            await service.refreshCache(moviesDir);
+            const result = await service.getActorMovieCountMap(moviesDir);
+            const names = result.map(a => a.name);
+            for (let i = 1; i < names.length; i++) {
+                expect(names[i].localeCompare(names[i - 1], 'zh-CN')).toBeGreaterThanOrEqual(0);
+            }
+        });
+
+        test('SVC-MOVIE-076: 同一演员在多部电影中计数正确', async () => {
+            const movieDir2 = path.join(moviesDir, 'movie', 'count-movie-2');
+            fs.mkdirSync(movieDir2, { recursive: true });
+            const movieNfo2 = `<?xml version="1.0"?>
+<movie>
+    <id>count-movie-2</id>
+    <title>Count Movie 2</title>
+    <actor><name>Actor 1</name></actor>
+</movie>`;
+            fs.writeFileSync(path.join(movieDir2, 'movie.nfo'), movieNfo2);
+
+            await service.refreshCache(moviesDir);
+            const result = await service.getActorMovieCountMap(moviesDir);
+            const actor1 = result.find(a => a.name === 'Actor 1');
+            expect(actor1).toBeDefined();
+            expect(actor1.movieCount).toBeGreaterThanOrEqual(2);
+        });
+
+        test('SVC-MOVIE-077: 空演员名被忽略', async () => {
+            const movieDir2 = path.join(moviesDir, 'movie', 'empty-actor-movie');
+            fs.mkdirSync(movieDir2, { recursive: true });
+            const movieNfo2 = `<?xml version="1.0"?>
+<movie>
+    <id>empty-actor-1</id>
+    <title>Empty Actor Movie</title>
+    <actor><name></name></actor>
+    <actor><name>   </name></actor>
+</movie>`;
+            fs.writeFileSync(path.join(movieDir2, 'movie.nfo'), movieNfo2);
+
+            await service.refreshCache(moviesDir);
+            const result = await service.getActorMovieCountMap(moviesDir);
+            const emptyActor = result.find(a => a.name === '' || a.name === '   ');
+            expect(emptyActor).toBeUndefined();
+        });
+
+        test('SVC-MOVIE-078: 缓存未初始化时自动初始化', async () => {
+            expect(service.getCacheService().isCacheInitialized()).toBe(false);
+            const result = await service.getActorMovieCountMap(moviesDir);
+            expect(service.getCacheService().isCacheInitialized()).toBe(true);
+        });
+    });
+
     describe('excludeMoviesInBox', () => {
         test('SVC-MOVIE-062: 排除收藏夹中已收藏的电影', async () => {
             await service.refreshCache(moviesDir);
