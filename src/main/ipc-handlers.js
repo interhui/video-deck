@@ -215,6 +215,7 @@ function setupIpcHandlers(services) {
         createBoxWindow,
         createBoxViewWindow,
         createActorViewWindow,
+        createTagViewWindow,
         createActorManagementWindow,
         createCategoryManagementWindow,
         createHistoryWindow,
@@ -1237,6 +1238,31 @@ function setupIpcHandlers(services) {
             return { success: true };
         } catch (error) {
             console.error('Error opening actor view window:', error.message || error);
+            return { error: error.message };
+        }
+    });
+
+    // 打开标签视图窗口
+    ipcMain.handle('open-tag-view-window', async () => {
+        try {
+            createTagViewWindow();
+            return { success: true };
+        } catch (error) {
+            console.error('Error opening tag view window:', error.message || error);
+            return { error: error.message };
+        }
+    });
+
+    // 获取标签关联电影数量
+    ipcMain.handle('get-tag-movie-count-map', async () => {
+        try {
+            const settings = settingsService.getSettings();
+            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const allIndexMovies = await indexService.getAllCategoriesIndexMovies(moviesDir);
+            const tags = tagService.getTagMovieCountMap(allIndexMovies);
+            return tags;
+        } catch (error) {
+            console.error('Error getting tag movie count map:', error.message || error);
             return { error: error.message };
         }
     });

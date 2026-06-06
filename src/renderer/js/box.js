@@ -28,7 +28,6 @@ const state = {
 
 // DOM 元素
 const elements = {
-    backBtn: document.getElementById('back-btn'),
     boxTitle: document.getElementById('box-title'),
     minimizeBtn: document.getElementById('minimize-btn'),
     closeBtn: document.getElementById('close-btn'),
@@ -281,11 +280,6 @@ function initSplitter() {
  * 绑定事件
  */
 function bindEvents() {
-    // 返回按钮
-    elements.backBtn.addEventListener('click', () => {
-        window.close();
-    });
-
     // 最小化按钮
     elements.minimizeBtn.addEventListener('click', () => {
         window.electronAPI.minimizeWindow();

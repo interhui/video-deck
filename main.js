@@ -262,6 +262,13 @@ function createApplicationMenu() {
                         createActorViewWindow();
                     }
                 },
+                {
+                    label: '标签视图',
+                    accelerator: 'CmdOrCtrl+T',
+                    click: () => {
+                        createTagViewWindow();
+                    }
+                },
                 { type: 'separator' },
                 { role: 'forceReload' },
                 { role: 'toggleDevTools' },
@@ -592,6 +599,43 @@ function createActorViewWindow() {
     });
 }
 
+let tagViewWindow = null;
+
+function createTagViewWindow() {
+    if (tagViewWindow) {
+        tagViewWindow.focus();
+        return;
+    }
+
+    tagViewWindow = new BrowserWindow({
+        width: 1280,
+        height: 800,
+        minWidth: 800,
+        minHeight: 600,
+        title: '标签视图',
+        frame: false,
+        autoHideMenuBar: true,
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
+            contextIsolation: true,
+            nodeIntegration: false,
+            sandbox: false
+        },
+        show: false
+    });
+
+    tagViewWindow.loadFile(path.join(__dirname, 'src', 'renderer', 'tag-view.html'));
+
+    tagViewWindow.once('ready-to-show', () => {
+        tagViewWindow.show();
+        tagViewWindow.maximize();
+    });
+
+    tagViewWindow.on('closed', () => {
+        tagViewWindow = null;
+    });
+}
+
 // 播放器窗口
 let playerWindow = null;
 
@@ -677,6 +721,7 @@ app.whenReady().then(async () => {
         createBoxWindow,
         createBoxViewWindow,
         createActorViewWindow,
+        createTagViewWindow,
         createActorManagementWindow,
         createCategoryManagementWindow,
         createHistoryWindow,

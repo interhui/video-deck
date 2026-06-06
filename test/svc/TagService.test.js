@@ -419,4 +419,118 @@ describe('TagService', () => {
             expect(result[0].name).toBe('科幻');
         });
     });
+
+    describe('getTagMovieCountMap', () => {
+        test('SVC-TAG-038: 返回标签及其关联电影数量', () => {
+            service.tagsCache = [
+                { id: 'action', name: '动作' },
+                { id: 'scifi', name: '科幻' },
+                { id: 'drama', name: '剧情' }
+            ];
+
+            const allIndexMovies = {
+                'movie': [
+                    { id: 'm1', name: 'Movie1', tags: ['action', 'scifi'] },
+                    { id: 'm2', name: 'Movie2', tags: ['action'] },
+                    { id: 'm3', name: 'Movie3', tags: ['scifi', 'drama'] }
+                ]
+            };
+
+            const result = service.getTagMovieCountMap(allIndexMovies);
+
+            expect(result).toHaveLength(3);
+            expect(result.find(t => t.id === 'action')).toEqual({ id: 'action', name: '动作', movieCount: 2 });
+            expect(result.find(t => t.id === 'scifi')).toEqual({ id: 'scifi', name: '科幻', movieCount: 2 });
+            expect(result.find(t => t.id === 'drama')).toEqual({ id: 'drama', name: '剧情', movieCount: 1 });
+        });
+
+        test('SVC-TAG-039: 按电影数量降序排列', () => {
+            service.tagsCache = [
+                { id: 'action', name: '动作' },
+                { id: 'scifi', name: '科幻' },
+                { id: 'drama', name: '剧情' }
+            ];
+
+            const allIndexMovies = {
+                'movie': [
+                    { id: 'm1', name: 'Movie1', tags: ['action'] },
+                    { id: 'm2', name: 'Movie2', tags: ['action'] },
+                    { id: 'm3', name: 'Movie3', tags: ['action', 'scifi'] },
+                    { id: 'm4', name: 'Movie4', tags: ['drama'] }
+                ]
+            };
+
+            const result = service.getTagMovieCountMap(allIndexMovies);
+
+            expect(result[0].id).toBe('action');
+            expect(result[0].movieCount).toBe(3);
+        });
+
+        test('SVC-TAG-040: 无关联电影的标签数量为0', () => {
+            service.tagsCache = [
+                { id: 'action', name: '动作' },
+                { id: 'unused', name: '未使用' }
+            ];
+
+            const allIndexMovies = {
+                'movie': [
+                    { id: 'm1', name: 'Movie1', tags: ['action'] }
+                ]
+            };
+
+            const result = service.getTagMovieCountMap(allIndexMovies);
+
+            expect(result.find(t => t.id === 'unused').movieCount).toBe(0);
+        });
+
+        test('SVC-TAG-041: 空电影数据返回所有标签数量为0', () => {
+            service.tagsCache = [
+                { id: 'action', name: '动作' },
+                { id: 'scifi', name: '科幻' }
+            ];
+
+            const result = service.getTagMovieCountMap({});
+
+            expect(result).toHaveLength(2);
+            result.forEach(tag => {
+                expect(tag.movieCount).toBe(0);
+            });
+        });
+
+        test('SVC-TAG-042: 电影无tags字段不影响统计', () => {
+            service.tagsCache = [
+                { id: 'action', name: '动作' }
+            ];
+
+            const allIndexMovies = {
+                'movie': [
+                    { id: 'm1', name: 'Movie1' },
+                    { id: 'm2', name: 'Movie2', tags: ['action'] }
+                ]
+            };
+
+            const result = service.getTagMovieCountMap(allIndexMovies);
+
+            expect(result.find(t => t.id === 'action').movieCount).toBe(1);
+        });
+
+        test('SVC-TAG-043: 跨分类统计标签电影数量', () => {
+            service.tagsCache = [
+                { id: 'action', name: '动作' }
+            ];
+
+            const allIndexMovies = {
+                'movie': [
+                    { id: 'm1', name: 'Movie1', tags: ['action'] }
+                ],
+                'anime': [
+                    { id: 'a1', name: 'Anime1', tags: ['action'] }
+                ]
+            };
+
+            const result = service.getTagMovieCountMap(allIndexMovies);
+
+            expect(result.find(t => t.id === 'action').movieCount).toBe(2);
+        });
+    });
 });

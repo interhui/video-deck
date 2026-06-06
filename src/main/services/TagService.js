@@ -224,6 +224,36 @@ class TagService {
             return idMatch || nameMatch;
         });
     }
+
+    /**
+     * 获取所有标签及其关联电影数量
+     * @param {Object} allIndexMovies - 所有分类的电影索引数据
+     * @returns {Array} 标签列表，每项包含 id, name, movieCount
+     */
+    getTagMovieCountMap(allIndexMovies) {
+        const tags = this.getTags();
+        const tagCount = {};
+
+        Object.values(allIndexMovies).forEach(movies => {
+            movies.forEach(movie => {
+                if (movie.tags && Array.isArray(movie.tags)) {
+                    movie.tags.forEach(tag => {
+                        if (tag && tag.trim()) {
+                            tagCount[tag] = (tagCount[tag] || 0) + 1;
+                        }
+                    });
+                }
+            });
+        });
+
+        return tags
+            .map(tag => ({
+                id: tag.id,
+                name: tag.name,
+                movieCount: tagCount[tag.id] || 0
+            }))
+            .sort((a, b) => b.movieCount - a.movieCount);
+    }
 }
 
 module.exports = TagService;
