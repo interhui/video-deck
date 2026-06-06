@@ -154,7 +154,7 @@ class MovieService {
 
             return categoryData;
         } catch (error) {
-            console.error('Error getting all categories:', error);
+            console.error('Error getting all categories:', error.message || error);
             throw error;
         }
     }
@@ -187,7 +187,7 @@ class MovieService {
 
             return categoryData;
         } catch (error) {
-            console.error('Error getting category stats:', error);
+            console.error('Error getting category stats:', error.message || error);
             throw error;
         }
     }
@@ -219,7 +219,7 @@ class MovieService {
             // 排序
             return this.sortMovies(movies, sortBy, sortOrder);
         } catch (error) {
-            console.error('Error getting movies by category:', error);
+            console.error('Error getting movies by category:', error.message || error);
             throw error;
         }
     }
@@ -250,7 +250,7 @@ class MovieService {
             // 排序
             return this.sortMovies(movies, sortBy, sortOrder);
         } catch (error) {
-            console.error('Error getting all movies:', error);
+            console.error('Error getting all movies:', error.message || error);
             throw error;
         }
     }
@@ -281,7 +281,7 @@ class MovieService {
             // 排序
             return this.sortMovies(allMovies, sortBy, sortOrder);
         } catch (error) {
-            console.error('Error getting all movies from index:', error);
+            console.error('Error getting all movies from index:', error.message || error);
             throw error;
         }
     }
@@ -303,7 +303,7 @@ class MovieService {
             // 排序
             return this.sortMovies(moviesWithCategory, sortBy, sortOrder);
         } catch (error) {
-            console.error('Error getting movies by category from index:', error);
+            console.error('Error getting movies by category from index:', error.message || error);
             throw error;
         }
     }
@@ -333,7 +333,7 @@ class MovieService {
                 actors
             });
         } catch (error) {
-            console.error('Error getting movies paginated:', error);
+            console.error('Error getting movies paginated:', error.message || error);
             throw error;
         }
     }
@@ -379,7 +379,7 @@ class MovieService {
                 totalPages
             };
         } catch (error) {
-            console.error('Error getting movies paginated from index:', error);
+            console.error('Error getting movies paginated from index:', error.message || error);
             throw error;
         }
     }
@@ -401,7 +401,7 @@ class MovieService {
             // 使用缓存搜索
             return this.cacheService.searchMovies(keyword, filters);
         } catch (error) {
-            console.error('Error searching movies:', error);
+            console.error('Error searching movies:', error.message || error);
             throw error;
         }
     }
@@ -423,7 +423,7 @@ class MovieService {
             const movie = this.cacheService.getMovieById(movieId);
             return movie || null;
         } catch (error) {
-            console.error('Error getting movie detail:', error);
+            console.error('Error getting movie detail:', error.message || error);
             throw error;
         }
     }
@@ -438,7 +438,7 @@ class MovieService {
             const movieData = await this.fileService.readMovieNfo(moviePath);
             return movieData !== null && movieData.title !== undefined;
         } catch (error) {
-            console.error('Error validating movie:', error);
+            console.error('Error validating movie:', error.message || error);
             return false;
         }
     }
@@ -479,7 +479,7 @@ class MovieService {
 
             return { success: true };
         } catch (error) {
-            console.error('Error saving rating:', error);
+            console.error('Error saving rating:', error.message || error);
             throw error;
         }
     }
@@ -506,7 +506,7 @@ class MovieService {
             }
             return { success: true, count: results.length };
         } catch (error) {
-            console.error('Error batch deleting movies:', error);
+            console.error('Error batch deleting movies:', error.message || error);
             throw error;
         }
     }
@@ -533,7 +533,7 @@ class MovieService {
 
             return stats;
         } catch (error) {
-            console.error('Error getting stats:', error);
+            console.error('Error getting stats:', error.message || error);
             throw error;
         }
     }
@@ -753,7 +753,7 @@ class MovieService {
                 movie: movie
             };
         } catch (error) {
-            console.error('Error adding movie:', error);
+            console.error('Error adding movie:', error.message || error);
             throw error;
         }
     }
@@ -816,7 +816,7 @@ class MovieService {
                 movies: scannedMovies
             };
         } catch (error) {
-            console.error('Error scanning movie directory:', error);
+            console.error('Error scanning movie directory:', error.message || error);
             throw error;
         }
     }
@@ -913,7 +913,7 @@ class MovieService {
                     });
                 }
             } catch (error) {
-                console.error(`Error processing movie folder ${folderInfo.folderPath}:`, error);
+                console.error(`Error processing movie folder ${folderInfo.folderPath}:`, error.message || error);
             }
         }
 
@@ -992,7 +992,7 @@ class MovieService {
                     });
                 }
             } catch (error) {
-                console.error(`Error processing CSV movie ${movieInfo.title}:`, error);
+                console.error(`Error processing CSV movie ${movieInfo.title}:`, error.message || error);
             }
         }
 
@@ -1107,7 +1107,7 @@ class MovieService {
                     });
                 }
             } catch (error) {
-                console.error(`Error processing video file ${videoFile.fileName}:`, error);
+                console.error(`Error processing video file ${videoFile.fileName}:`, error.message || error);
             }
         }
 
@@ -1204,7 +1204,7 @@ class MovieService {
                 poster: poster
             };
         } catch (error) {
-            console.error('Error updating temp movie:', error);
+            console.error('Error updating temp movie:', error.message || error);
             throw error;
         }
     }
@@ -1315,7 +1315,7 @@ class MovieService {
                     results.actorsImported = actorResult.added;
                     results.actorsSkipped = actorResult.skipped;
                 } catch (err) {
-                    console.error('Error importing actors:', err);
+                    console.error('Error importing actors:', err.message || err);
                     results.errors.push(`导入演员失败: ${err.message}`);
                 }
             } else if (importActors && allActorNames.length > 0) {
@@ -1349,7 +1349,7 @@ class MovieService {
                 actorsSkipped: results.actorsSkipped
             };
         } catch (error) {
-            console.error('Error importing scanned movies:', error);
+            console.error('Error importing scanned movies:', error.message || error);
             throw error;
         }
     }
@@ -1382,7 +1382,7 @@ class MovieService {
 
             return movies;
         } catch (error) {
-            console.error('Error getting temp scanned movies:', error);
+            console.error('Error getting temp scanned movies:', error.message || error);
             return [];
         }
     }
@@ -1396,7 +1396,7 @@ class MovieService {
             await this.fileService.deleteDir(tempDir);
             return { success: true };
         } catch (error) {
-            console.error('Error deleting temp scan dir:', error);
+            console.error('Error deleting temp scan dir:', error.message || error);
             throw error;
         }
     }
@@ -1422,7 +1422,7 @@ class MovieService {
             const { sortBy, sortOrder } = options;
             return this.sortMovies(actorMovies, sortBy, sortOrder);
         } catch (error) {
-            console.error('Error getting actor movie list:', error);
+            console.error('Error getting actor movie list:', error.message || error);
             throw error;
         }
     }
@@ -1478,7 +1478,7 @@ class MovieService {
 
             return actors;
         } catch (error) {
-            console.error('Error getting actor movie count map:', error);
+            console.error('Error getting actor movie count map:', error.message || error);
             throw error;
         }
     }

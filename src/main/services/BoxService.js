@@ -29,7 +29,7 @@ class BoxService {
             await this.saveBoxesConfig(defaultConfig);
             return defaultConfig;
         } catch (error) {
-            console.error('Error loading boxes config:', error);
+            console.error('Error loading boxes config:', error.message || error);
             return { boxes: [] };
         }
     }
@@ -42,7 +42,7 @@ class BoxService {
             await this.fileService.writeJson(this.boxesConfigPath, config);
             this.boxesConfigCache = config;
         } catch (error) {
-            console.error('Error saving boxes config:', error);
+            console.error('Error saving boxes config:', error.message || error);
             throw error;
         }
     }
@@ -105,7 +105,7 @@ class BoxService {
 
             return boxes;
         } catch (error) {
-            console.error('Error getting all boxes:', error);
+            console.error('Error getting all boxes:', error.message || error);
             throw error;
         }
     }
@@ -134,7 +134,7 @@ class BoxService {
 
             return JSON.parse(content);
         } catch (error) {
-            console.error('Error reading box file:', error);
+            console.error('Error reading box file:', error.message || error);
             // 如果是 JSON 解析错误，返回空对象而不是抛出异常
             if (error instanceof SyntaxError) {
                 return {};
@@ -182,7 +182,7 @@ class BoxService {
 
             return { success: true, name: boxName };
         } catch (error) {
-            console.error('Error creating box:', error);
+            console.error('Error creating box:', error.message || error);
             throw error;
         }
     }
@@ -223,7 +223,7 @@ class BoxService {
 
             return { success: true, backupPath: backupPath };
         } catch (error) {
-            console.error('Error deleting box:', error);
+            console.error('Error deleting box:', error.message || error);
             throw error;
         }
     }
@@ -299,7 +299,7 @@ class BoxService {
 
             return { success: true, name: newName };
         } catch (error) {
-            console.error('Error updating box:', error);
+            console.error('Error updating box:', error.message || error);
             throw error;
         }
     }
@@ -333,7 +333,7 @@ class BoxService {
                 movies: movies
             };
         } catch (error) {
-            console.error('Error getting box detail:', error);
+            console.error('Error getting box detail:', error.message || error);
             throw error;
         }
     }
@@ -350,7 +350,7 @@ class BoxService {
             const result = await this.addMoviesToBox(boxName, [movieInfo], movieboxDir);
             return { success: true, added: result.addedCount > 0, updated: result.updatedCount > 0 };
         } catch (error) {
-            console.error('Error adding movie to box:', error);
+            console.error('Error adding movie to box:', error.message || error);
             throw error;
         }
     }
@@ -380,7 +380,7 @@ class BoxService {
 
             return { success: true };
         } catch (error) {
-            console.error('Error removing movie from box:', error);
+            console.error('Error removing movie from box:', error.message || error);
             throw error;
         }
     }
@@ -412,7 +412,7 @@ class BoxService {
 
             return { success: true, removedCount };
         } catch (error) {
-            console.error('Error cleaning box:', error);
+            console.error('Error cleaning box:', error.message || error);
             throw error;
         }
     }
@@ -450,7 +450,7 @@ class BoxService {
 
             return { success: true };
         } catch (error) {
-            console.error('Error updating movie in box:', error);
+            console.error('Error updating movie in box:', error.message || error);
             throw error;
         }
     }
@@ -501,7 +501,7 @@ class BoxService {
 
             return { success: true, addedCount, updatedCount };
         } catch (error) {
-            console.error('Error adding movies to box:', error);
+            console.error('Error adding movies to box:', error.message || error);
             throw error;
         }
     }

@@ -188,7 +188,7 @@ class BatchActorSearchService {
                 photoPath: photoPath
             };
         } catch (error) {
-            console.error(`Error saving actor ${oldName}:`, error);
+            console.error(`Error saving actor ${oldName}:`, error.message || error);
             return {
                 success: false,
                 actorName: oldName,

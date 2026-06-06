@@ -34,7 +34,7 @@ class DatabaseService {
             this.loadData();
             console.log('Movie Database(NFO Files) initialized successfully');
         } catch (error) {
-            console.error('Error initializing database:', error);
+            console.error('Error initializing database:', error.message || error);
             throw error;
         }
     }
@@ -51,7 +51,7 @@ class DatabaseService {
                 this.saveData();
             }
         } catch (error) {
-            console.error('Error loading data:', error);
+            console.error('Error loading data:', error.message || error);
             this.data = { movies: [], tags: [], movie_tags: [] };
         }
     }
@@ -63,7 +63,7 @@ class DatabaseService {
         try {
             fs.writeFileSync(this.dbPath, JSON.stringify(this.data, null, 2), 'utf-8');
         } catch (error) {
-            console.error('Error saving data:', error);
+            console.error('Error saving data:', error.message || error);
             throw error;
         }
     }
@@ -93,7 +93,7 @@ class DatabaseService {
                 this.saveData();
             }
         } catch (error) {
-            console.error('Error saving movie state:', error);
+            console.error('Error saving movie state:', error.message || error);
             throw error;
         }
     }
@@ -117,7 +117,7 @@ class DatabaseService {
             }
             return null;
         } catch (error) {
-            console.error('Error getting movie state:', error);
+            console.error('Error getting movie state:', error.message || error);
             throw error;
         }
     }
@@ -143,7 +143,7 @@ class DatabaseService {
     
             return stats;
         } catch (error) {
-            console.error('Error getting movie stats:', error);
+            console.error('Error getting movie stats:', error.message || error);
             throw error;
         }
     }
@@ -166,7 +166,7 @@ class DatabaseService {
                 this.saveData();
             }
         } catch (error) {
-            console.error('Error updating play time:', error);
+            console.error('Error updating play time:', error.message || error);
             throw error;
         }
     }
@@ -187,7 +187,7 @@ class DatabaseService {
                 this.saveData();
             }
         } catch (error) {
-            console.error('Error saving user rating:', error);
+            console.error('Error saving user rating:', error.message || error);
             throw error;
         }
     }
@@ -200,7 +200,7 @@ class DatabaseService {
         try {
             return [...this.data.tags].sort((a, b) => a.name.localeCompare(b.name));
         } catch (error) {
-            console.error('Error getting tags:', error);
+            console.error('Error getting tags:', error.message || error);
             throw error;
         }
     }
@@ -222,7 +222,7 @@ class DatabaseService {
             }
             this.saveData();
         } catch (error) {
-            console.error('Error adding tags to movie:', error);
+            console.error('Error adding tags to movie:', error.message || error);
             throw error;
         }
     }
@@ -239,7 +239,7 @@ class DatabaseService {
             );
             this.saveData();
         } catch (error) {
-            console.error('Error removing tags from movie:', error);
+            console.error('Error removing tags from movie:', error.message || error);
             throw error;
         }
     }
@@ -256,7 +256,7 @@ class DatabaseService {
                 .map(mt => mt.tag_id);
             return this.data.tags.filter(t => tagIds.includes(t.id));
         } catch (error) {
-            console.error('Error getting movie tags:', error);
+            console.error('Error getting movie tags:', error.message || error);
             throw error;
         }
     }
@@ -284,7 +284,7 @@ class DatabaseService {
 
             this.saveData();
         } catch (error) {
-            console.error('Error upserting movie:', error);
+            console.error('Error upserting movie:', error.message || error);
             throw error;
         }
     }
@@ -356,7 +356,7 @@ class DatabaseService {
 
             return results;
         } catch (error) {
-            console.error('Error searching movies:', error);
+            console.error('Error searching movies:', error.message || error);
             throw error;
         }
     }
@@ -373,7 +373,7 @@ class DatabaseService {
             );
             this.saveData();
         } catch (error) {
-            console.error('Error deleting movies:', error);
+            console.error('Error deleting movies:', error.message || error);
             throw error;
         }
     }

@@ -1,29 +1,25 @@
 /**
- * 演员视图逻辑
- * 独立视图，列出所有演员，点击查看关联电影
+ * 标签视图逻辑
+ * 独立视图，列出所有标签，点击查看关联电影
  */
 
 const state = {
-    actors: [],
-    actorSearchKeyword: '',
-    currentActorName: '',
+    tags: [],
+    tagSearchKeyword: '',
+    currentTagId: '',
+    currentTagName: '',
     movies: [],
     categories: [],
     currentCategory: '',
     currentSort: 'name-asc',
     searchKeyword: '',
-    currentTag: '',
-    currentTagFilter: '',
-    tagFilterSearchKeyword: '',
-    tempSelectedTag: null,
     detailEditModeLocked: false,
-    showFavoritesOnly: false,
     settings: {}
 };
 
 const elements = {
-    actorList: document.getElementById('actor-list'),
-    actorSearchInput: document.getElementById('actor-search-input'),
+    tagList: document.getElementById('tag-list'),
+    tagSearchInput: document.getElementById('tag-search-input'),
     playBtn: document.getElementById('play-btn'),
     minimizeBtn: document.getElementById('minimize-btn'),
     closeBtn: document.getElementById('close-btn'),
@@ -33,33 +29,13 @@ const elements = {
     moviesGrid: document.getElementById('movies-grid'),
     emptyState: document.getElementById('empty-state'),
     sortSelect: document.getElementById('sort-select'),
-    categoryFilter: document.getElementById('category-filter'),
-    tagFilter: document.getElementById('tag-filter'),
-    tagFilterModal: document.getElementById('tag-filter-modal'),
-    closeTagFilter: document.getElementById('close-tag-filter'),
-    tagFilterList: document.getElementById('tag-filter-list'),
-    tagFilterSearchInput: document.getElementById('tag-filter-search-input'),
-    tagFilterSearchBtn: document.getElementById('tag-filter-search-btn'),
-    tagFilterClearBtn: document.getElementById('tag-filter-clear-btn'),
-    confirmTagFilter: document.getElementById('confirm-tag-filter'),
-    cancelTagFilter: document.getElementById('cancel-tag-filter'),
-    favoriteFilter: document.getElementById('favorite-filter')
+    categoryFilter: document.getElementById('category-filter')
 };
 
 let categoriesCache = [];
-let tagsCache = [];
 
 async function loadCategories() {
     categoriesCache = await loadCategoriesCache();
-}
-
-async function loadTags() {
-    tagsCache = await loadTagsCache();
-    _updateTagFilter();
-}
-
-function _updateTagFilter() {
-    updateTagFilter({ selectEl: elements.tagFilter, tags: tagsCache, showSelectOption: true, maxDisplay: 10 });
 }
 
 async function init() {
@@ -71,7 +47,6 @@ async function init() {
     });
 
     await loadCategories();
-    await loadTags();
 
     bindEvents();
     initSplitter();
@@ -84,103 +59,101 @@ async function init() {
         state.detailEditModeLocked = isEditing;
     });
 
-    await loadActorList();
+    await loadTagList();
 }
 
-async function loadActorList() {
+async function loadTagList() {
     try {
-        const actors = await window.electronAPI.getActorMovieCountMap();
-        if (Array.isArray(actors)) {
-            state.actors = actors;
+        const tags = await window.electronAPI.getTagMovieCountMap();
+        if (Array.isArray(tags)) {
+            state.tags = tags;
         } else {
-            state.actors = [];
+            state.tags = [];
         }
-        renderActorList();
-        if (state.actors.length > 0 && !state.currentActorName) {
-            await selectActor(state.actors[0].name);
+        renderTagList();
+        if (state.tags.length > 0 && !state.currentTagId) {
+            await selectTag(state.tags[0].id, state.tags[0].name);
         }
     } catch (error) {
-        console.error('Error loading actor list:', error.message || error);
-        state.actors = [];
-        renderActorList();
+        console.error('Error loading tag list:', error.message || error);
+        state.tags = [];
+        renderTagList();
     }
 }
 
-function renderActorList() {
-    if (state.actors.length === 0) {
-        elements.actorList.innerHTML = '<li class="box-category-item" style="color: var(--text-secondary); cursor: default; justify-content: center;">暂无演员</li>';
+function renderTagList() {
+    if (state.tags.length === 0) {
+        elements.tagList.innerHTML = '<li class="box-category-item" style="color: var(--text-secondary); cursor: default; justify-content: center;">暂无标签</li>';
         return;
     }
 
-    let filteredActors = state.actors;
-    if (state.showFavoritesOnly) {
-        filteredActors = filteredActors.filter(actor => actor.favorites);
-    }
-    if (state.actorSearchKeyword) {
-        const keyword = state.actorSearchKeyword.toLowerCase();
-        filteredActors = state.actors.filter(actor =>
-            actor.name && actor.name.toLowerCase().includes(keyword)
+    let filteredTags = state.tags;
+    if (state.tagSearchKeyword) {
+        const keyword = state.tagSearchKeyword.toLowerCase();
+        filteredTags = state.tags.filter(tag =>
+            (tag.name && tag.name.toLowerCase().includes(keyword)) ||
+            (tag.id && tag.id.toLowerCase().includes(keyword))
         );
     }
 
-    if (filteredActors.length === 0) {
-        elements.actorList.innerHTML = '<li class="box-category-item" style="color: var(--text-secondary); cursor: default; justify-content: center;">无匹配演员</li>';
+    if (filteredTags.length === 0) {
+        elements.tagList.innerHTML = '<li class="box-category-item" style="color: var(--text-secondary); cursor: default; justify-content: center;">无匹配标签</li>';
         return;
     }
 
-    filteredActors.sort((a, b) => (b.movieCount || 0) - (a.movieCount || 0));
-
     let html = '';
-    filteredActors.forEach(actor => {
-        const isActive = actor.name === state.currentActorName;
+    filteredTags.forEach(tag => {
+        const isActive = tag.id === state.currentTagId;
         html += `
-            <li class="box-category-item ${isActive ? 'active' : ''}" data-actor-name="${escapeHtml(actor.name)}">
-                <span class="category-name">${escapeHtml(actor.name)}</span>
-                <span class="movie-count">${actor.movieCount || 0}</span>
+            <li class="box-category-item ${isActive ? 'active' : ''}" data-tag-id="${escapeHtml(tag.id)}" data-tag-name="${escapeHtml(tag.name)}">
+                <span class="category-name">${escapeHtml(tag.name)}</span>
+                <span class="movie-count">${tag.movieCount || 0}</span>
             </li>
         `;
     });
 
-    elements.actorList.innerHTML = html;
+    elements.tagList.innerHTML = html;
 
-    elements.actorList.querySelectorAll('.box-category-item[data-actor-name]').forEach(item => {
+    elements.tagList.querySelectorAll('.box-category-item[data-tag-id]').forEach(item => {
         item.addEventListener('click', () => {
-            selectActor(item.dataset.actorName);
+            selectTag(item.dataset.tagId, item.dataset.tagName);
         });
     });
 }
 
-async function selectActor(actorName) {
-    state.currentActorName = actorName;
+async function selectTag(tagId, tagName) {
+    state.currentTagId = tagId;
+    state.currentTagName = tagName;
 
-    document.querySelectorAll('#actor-list .box-category-item').forEach(item => {
-        item.classList.toggle('active', item.dataset.actorName === actorName);
+    document.querySelectorAll('#tag-list .box-category-item').forEach(item => {
+        item.classList.toggle('active', item.dataset.tagId === tagId);
     });
 
     state.currentCategory = '';
     state.currentSort = 'name-asc';
     state.searchKeyword = '';
-    state.currentTag = '';
-    state.currentTagFilter = '';
 
     elements.searchInput.value = '';
     elements.sortSelect.value = 'name-asc';
     elements.categoryFilter.value = '';
-    elements.tagFilter.value = '';
     elements.clearSearchBtn.style.display = 'none';
 
-    await loadActorMovies();
+    await loadTagMovies();
 }
 
-async function loadActorMovies() {
+async function loadTagMovies() {
     try {
-        const movies = await window.electronAPI.getActorMovieList(state.currentActorName);
-        state.movies = movies || [];
+        const result = await window.electronAPI.getMoviesByTag(state.currentTagId);
+        if (result && result.success && Array.isArray(result.movies)) {
+            state.movies = result.movies;
+        } else {
+            state.movies = [];
+        }
         state.categories = [...new Set(state.movies.map(m => m.category).filter(Boolean))];
         _updateCategoryFilter();
         renderMovies();
     } catch (error) {
-        console.error('Error loading actor movies:', error.message || error);
+        console.error('Error loading tag movies:', error.message || error);
         state.movies = [];
         state.categories = [];
         renderMovies();
@@ -192,7 +165,7 @@ function _updateCategoryFilter() {
 }
 
 function renderMovies() {
-    let filteredMovies = getFilteredMovies(state.movies, { category: state.currentCategory, tag: state.currentTag, searchKeyword: state.searchKeyword });
+    let filteredMovies = getFilteredMovies(state.movies, { category: state.currentCategory, tag: '', searchKeyword: state.searchKeyword });
 
     const [sortBy, sortOrder] = state.currentSort.split('-');
     filteredMovies = sortMovies(filteredMovies, sortBy, sortOrder);
@@ -290,15 +263,15 @@ async function playMovie(movieId) {
     }
 }
 
-async function playActorMovies() {
-    if (!state.currentActorName) {
-        alert('请先选择一个演员');
+async function playTagMovies() {
+    if (!state.currentTagId) {
+        alert('请先选择一个标签');
         return;
     }
 
     try {
         const playlist = [];
-        const allMovies = getFilteredMovies(state.movies, { category: state.currentCategory, tag: state.currentTag, searchKeyword: state.searchKeyword });
+        const allMovies = getFilteredMovies(state.movies, { category: state.currentCategory, tag: '', searchKeyword: state.searchKeyword });
 
         for (const movie of allMovies) {
             const movieDetail = await window.electronAPI.getMovieDetail(movie.id);
@@ -347,74 +320,21 @@ async function playActorMovies() {
         }
 
         if (playlist.length === 0) {
-            alert('该演员没有可播放的视频文件');
+            alert('该标签没有可播放的视频文件');
             return;
         }
 
         await window.electronAPI.openBatchPlayerWindow(playlist);
     } catch (error) {
-        console.error('Error playing actor movies:', error.message || error);
+        console.error('Error playing tag movies:', error.message || error);
         alert('播放失败: ' + error.message);
     }
 }
 
-function openTagFilterModal() {
-    state.tagFilterSearchKeyword = '';
-    elements.tagFilterSearchInput.value = '';
-    state.tempSelectedTag = state.currentTagFilter || null;
-    _renderTagFilterList();
-    elements.tagFilterModal.style.display = 'flex';
-}
-
-function closeTagFilterModal() {
-    elements.tagFilterModal.style.display = 'none';
-}
-
-function confirmTagFilter() {
-    state.currentTagFilter = state.tempSelectedTag;
-    state.currentTag = state.currentTagFilter || '';
-    _updateTagFilterDisplay();
-    closeTagFilterModal();
-    renderMovies();
-}
-
-function cancelTagFilter() {
-    state.currentTagFilter = '';
-    state.currentTag = '';
-    state.tempSelectedTag = null;
-    _updateTagFilterDisplay();
-    closeTagFilterModal();
-    renderMovies();
-}
-
-function _renderTagFilterList() {
-    renderTagFilterList({ tags: tagsCache, searchKeyword: state.tagFilterSearchKeyword, selectedTag: state.tempSelectedTag, listEl: elements.tagFilterList, onToggleTag: _toggleTagSelection });
-}
-
-function _toggleTagSelection(tagId) {
-    toggleTagSelection(tagId, {
-        currentSelected: state.tempSelectedTag,
-        listEl: elements.tagFilterList,
-        onStateChanged: (newSelected) => { state.tempSelectedTag = newSelected; }
-    });
-}
-
-function _updateTagFilterDisplay() {
-    updateTagFilterDisplay({ selectEl: elements.tagFilter, currentTagFilter: state.currentTagFilter, tags: tagsCache });
-}
-
-function _updateTagFilterClearButton() {
-    updateTagFilterClearButton(elements.tagFilterClearBtn, state.tagFilterSearchKeyword);
-}
-
-function _updateClearButtonVisibility() {
-    updateClearButtonVisibility(elements.clearSearchBtn, state.searchKeyword);
-}
-
 function initSplitter() {
-    const splitter = document.getElementById('actor-splitter');
-    const sidebar = document.getElementById('actor-sidebar');
-    const movieWall = document.getElementById('actor-movie-wall');
+    const splitter = document.getElementById('tag-splitter');
+    const sidebar = document.getElementById('tag-sidebar');
+    const movieWall = document.getElementById('tag-movie-wall');
 
     if (!splitter || !sidebar || !movieWall) return;
 
@@ -449,25 +369,20 @@ function initSplitter() {
 }
 
 function bindEvents() {
-    elements.actorSearchInput.addEventListener('input', () => {
-        state.actorSearchKeyword = elements.actorSearchInput.value.trim();
-        renderActorList();
+    elements.tagSearchInput.addEventListener('input', () => {
+        state.tagSearchKeyword = elements.tagSearchInput.value.trim();
+        renderTagList();
     });
 
-    elements.actorSearchInput.addEventListener('keypress', (e) => {
+    elements.tagSearchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            state.actorSearchKeyword = elements.actorSearchInput.value.trim();
-            renderActorList();
+            state.tagSearchKeyword = elements.tagSearchInput.value.trim();
+            renderTagList();
         }
     });
 
-    elements.favoriteFilter.addEventListener('change', (e) => {
-        state.showFavoritesOnly = e.target.checked;
-        renderActorList();
-    });
-
     elements.playBtn.addEventListener('click', async () => {
-        await playActorMovies();
+        await playTagMovies();
     });
 
     elements.minimizeBtn.addEventListener('click', () => {
@@ -509,64 +424,16 @@ function bindEvents() {
         renderMovies();
     });
 
-    elements.tagFilter.addEventListener('change', (e) => {
-        const value = e.target.value;
-        if (value === '') {
-            state.currentTag = '';
-            state.currentTagFilter = '';
-            renderMovies();
-        } else if (value === 'select') {
-            openTagFilterModal();
-        } else {
-            state.currentTag = value;
-            state.currentTagFilter = value;
-            renderMovies();
-        }
-    });
-
-    elements.closeTagFilter.addEventListener('click', closeTagFilterModal);
-    elements.cancelTagFilter.addEventListener('click', cancelTagFilter);
-    elements.tagFilterModal.addEventListener('click', (e) => {
-        if (e.target === elements.tagFilterModal) {
-            cancelTagFilter();
-        }
-    });
-
-    elements.confirmTagFilter.addEventListener('click', confirmTagFilter);
-
-    elements.tagFilterSearchBtn.addEventListener('click', () => {
-        state.tagFilterSearchKeyword = elements.tagFilterSearchInput.value.trim();
-        _updateTagFilterClearButton();
-        _renderTagFilterList();
-    });
-
-    elements.tagFilterSearchInput.addEventListener('input', () => {
-        state.tagFilterSearchKeyword = elements.tagFilterSearchInput.value.trim();
-        _updateTagFilterClearButton();
-        _renderTagFilterList();
-    });
-
-    elements.tagFilterSearchInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            state.tagFilterSearchKeyword = elements.tagFilterSearchInput.value.trim();
-            _updateTagFilterClearButton();
-            _renderTagFilterList();
-        }
-    });
-
-    elements.tagFilterClearBtn.addEventListener('click', () => {
-        elements.tagFilterSearchInput.value = '';
-        state.tagFilterSearchKeyword = '';
-        _updateTagFilterClearButton();
-        _renderTagFilterList();
-    });
-
     document.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.key === 'f') {
             e.preventDefault();
             elements.searchInput.focus();
         }
     });
+}
+
+function _updateClearButtonVisibility() {
+    updateClearButtonVisibility(elements.clearSearchBtn, state.searchKeyword);
 }
 
 document.addEventListener('DOMContentLoaded', init);

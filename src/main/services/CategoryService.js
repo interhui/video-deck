@@ -39,7 +39,7 @@ class CategoryService {
 
             return this.categoriesCache;
         } catch (error) {
-            console.error('Error loading categories:', error);
+            console.error('Error loading categories:', error.message || error);
             this.categoriesCache = this.hardCodeService.getDefaultCategories();
             return this.categoriesCache;
         }
@@ -63,7 +63,7 @@ class CategoryService {
                     this.categoriesCache = this.hardCodeService.getDefaultCategories();
                 }
             } catch (error) {
-                console.error('Error reading categories synchronously:', error);
+                console.error('Error reading categories synchronously:', error.message || error);
                 this.categoriesCache = this.hardCodeService.getDefaultCategories();
             }
         }
@@ -133,7 +133,7 @@ class CategoryService {
             await this.fileService.writeJson(this.categoryConfigPath, config);
             this.categoriesCache = categories;
         } catch (error) {
-            console.error('Error saving categories:', error);
+            console.error('Error saving categories:', error.message || error);
             throw error;
         }
     }

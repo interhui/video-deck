@@ -39,7 +39,7 @@ class TagService {
 
             return this.tagsCache;
         } catch (error) {
-            console.error('Error loading tags:', error);
+            console.error('Error loading tags:', error.message || error);
             this.tagsCache = this.hardCodeService.getDefaultTags();
             return this.tagsCache;
         }
@@ -62,7 +62,7 @@ class TagService {
                     this.tagsCache = this.hardCodeService.getDefaultTags();
                 }
             } catch (error) {
-                console.error('Error reading tags synchronously:', error);
+                console.error('Error reading tags synchronously:', error.message || error);
                 this.tagsCache = this.hardCodeService.getDefaultTags();
             }
         }
@@ -103,7 +103,7 @@ class TagService {
             await this.fileService.writeJson(this.tagsPath, tags);
             this.tagsCache = tags;
         } catch (error) {
-            console.error('Error saving tags:', error);
+            console.error('Error saving tags:', error.message || error);
             throw error;
         }
     }
@@ -167,7 +167,7 @@ class TagService {
             await this.saveTags(existingTags);
             return { success: true, addedCount: addedTags.length };
         } catch (error) {
-            console.error('Error batch adding tags:', error);
+            console.error('Error batch adding tags:', error.message || error);
             throw error;
         }
     }
@@ -223,6 +223,36 @@ class TagService {
             const nameMatch = tag.name && tag.name.toLowerCase().includes(normalizedKeyword);
             return idMatch || nameMatch;
         });
+    }
+
+    /**
+     * 获取所有标签及其关联电影数量
+     * @param {Object} allIndexMovies - 所有分类的电影索引数据
+     * @returns {Array} 标签列表，每项包含 id, name, movieCount
+     */
+    getTagMovieCountMap(allIndexMovies) {
+        const tags = this.getTags();
+        const tagCount = {};
+
+        Object.values(allIndexMovies).forEach(movies => {
+            movies.forEach(movie => {
+                if (movie.tags && Array.isArray(movie.tags)) {
+                    movie.tags.forEach(tag => {
+                        if (tag && tag.trim()) {
+                            tagCount[tag] = (tagCount[tag] || 0) + 1;
+                        }
+                    });
+                }
+            });
+        });
+
+        return tags
+            .map(tag => ({
+                id: tag.id,
+                name: tag.name,
+                movieCount: tagCount[tag.id] || 0
+            }))
+            .sort((a, b) => b.movieCount - a.movieCount);
     }
 }
 

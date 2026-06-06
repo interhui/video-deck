@@ -67,6 +67,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     filterByTag: (tagId) => ipcRenderer.invoke('filter-by-tag', tagId),
     openActorManagement: () => ipcRenderer.invoke('open-actor-management'),
     openActorViewWindow: () => ipcRenderer.invoke('open-actor-view-window'),
+    openTagViewWindow: () => ipcRenderer.invoke('open-tag-view-window'),
+    getTagMovieCountMap: () => ipcRenderer.invoke('get-tag-movie-count-map'),
     getActorMovieList: (actorName) => ipcRenderer.invoke('get-actor-movie-list', actorName),
     getActorMovieCountMap: () => ipcRenderer.invoke('get-actor-movie-count-map'),
     openCategoryManagement: () => ipcRenderer.invoke('open-category-management'),

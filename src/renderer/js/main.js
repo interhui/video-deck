@@ -378,34 +378,13 @@ function initSplitter() {
     });
 }
 
-/**
- * 加载标签缓存
- */
 async function loadTags() {
-    try {
-        const tags = await window.electronAPI.getTags();
-        if (Array.isArray(tags)) {
-            state.tags = tags;
-            updateTagFilter();
-        }
-    } catch (error) {
-        console.error('Error loading tags:', error);
-    }
+    state.tags = await loadTagsCache();
+    _updateTagFilter();
 }
 
-/**
- * 更新标签筛选下拉框
- */
-function updateTagFilter() {
-    elements.tagFilter.innerHTML = '<option value="">全部标签</option><option value="select">选择标签</option>';
-    
-    const displayTags = state.tags.slice(0, 10);
-    displayTags.forEach(tag => {
-        const option = document.createElement('option');
-        option.value = tag.id;
-        option.textContent = tag.name;
-        elements.tagFilter.appendChild(option);
-    });
+function _updateTagFilter() {
+    updateTagFilter({ selectEl: elements.tagFilter, tags: state.tags, showSelectOption: true, maxDisplay: 10 });
 }
 
 /**
@@ -594,7 +573,7 @@ async function toggleActorFavorite(actorName) {
             favoriteBtn.textContent = actor.favorites ? '❤' : '♡';
         }
     } catch (error) {
-        console.error('Error toggling actor favorite:', error);
+        console.error('Error toggling actor favorite:', error.message || error);
     }
 }
 
@@ -639,7 +618,7 @@ async function openTagFilterModal() {
     elements.tagFilterSearchInput.value = '';
     await loadTags();
     state.tempSelectedTag = state.currentTagFilter || null;
-    renderTagFilterList();
+    _renderTagFilterList();
     elements.tagFilterModal.style.display = 'flex';
 }
 
@@ -657,7 +636,7 @@ function closeTagFilterModal() {
 function confirmTagFilter() {
     state.currentTagFilter = state.tempSelectedTag;
     state.currentTag = state.tempSelectedTag || '';
-    updateTagFilterDisplay();
+    _updateTagFilterDisplay();
     closeTagFilterModal();
     loadMovies();
 }
@@ -669,7 +648,7 @@ function cancelTagFilter() {
     state.currentTagFilter = '';
     state.currentTag = '';
     state.tempSelectedTag = null;
-    updateTagFilterDisplay();
+    _updateTagFilterDisplay();
     closeTagFilterModal();
     loadMovies();
 }
@@ -677,106 +656,24 @@ function cancelTagFilter() {
 /**
  * 渲染标签过滤列表
  */
-function renderTagFilterList() {
-    const searchKeyword = state.tagFilterSearchKeyword || '';
-    
-    let filteredTags = state.tags.filter(tag => {
-        if (!searchKeyword) return true;
-        const keyword = searchKeyword.toLowerCase();
-        const idMatch = tag.id && tag.id.toLowerCase().includes(keyword);
-        const nameMatch = tag.name && tag.name.toLowerCase().includes(keyword);
-        return idMatch || nameMatch;
-    });
-    
-    filteredTags.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-    
-    if (filteredTags.length === 0) {
-        elements.tagFilterList.innerHTML = '<div class="tag-filter-empty">暂无标签</div>';
-        return;
-    }
-    
-    elements.tagFilterList.innerHTML = filteredTags.map(tag => {
-        const isSelected = state.tempSelectedTag === tag.id;
-        
-        return `
-            <div class="tag-filter-item ${isSelected ? 'selected' : ''}" data-id="${escapeHtml(tag.id)}">
-                <div class="tag-filter-radio ${isSelected ? 'checked' : ''}" data-tag-id="${escapeHtml(tag.id)}"></div>
-                <div class="tag-filter-info">
-                    <div class="tag-filter-name">${escapeHtml(tag.name)}</div>
-                </div>
-            </div>
-        `;
-    }).join('');
-    
-    elements.tagFilterList.querySelectorAll('.tag-filter-item').forEach(item => {
-        item.addEventListener('click', () => {
-            const tagId = item.dataset.id;
-            toggleTagSelection(tagId);
-        });
-    });
-    
-    elements.tagFilterList.querySelectorAll('.tag-filter-radio').forEach(radio => {
-        radio.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const tagId = radio.dataset.tagId;
-            toggleTagSelection(tagId);
-        });
+function _renderTagFilterList() {
+    renderTagFilterList({ tags: state.tags, searchKeyword: state.tagFilterSearchKeyword, selectedTag: state.tempSelectedTag, listEl: elements.tagFilterList, onToggleTag: _toggleTagSelection });
+}
+
+function _toggleTagSelection(tagId) {
+    toggleTagSelection(tagId, {
+        currentSelected: state.tempSelectedTag,
+        listEl: elements.tagFilterList,
+        onStateChanged: (newSelected) => { state.tempSelectedTag = newSelected; }
     });
 }
 
-/**
- * 切换标签选中状态（单选）
- */
-function toggleTagSelection(tagId) {
-    state.tempSelectedTag = state.tempSelectedTag === tagId ? null : tagId;
-    
-    elements.tagFilterList.querySelectorAll('.tag-filter-item').forEach(item => {
-        const isSelected = item.dataset.id === state.tempSelectedTag;
-        item.classList.toggle('selected', isSelected);
-        const radio = item.querySelector('.tag-filter-radio');
-        radio.classList.toggle('checked', isSelected);
-    });
+function _updateTagFilterDisplay() {
+    updateTagFilterDisplay({ selectEl: elements.tagFilter, currentTagFilter: state.currentTagFilter, tags: state.tags });
 }
 
-/**
- * 更新标签过滤下拉框显示
- */
-function updateTagFilterDisplay() {
-    if (!state.currentTagFilter) {
-        elements.tagFilter.value = '';
-    } else {
-        // 检查当前选中的标签是否已在下拉框中
-        const existingOption = elements.tagFilter.querySelector(`option[value="${state.currentTagFilter}"]`);
-        if (existingOption) {
-            elements.tagFilter.value = state.currentTagFilter;
-        } else {
-            // 标签不在下拉框中，需要重建innerHTML
-            elements.tagFilter.innerHTML = `
-                <option value="">全部标签</option>
-                <option value="select">选择标签</option>
-                <option value="${state.currentTagFilter}" selected>${state.currentTagFilter}</option>
-            `;
-            state.tags.slice(0, 10).forEach(tag => {
-                if (tag.id !== state.currentTagFilter) {
-                    const option = document.createElement('option');
-                    option.value = tag.id;
-                    option.textContent = tag.name;
-                    elements.tagFilter.appendChild(option);
-                }
-            });
-        }
-    }
-}
-
-/**
- * 更新标签过滤搜索清除按钮可见性
- */
-function updateTagFilterClearButton() {
-    if (state.tagFilterSearchKeyword) {
-        elements.tagFilterClearBtn.style.display = 'block';
-    } else {
-        elements.tagFilterClearBtn.style.display = 'none';
-    }
+function _updateTagFilterClearButton() {
+    updateTagFilterClearButton(elements.tagFilterClearBtn, state.tagFilterSearchKeyword);
 }
 
 /**
@@ -859,7 +756,7 @@ async function loadSettings() {
         state.viewMode = state.settings.layout.viewMode;
         state.newMovieHours = state.settings.library?.newMovieHours || 72;
     } catch (error) {
-        console.error('Error loading settings:', error);
+        console.error('Error loading settings:', error.message || error);
     }
 }
 
@@ -938,7 +835,7 @@ async function loadCategories() {
         // 更新侧边栏
         renderSidebar(categories);
     } catch (error) {
-        console.error('Error loading categories:', error);
+        console.error('Error loading categories:', error.message || error);
     }
 }
 
@@ -1034,7 +931,7 @@ async function loadBoxes() {
         state.boxes = boxes;
         updateBoxList(boxes);
     } catch (error) {
-        console.error('Error loading boxes:', error);
+        console.error('Error loading boxes:', error.message || error);
     }
 }
 
@@ -1114,7 +1011,7 @@ async function openEditBoxModal(boxOriginalName) {
             elements.editBoxModal.style.display = 'flex';
         }
     } catch (error) {
-        console.error('Error opening edit box modal:', error);
+        console.error('Error opening edit box modal:', error.message || error);
     }
 }
 
@@ -1133,7 +1030,7 @@ async function openBoxView(boxName) {
     try {
         await window.electronAPI.openBoxWindow(boxName);
     } catch (error) {
-        console.error('Error opening box view:', error);
+        console.error('Error opening box view:', error.message || error);
     }
 }
 
@@ -1159,7 +1056,7 @@ async function loadMovies() {
         await initLazyLoader();
         state.lazyLoader.loadFirstPage();
     } catch (error) {
-        console.error('Error loading movies:', error);
+        console.error('Error loading movies:', error.message || error);
     }
 }
 
@@ -1231,7 +1128,7 @@ async function loadMoviesAll() {
             state.sidebarSearchActive = false;
         }
     } catch (error) {
-        console.error('Error loading movies all:', error);
+        console.error('Error loading movies all:', error.message || error);
     }
 }
 
@@ -1288,7 +1185,7 @@ async function initLazyLoader() {
             console.log('All movies loaded');
         },
         onError: (error) => {
-            console.error('LazyLoader error:', error);
+            console.error('LazyLoader error:', error.message || error);
         }
     });
 }
@@ -1728,7 +1625,7 @@ async function openMovieDetail(movieId) {
             await window.electronAPI.openMovieDetail(movie);
         }
     } catch (error) {
-        console.error('Error opening movie detail:', error);
+        console.error('Error opening movie detail:', error.message || error);
     }
 }
 
@@ -1742,7 +1639,7 @@ async function playMovie(movieId) {
             await window.electronAPI.openPlayerWindow(movie, 0);
         }
     } catch (error) {
-        console.error('Error playing movie:', error);
+        console.error('Error playing movie:', error.message || error);
         alert('播放失败: ' + error.message);
     }
 }
@@ -1763,7 +1660,7 @@ async function loadStats() {
         elements.statsBar.actor.textContent = `演员总数：${stats.totalActorCount || 0}`;
         elements.statsBar.category.textContent = `分类总数：${stats.totalCategoryCount || 0}`;
     } catch (error) {
-        console.error('Error loading stats:', error);
+        console.error('Error loading stats:', error.message || error);
     }
 }
 
@@ -1835,7 +1732,7 @@ function bindEvents() {
                 elements.excludeBoxModal.style.display = 'none';
                 loadMovies();
             } catch (error) {
-                console.error('Error loading box detail:', error);
+                console.error('Error loading box detail:', error.message || error);
                 alert('加载收藏夹详情失败: ' + error.message);
             }
         });
@@ -1905,23 +1802,23 @@ function bindEvents() {
     elements.tagFilterSearchBtn.addEventListener('click', () => {
         const keyword = elements.tagFilterSearchInput.value.trim();
         state.tagFilterSearchKeyword = keyword;
-        updateTagFilterClearButton();
-        renderTagFilterList();
+        _updateTagFilterClearButton();
+        _renderTagFilterList();
     });
 
     elements.tagFilterSearchInput.addEventListener('input', () => {
         const keyword = elements.tagFilterSearchInput.value.trim();
         state.tagFilterSearchKeyword = keyword;
-        updateTagFilterClearButton();
-        renderTagFilterList();
+        _updateTagFilterClearButton();
+        _renderTagFilterList();
     });
 
     elements.tagFilterSearchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             const keyword = e.target.value.trim();
             state.tagFilterSearchKeyword = keyword;
-            updateTagFilterClearButton();
-            renderTagFilterList();
+            _updateTagFilterClearButton();
+            _renderTagFilterList();
         }
     });
 
@@ -1929,8 +1826,8 @@ function bindEvents() {
     elements.tagFilterClearBtn.addEventListener('click', () => {
         elements.tagFilterSearchInput.value = '';
         state.tagFilterSearchKeyword = '';
-        updateTagFilterClearButton();
-        renderTagFilterList();
+        _updateTagFilterClearButton();
+        _renderTagFilterList();
     });
 
     // 演员筛选
@@ -2014,33 +1911,23 @@ function bindEvents() {
     elements.searchBtn.addEventListener('click', () => {
         state.searchKeyword = elements.searchInput.value.trim();
         loadMovies();
-        updateClearButtonVisibility();
+        updateClearButtonVisibility(elements.clearSearchBtn, state.searchKeyword);
     });
 
     elements.searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             state.searchKeyword = e.target.value.trim();
             loadMovies();
-            updateClearButtonVisibility();
+            updateClearButtonVisibility(elements.clearSearchBtn, state.searchKeyword);
         }
     });
 
-    // 清除搜索
     elements.clearSearchBtn.addEventListener('click', () => {
         elements.searchInput.value = '';
         state.searchKeyword = '';
         loadMovies();
-        updateClearButtonVisibility();
+        updateClearButtonVisibility(elements.clearSearchBtn, state.searchKeyword);
     });
-
-    // 更新清除按钮可见性
-    function updateClearButtonVisibility() {
-        if (state.searchKeyword) {
-            elements.clearSearchBtn.style.display = 'block';
-        } else {
-            elements.clearSearchBtn.style.display = 'none';
-        }
-    }
 
     // 视图切换
     function switchView(view) {
@@ -2103,7 +1990,7 @@ function bindEvents() {
         try {
             await window.electronAPI.refreshMovieLibrary();
         } catch (error) {
-            console.error('Error refreshing movie library:', error);
+            console.error('Error refreshing movie library:', error.message || error);
         }
 
         // 关闭进度弹窗
@@ -2256,7 +2143,7 @@ function bindEvents() {
         // 设置当前标签过滤
         state.currentTag = tagId;
         state.currentTagFilter = tagId;
-        updateTagFilterDisplay();
+        _updateTagFilterDisplay();
         // 关闭详情窗口
         window.electronAPI.closeDetailWindow();
         // 加载电影列表
@@ -2345,7 +2232,7 @@ function bindEvents() {
                 alert('创建失败: ' + result.error);
             }
         } catch (error) {
-            console.error('Error creating box:', error);
+            console.error('Error creating box:', error.message || error);
             alert('创建失败: ' + error.message);
         }
     });
@@ -2390,7 +2277,7 @@ function bindEvents() {
                 alert('编辑失败: ' + result.error);
             }
         } catch (error) {
-            console.error('Error editing box:', error);
+            console.error('Error editing box:', error.message || error);
             alert('编辑失败: ' + error.message);
         }
     });
@@ -2428,7 +2315,7 @@ function bindEvents() {
                 alert('删除失败: ' + result.error);
             }
         } catch (error) {
-            console.error('Error deleting box:', error);
+            console.error('Error deleting box:', error.message || error);
             alert('删除失败: ' + error.message);
         }
     });
@@ -2526,7 +2413,7 @@ function bindEvents() {
             clearSelectedMovies();
             await loadMovies();
         } catch (error) {
-            console.error('Error batch adding to box:', error);
+            console.error('Error batch adding to box:', error.message || error);
             alert('添加失败: ' + error.message);
         }
     });
@@ -2608,7 +2495,7 @@ function bindEvents() {
 
             await window.electronAPI.openBatchPlayerWindow(playlist);
         } catch (error) {
-            console.error('Error batch playing movies:', error);
+            console.error('Error batch playing movies:', error.message || error);
             alert('播放失败: ' + error.message);
         }
     });
@@ -2667,7 +2554,7 @@ function bindEvents() {
             await loadBoxes();
             await loadStats();
         } catch (error) {
-            console.error('Error batch deleting movies:', error);
+            console.error('Error batch deleting movies:', error.message || error);
             alert('删除失败: ' + error.message);
         }
     });
@@ -2904,7 +2791,7 @@ function bindEvents() {
                 }
             }
         } catch (error) {
-            console.error('Error adding movie:', error);
+            console.error('Error adding movie:', error.message || error);
             alert('添加失败: ' + error.message);
         }
     });
@@ -3625,7 +3512,7 @@ async function loadActors() {
             state.actors = [];
         }
     } catch (error) {
-        console.error('Error loading actors:', error);
+        console.error('Error loading actors:', error.message || error);
         state.actors = [];
     }
 }
@@ -3707,7 +3594,7 @@ async function saveSettingsHandler() {
         await loadStats();
         await loadBoxes();
     } catch (error) {
-        console.error('Error saving settings:', error);
+        console.error('Error saving settings:', error.message || error);
     }
 }
 
@@ -3865,7 +3752,7 @@ async function startScanDirectory() {
     } catch (error) {
         // 如果是非用户主动中断显示错误提示
         if (!state.scanCancelledByUser) {
-            console.error('Error scanning directory:', error);
+            console.error('Error scanning directory:', error.message || error);
             alert('扫描失败: ' + error.message);
         }
     } finally {
@@ -3930,7 +3817,7 @@ async function showScanResults(movies, category) {
             if (m.id) existingMovieIds.add(m.id);
         });
     } catch (error) {
-        console.error('Error fetching existing movies:', error);
+        console.error('Error fetching existing movies:', error.message || error);
     }
 
     // 获取演员列表用于校验
@@ -3943,7 +3830,7 @@ async function showScanResults(movies, category) {
             });
         }
     } catch (error) {
-        console.error('Error fetching actors:', error);
+        console.error('Error fetching actors:', error.message || error);
     }
 
     // 渲染电影列表（table 形式，滚动条仅在 scan-movies-list 内）
@@ -4057,7 +3944,7 @@ async function editScanMovie(index) {
                 state.scanMovies[index].movieData = movieData;
             }
         } catch (error) {
-            console.error('Error loading movie data:', error);
+            console.error('Error loading movie data:', error.message || error);
         }
     }
 
@@ -4244,7 +4131,7 @@ async function handleScanCoverChange(e) {
         elements.scanCoverPreview.innerHTML = `<img src="${base64}" alt="Cover" style="width: 100%; height: 100%; object-fit: cover;">`;
         elements.scanMovieCoverInput.dataset.cover = base64;
     } catch (error) {
-        console.error('Error reading cover file:', error);
+        console.error('Error reading cover file:', error.message || error);
     }
 }
 
@@ -4463,7 +4350,7 @@ async function confirmScanMovieEdit() {
         closeScanMovieEditModal();
 
     } catch (error) {
-        console.error('Error saving scan movie:', error);
+        console.error('Error saving scan movie:', error.message || error);
         alert('保存失败: ' + error.message);
     }
 }
@@ -4506,7 +4393,7 @@ async function importAllScannedMovies() {
                 if (m.id) existingMovieIds.add(m.id);
             });
         } catch (error) {
-            console.error('Error fetching existing movies:', error);
+            console.error('Error fetching existing movies:', error.message || error);
         }
 
         // 收集需要排除的电影ID（已删除的电影 + 电影库中已存在的电影）
@@ -4559,7 +4446,7 @@ async function importAllScannedMovies() {
         await loadStats();
 
     } catch (error) {
-        console.error('Error importing scanned movies:', error);
+        console.error('Error importing scanned movies:', error.message || error);
         alert('导入失败: ' + error.message);
     } finally {
         // 只有非用户中断的情况下才重置UI状态
@@ -4614,7 +4501,7 @@ async function cancelScan() {
         try {
             await window.electronAPI.deleteTempScanDir(state.scanTempDir);
         } catch (error) {
-            console.error('Error deleting temp scan dir:', error);
+            console.error('Error deleting temp scan dir:', error.message || error);
         }
     }
 
@@ -4997,7 +4884,7 @@ async function startBatchSearch() {
         adapterRadios.forEach(radio => radio.disabled = false);
         elements.batchSearchConfig.style.display = 'block';
     } catch (error) {
-        console.error('Batch search error:', error);
+        console.error('Batch search error:', error.message || error);
         showToast('批量搜索失败: ' + error.message);
         state.batchSearchInProgress = false;
         elements.batchSearchStart.style.display = 'inline-block';
@@ -5066,7 +4953,7 @@ async function confirmBatchSearch() {
             showToast(`成功保存 ${completedItems.length} 部电影信息`);
         }
     } catch (error) {
-        console.error('Batch save error:', error);
+        console.error('Batch save error:', error.message || error);
         showToast('保存失败: ' + error.message);
         // 保存失败时，保持确认按钮可用，允许再次尝试
         elements.batchSearchConfirm.disabled = false;

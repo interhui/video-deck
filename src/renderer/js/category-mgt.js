@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             renderCategoryList();
         } catch (error) {
-            console.error('Error loading categories:', error);
+            console.error('Error loading categories:', error.message || error);
             categories = [];
             renderCategoryList();
         }
@@ -195,7 +195,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             resetForm();
             hideForm();
         } catch (error) {
-            console.error('Error saving category:', error);
+            console.error('Error saving category:', error.message || error);
             alert('保存失败: ' + error.message);
         }
     }
@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             resetForm();
             hideForm();
         } catch (error) {
-            console.error('Error deleting category:', error);
+            console.error('Error deleting category:', error.message || error);
             alert('删除失败: ' + error.message);
         }
     }

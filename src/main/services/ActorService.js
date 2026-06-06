@@ -35,7 +35,7 @@ class ActorService {
 
             return this.actorsCache;
         } catch (error) {
-            console.error('Error loading actors:', error);
+            console.error('Error loading actors:', error.message || error);
             this.actorsCache = [];
             return this.actorsCache;
         }
@@ -59,7 +59,7 @@ class ActorService {
                     this.actorsCache = [];
                 }
             } catch (error) {
-                console.error('Error reading actors synchronously:', error);
+                console.error('Error reading actors synchronously:', error.message || error);
                 this.actorsCache = [];
             }
         }
@@ -170,7 +170,7 @@ class ActorService {
             await this.fileService.writeJson(this.actorFilePath, data);
             this.actorsCache = actors;
         } catch (error) {
-            console.error('Error saving actors:', error);
+            console.error('Error saving actors:', error.message || error);
             throw error;
         }
     }

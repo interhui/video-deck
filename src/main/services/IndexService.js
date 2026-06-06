@@ -89,7 +89,7 @@ class IndexService {
 
             return { success: true, category, movieCount: movies.length };
         } catch (error) {
-            console.error(`Error building index for ${category}:`, error);
+            console.error(`Error building index for ${category}:`, error.message || error);
             throw error;
         }
     }
@@ -111,7 +111,7 @@ class IndexService {
 
             return { success: true, results };
         } catch (error) {
-            console.error('Error rebuilding all indexes:', error);
+            console.error('Error rebuilding all indexes:', error.message || error);
             throw error;
         }
     }
@@ -133,7 +133,7 @@ class IndexService {
 
             return indexData.movies;
         } catch (error) {
-            console.error(`Error reading index for ${category}:`, error);
+            console.error(`Error reading index for ${category}:`, error.message || error);
             return [];
         }
     }
@@ -170,7 +170,7 @@ class IndexService {
                 totalPages
             };
         } catch (error) {
-            console.error(`Error getting paginated movies from index for ${category}:`, error);
+            console.error(`Error getting paginated movies from index for ${category}:`, error.message || error);
             throw error;
         }
     }
@@ -227,7 +227,7 @@ class IndexService {
 
             return { success: true };
         } catch (error) {
-            console.error(`Error updating movie index for ${movie.id}:`, error);
+            console.error(`Error updating movie index for ${movie.id}:`, error.message || error);
             throw error;
         }
     }
@@ -257,7 +257,7 @@ class IndexService {
 
             return { success: true };
         } catch (error) {
-            console.error(`Error deleting movie ${movieId} from index:`, error);
+            console.error(`Error deleting movie ${movieId} from index:`, error.message || error);
             throw error;
         }
     }
@@ -295,7 +295,7 @@ class IndexService {
                 missingCategories
             };
         } catch (error) {
-            console.error('Error checking indexes:', error);
+            console.error('Error checking indexes:', error.message || error);
             return { allExist: false, missingCategories: [], error: error.message };
         }
     }
@@ -319,7 +319,7 @@ class IndexService {
 
             return result;
         } catch (error) {
-            console.error('Error getting all categories index movies:', error);
+            console.error('Error getting all categories index movies:', error.message || error);
             throw error;
         }
     }

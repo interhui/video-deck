@@ -225,7 +225,7 @@ async function loadTags() {
             tagsCache = tags;
         }
     } catch (error) {
-        console.error('Error loading tags:', error);
+        console.error('Error loading tags:', error.message || error);
     }
 }
 
@@ -239,7 +239,7 @@ async function loadCategories() {
             categoriesCache = categories;
         }
     } catch (error) {
-        console.error('Error loading categories:', error);
+        console.error('Error loading categories:', error.message || error);
     }
 }
 
@@ -256,7 +256,7 @@ async function loadActors() {
             actorsCache = [];
         }
     } catch (error) {
-        console.error('Error loading actors:', error);
+        console.error('Error loading actors:', error.message || error);
         actorsCache = [];
     }
 }
@@ -460,16 +460,6 @@ function closeActorSelectorModal() {
  */
 function confirmActorSelection() {
     closeActorSelectorModal();
-}
-
-/**
- * HTML转义，防止XSS
- */
-function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
 }
 
 /**
@@ -679,7 +669,7 @@ async function loadScreenshots() {
             renderScreenshots([]);
         }
     } catch (error) {
-        console.error('Error loading screenshots:', error);
+        console.error('Error loading screenshots:', error.message || error);
         renderScreenshots([]);
     }
 }
@@ -760,7 +750,7 @@ async function deleteScreenshot(number) {
             alert('删除剧照失败: ' + (result.error || '未知错误'));
         }
     } catch (error) {
-        console.error('Error deleting screenshot:', error);
+        console.error('Error deleting screenshot:', error.message || error);
         alert('删除剧照失败: ' + error.message);
     }
 }
@@ -772,7 +762,7 @@ async function playMovieFromScreenshot(startTime) {
     try {
         await window.electronAPI.openPlayerWindow(currentMovie, startTime);
     } catch (error) {
-        console.error('Error playing movie from screenshot:', error);
+        console.error('Error playing movie from screenshot:', error.message || error);
         alert('播放电影失败: ' + error.message);
     }
 }
@@ -1033,7 +1023,7 @@ function parseFileinfo(fileinfoXml) {
 
         return { codec, width, height, durationinseconds };
     } catch (e) {
-        console.error('Error parsing fileinfo:', e);
+        console.error('Error parsing fileinfo:', e.message || e);
         return { codec: '', width: '', height: '', durationinseconds: '' };
     }
 }
@@ -1261,7 +1251,7 @@ async function confirmStatusEdit() {
             alert('修改状态失败: ' + result.error);
         }
     } catch (error) {
-        console.error('Error updating movie status:', error);
+        console.error('Error updating movie status:', error.message || error);
         alert('修改状态失败: ' + error.message);
     }
 }
@@ -1428,7 +1418,7 @@ function bindEditModeEvents() {
                 elements.moviePoster.style.display = 'block';
                 elements.posterPlaceholder.style.display = 'none';
             } catch (error) {
-                console.error('Error converting image to base64:', error);
+                console.error('Error converting image to base64:', error.message || error);
                 alert('图片处理失败: ' + error.message);
             }
         }
@@ -1517,7 +1507,7 @@ async function saveEdit() {
             alert('保存失败: ' + result.error);
         }
     } catch (error) {
-        console.error('Error saving edit:', error);
+        console.error('Error saving edit:', error.message || error);
         alert('保存失败: ' + error.message);
     }
 }
@@ -1633,7 +1623,7 @@ async function fetchVideoInfo(videoPath) {
             console.log('Get Video Info Error:', result.error);
         }
     } catch (error) {
-        console.error('Get Video Info Error:', error);
+        console.error('Get Video Info Error:', error.message || error);
     }
 }
 
@@ -1754,7 +1744,7 @@ function bindEvents() {
         try {
             await window.electronAPI.openPlayerWindow(currentMovie, 0);
         } catch (error) {
-            console.error('Error playing movie:', error);
+            console.error('Error playing movie:', error.message || error);
             alert('播放电影失败: ' + error.message);
         }
     });
@@ -1790,7 +1780,7 @@ function bindEvents() {
                     alert('删除失败: ' + result.error);
                 }
             } catch (error) {
-                console.error('Error deleting movie:', error);
+                console.error('Error deleting movie:', error.message || error);
                 alert('删除失败: ' + error.message);
             }
         }
@@ -1815,7 +1805,7 @@ function bindEvents() {
 
             elements.addToBoxModal.style.display = 'flex';
         } catch (error) {
-            console.error('Error loading boxes:', error);
+            console.error('Error loading boxes:', error.message || error);
             alert('加载收藏夹失败: ' + error.message);
         }
     });
@@ -1846,7 +1836,7 @@ function bindEvents() {
                 alert('添加失败: ' + result.error);
             }
         } catch (error) {
-            console.error('Error adding to box:', error);
+            console.error('Error adding to box:', error.message || error);
             alert('添加失败: ' + error.message);
         }
     });
@@ -1881,7 +1871,7 @@ function bindEvents() {
                     alert('移除失败: ' + result.error);
                 }
             } catch (error) {
-                console.error('Error removing movie from box:', error);
+                console.error('Error removing movie from box:', error.message || error);
                 alert('移除失败: ' + error.message);
             }
         }
@@ -1891,7 +1881,7 @@ function bindEvents() {
         try {
             await window.electronAPI.openPlayerWindow(currentMovie, 0);
         } catch (error) {
-            console.error('Error playing movie:', error);
+            console.error('Error playing movie:', error.message || error);
             alert('播放电影失败: ' + error.message);
         }
     });
@@ -2198,7 +2188,7 @@ async function loadCategoriesForMovieSearch() {
             elements.movieSearchCategory.innerHTML = '<option value="">无可用分类</option>';
         }
     } catch (error) {
-        console.error('Error loading categories for Movie search:', error);
+        console.error('Error loading categories for Movie search:', error.message || error);
         elements.movieSearchCategory.innerHTML = '<option value="">加载失败</option>';
     }
 }
@@ -2273,7 +2263,7 @@ async function searchMovieMovies() {
         renderMovieSearchResults(movieSearchResults);
 
     } catch (error) {
-        console.error('Error searching movies:', error);
+        console.error('Error searching movies:', error.message || error);
         elements.movieSearchLoading.style.display = 'none';
         elements.movieSearchError.textContent = '搜索失败: ' + error.message;
         elements.movieSearchError.style.display = 'block';
@@ -2363,7 +2353,7 @@ async function confirmMovieSearch() {
         closeMovieSearchModal();
 
     } catch (error) {
-        console.error('Error getting movie detail:', error);
+        console.error('Error getting movie detail:', error.message || error);
         alert('获取电影详情失败: ' + error.message);
     } finally {
         elements.confirmMovieSearch.disabled = false;
@@ -2476,7 +2466,7 @@ async function downloadAndSetPoster(posterUrl) {
             console.error('Error downloading poster:', result.error);
         }
     } catch (error) {
-        console.error('Error downloading poster:', error);
+        console.error('Error downloading poster:', error.message || error);
     }
 }
 
