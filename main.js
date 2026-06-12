@@ -28,6 +28,7 @@ const BatchSearchService = require('./src/main/services/BatchSearchService');
 const BatchActorSearchService = require('./src/main/services/BatchActorSearchService');
 const ScreenshotService = require('./src/main/services/ScreenshotService');
 const MovieHistoryService = require('./src/main/services/MovieHistoryService');
+const HttpService = require('./src/main/services/HttpService');
 const { setupIpcHandlers } = require('./src/main/ipc-handlers');
 const { setGlobalProxy } = require('./src/main/utils/HttpUtils');
 
@@ -54,6 +55,7 @@ let batchSearchService = null;
 let batchActorSearchService = null;
 let screenshotService = null;
 let movieHistoryService = null;
+let httpService = null;
 
 /**
  * 初始化服务
@@ -106,6 +108,22 @@ async function initializeServices() {
 
     screenshotService = new ScreenshotService();
     movieHistoryService = new MovieHistoryService(path.join(__dirname, 'config'));
+
+    // 初始化HTTP服务（按settings.http配置决定是否启动）
+    httpService = new HttpService({
+        settingsService,
+        movieService,
+        boxService,
+        categoryService,
+        tagService,
+        actorService,
+        movieHistoryService
+    });
+    try {
+        await httpService.start();
+    } catch (error) {
+        log.error('Failed to start HTTP service:', error.message || error);
+    }
 
     log.info('Services initialized successfully');
 }
@@ -716,6 +734,7 @@ app.whenReady().then(async () => {
         batchActorSearchService,
         screenshotService,
         movieHistoryService,
+        httpService,
         getMainWindow: () => mainWindow,
         createMovieDetailWindow,
         createBoxWindow,
@@ -754,6 +773,9 @@ app.on('before-quit', () => {
     log.info('App quitting...');
     if (dbService) {
         dbService.close();
+    }
+    if (httpService && httpService.isRunning()) {
+        httpService.stop().catch(err => log.error('Stop httpService error:', err));
     }
 });
 

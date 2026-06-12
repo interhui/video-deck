@@ -210,6 +210,7 @@ function setupIpcHandlers(services) {
         batchActorSearchService,
         screenshotService,
         movieHistoryService,
+        httpService,
         getMainWindow,
         createMovieDetailWindow,
         createBoxWindow,
@@ -494,6 +495,22 @@ function setupIpcHandlers(services) {
             if (newSettings.library && oldSettings.library.moviesDir !== newSettings.library.moviesDir) {
                 const moviesDir = getMoviesDirPath(newSettings.library.moviesDir);
                 await movieService.refreshCache(moviesDir);
+            }
+
+            // 如果HTTP配置改变，重启HTTP服务
+            if (httpService && newSettings.http) {
+                const oldHttp = oldSettings.http || {};
+                const newHttp = newSettings.http;
+                const httpChanged = oldHttp.enabled !== newHttp.enabled
+                    || oldHttp.listenAddress !== newHttp.listenAddress
+                    || oldHttp.listenPort !== newHttp.listenPort;
+                if (httpChanged) {
+                    try {
+                        await httpService.restart();
+                    } catch (httpError) {
+                        console.error('[ipc-handlers] HTTP service restart failed:', httpError.message || httpError);
+                    }
+                }
             }
 
             return { success: true };

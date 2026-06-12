@@ -111,6 +111,10 @@ const elements = {
     proxyAddress: document.getElementById('proxy-address'),
     proxyUsername: document.getElementById('proxy-username'),
     proxyPassword: document.getElementById('proxy-password'),
+    // HTTP服务设置
+    httpEnabled: document.getElementById('http-enabled'),
+    httpListenAddress: document.getElementById('http-listen-address'),
+    httpListenPort: document.getElementById('http-listen-port'),
     // 播放器设置
     subtitleBgMode: document.getElementById('subtitle-bg-mode'),
     subtitleBgColor: document.getElementById('subtitle-bg-color'),
@@ -717,6 +721,11 @@ async function loadSettings() {
         if (elements.proxyAddress) elements.proxyAddress.value = state.settings.proxy?.address || '';
         if (elements.proxyUsername) elements.proxyUsername.value = state.settings.proxy?.username || '';
         if (elements.proxyPassword) elements.proxyPassword.value = state.settings.proxy?.password || '';
+
+        // HTTP服务设置回显
+        if (elements.httpEnabled) elements.httpEnabled.checked = state.settings.http?.enabled || false;
+        if (elements.httpListenAddress) elements.httpListenAddress.value = state.settings.http?.listenAddress || '0.0.0.0';
+        if (elements.httpListenPort) elements.httpListenPort.value = state.settings.http?.listenPort || 8080;
 
         // 初始化播放器设置
         if (state.settings.player && state.settings.player.subtitle) {
@@ -3567,6 +3576,11 @@ async function saveSettingsHandler() {
                 address: elements.proxyAddress?.value || '',
                 username: elements.proxyUsername?.value || '',
                 password: elements.proxyPassword?.value || ''
+            },
+            http: {
+                enabled: elements.httpEnabled?.checked || false,
+                listenAddress: elements.httpListenAddress?.value || '0.0.0.0',
+                listenPort: parseInt(elements.httpListenPort?.value || '8080', 10)
             },
             player: {
                 subtitle: {

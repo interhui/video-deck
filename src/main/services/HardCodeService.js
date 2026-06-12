@@ -66,6 +66,12 @@ class HardCodeService {
                 password: ''
             },
 
+            http: {
+                enabled: false,
+                listenAddress: '0.0.0.0',
+                listenPort: 8080
+            },
+
             player: {
                 subtitle: {
                     backgroundColor: 'rgba(0, 0, 0, 0.7)',

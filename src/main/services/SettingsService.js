@@ -248,6 +248,23 @@ getActorPhotoDir() {
     }
 
     /**
+     * 获取HTTP服务配置
+     * @returns {object} HTTP服务配置（enabled/listenAddress/listenPort）
+     */
+    getHttpConfig() {
+        return this.settings.http || { enabled: false, listenAddress: '0.0.0.0', listenPort: 8080 };
+    }
+
+    /**
+     * 设置HTTP服务配置
+     * @param {object} config - HTTP服务配置（enabled/listenAddress/listenPort）
+     */
+    setHttpConfig(config) {
+        this.settings.http = { ...this.settings.http, ...config };
+        this.saveSettings(this.settings);
+    }
+
+    /**
      * 获取播放器配置
      * @returns {object} 播放器配置
      */

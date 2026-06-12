@@ -416,6 +416,24 @@
                             <input type="password" id="proxy-password" placeholder="代理密码（可选）">
                         </div>
                     </div>
+                    <!-- HTTP服务设置 -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">HTTP服务</h3>
+                        <div class="settings-item">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="http-enabled">
+                                <span>启用HTTP服务</span>
+                            </label>
+                        </div>
+                        <div class="settings-item">
+                            <label>监听地址：</label>
+                            <input type="text" id="http-listen-address" placeholder="0.0.0.0">
+                        </div>
+                        <div class="settings-item">
+                            <label>监听端口：</label>
+                            <input type="number" id="http-listen-port" placeholder="8080" min="1" max="65535">
+                        </div>
+                    </div>
                 </div>
                 <!-- 播放器配置 Tab -->
                 <div class="settings-tab-content" id="tab-player-settings">
