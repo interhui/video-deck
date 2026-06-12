@@ -787,6 +787,53 @@ body {
     max-width: 500px;
 }
 
+/* 音量设置（声音配置） */
+.volume-setting {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 300px;
+}
+
+.volume-setting .volume-bar {
+    flex: 1;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--border-color);
+    border-radius: 2px;
+    cursor: pointer;
+    max-width: none;
+    padding: 0;
+    border: none;
+}
+
+.volume-setting .volume-bar::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.volume-setting .volume-bar::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+}
+
+.volume-setting-value {
+    min-width: 32px;
+    text-align: right;
+    font-size: 14px;
+    color: var(--text-color);
+}
+
 /* 目录输入组 */
 .dir-input-group {
     display: flex;

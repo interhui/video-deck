@@ -122,6 +122,8 @@ const elements = {
     subtitleFontSize: document.getElementById('subtitle-font-size'),
     subtitleFontWeight: document.getElementById('subtitle-font-weight'),
     subtitleTextStroke: document.getElementById('subtitle-text-stroke'),
+    volumeSetting: document.getElementById('volume-setting'),
+    volumeSettingValue: document.getElementById('volume-setting-value'),
     // 设置 Tab
     settingsTabs: document.querySelector('.settings-tabs'),
     onlyNewMoviesCheckbox: document.getElementById('only-new-movies'),
@@ -749,16 +751,26 @@ async function loadSettings() {
 
             // 字体大小
             elements.subtitleFontSize.value = subtitleConfig.fontSize || '22px';
-            
+
             // 字体加粗
             elements.subtitleFontWeight.value = subtitleConfig.fontWeight || '500';
-            
+
             // 字体边框
             if (subtitleConfig.textStroke) {
                 const strokeColorMatch = subtitleConfig.textStroke.match(/(\d+px)\s+#([0-9a-fA-F]{6})/);
                 if (strokeColorMatch) {
                     elements.subtitleTextStroke.value = '#' + strokeColorMatch[2];
                 }
+            }
+        }
+
+        // 加载音量配置
+        if (elements.volumeSetting) {
+            const volume = state.settings.player?.volume;
+            const volumeValue = (typeof volume === 'number') ? volume : 45;
+            elements.volumeSetting.value = volumeValue;
+            if (elements.volumeSettingValue) {
+                elements.volumeSettingValue.textContent = volumeValue;
             }
         }
 
@@ -2075,6 +2087,13 @@ function bindEvents() {
         elements.subtitleTextStroke.style.backgroundColor = hexColor;
         elements.subtitleTextStroke.textContent = hexColor;
     });
+
+    // 音量配置 - 实时显示数值
+    if (elements.volumeSetting && elements.volumeSettingValue) {
+        elements.volumeSetting.addEventListener('input', (e) => {
+            elements.volumeSettingValue.textContent = e.target.value;
+        });
+    }
 
     // 选择目录
     elements.selectDirBtn.addEventListener('click', async () => {
@@ -3590,7 +3609,8 @@ async function saveSettingsHandler() {
                     fontSize: elements.subtitleFontSize?.value || '22px',
                     fontWeight: elements.subtitleFontWeight?.value || '500',
                     textStroke: `2px ${elements.subtitleTextStroke?.value || '#000'}`
-                }
+                },
+                volume: parseInt(elements.volumeSetting?.value || '45', 10)
             }
         };
 

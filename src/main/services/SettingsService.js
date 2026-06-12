@@ -269,7 +269,7 @@ getActorPhotoDir() {
      * @returns {object} 播放器配置
      */
     getPlayerConfig() {
-        return this.settings.player || { subtitle: { backgroundColor: 'rgba(0, 0, 0, 0.7)', fontSize: '22px' } };
+        return this.settings.player || { subtitle: { backgroundColor: 'rgba(0, 0, 0, 0.7)', fontSize: '22px' }, volume: 45 };
     }
 
     /**

@@ -400,7 +400,7 @@
                         <div class="settings-item">
                             <label class="checkbox-label">
                                 <input type="checkbox" id="proxy-enabled">
-                                <span>启用代理</span>
+                                <span>启用HTTP代理</span>
                             </label>
                         </div>
                         <div class="settings-item">
@@ -437,6 +437,16 @@
                 </div>
                 <!-- 播放器配置 Tab -->
                 <div class="settings-tab-content" id="tab-player-settings">
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">声音配置</h3>
+                        <div class="settings-item">
+                            <label>音量：</label>
+                            <div class="volume-setting">
+                                <input type="range" id="volume-setting" class="volume-bar" min="0" max="100" value="45" step="1">
+                                <span id="volume-setting-value" class="volume-setting-value">45</span>
+                            </div>
+                        </div>
+                    </div>
                     <div class="settings-section">
                         <h3 class="settings-section-title">字幕配置</h3>
                         <div class="settings-item">
