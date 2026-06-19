@@ -9,7 +9,7 @@ const https = require('https');
 const http = require('http');
 const ExportService = require('./services/ExportService');
 const { setGlobalProxy } = require('./utils/HttpUtils');
-const { computeLibraryPaths, applyLibraryPathsToServices } = require('./utils/library-paths');
+const { computeLibraryPaths, applyLibraryPathsToServices, prepareLibraryDir } = require('./utils/LibraryUtils');
 
 // 程序根目录
 const APP_ROOT = path.join(__dirname, '..', '..');
@@ -737,6 +737,21 @@ function setupIpcHandlers(services) {
         } catch (error) {
             console.error('Error setting current library:', error.message || error);
             return { error: error.message };
+        }
+    });
+
+    // 准备影视库目录：确保根目录、3 个子目录、5 个配置文件就绪
+    // 返回 { success, dir, createdDirs, createdFiles, skippedFiles }
+    ipcMain.handle('prepare-library-dir', async (event, dir) => {
+        try {
+            if (!dir || typeof dir !== 'string' || !dir.trim()) {
+                return { success: false, error: '影视库目录不能为空' };
+            }
+            const result = await prepareLibraryDir(dir, { fileService });
+            return { success: true, ...result };
+        } catch (error) {
+            console.error('Error preparing library dir:', error.message || error);
+            return { success: false, error: error.message };
         }
     });
 

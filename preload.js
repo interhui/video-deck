@@ -37,6 +37,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getCurrentLibrary: () => ipcRenderer.invoke('get-current-library'),
     setCurrentLibrary: (name) => ipcRenderer.invoke('set-current-library', name),
     addLibrary: (data) => ipcRenderer.invoke('add-library', data),
+    prepareLibraryDir: (dir) => ipcRenderer.invoke('prepare-library-dir', dir),
     removeLibrary: (name) => ipcRenderer.invoke('remove-library', name),
     updateLibrary: (data) => ipcRenderer.invoke('update-library', data),
     onLibraryChanged: (callback) => {

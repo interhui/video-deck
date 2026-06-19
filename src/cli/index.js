@@ -62,7 +62,7 @@ async function getServices(options) {
         if (options.libraryDir && servicesInstance.settingsService) {
             servicesInstance.settingsService.setLibraryDir(options.libraryDir);
             // 重新触发 5 个配置服务的路径重定向
-            const { computeLibraryPaths, applyLibraryPathsToServices } = require('../main/utils/library-paths');
+            const { computeLibraryPaths, applyLibraryPathsToServices } = require('../main/utils/LibraryUtils');
             applyLibraryPathsToServices(computeLibraryPaths(servicesInstance.settingsService), servicesInstance);
         }
     }

@@ -4,7 +4,7 @@
  */
 const path = require('path');
 const fs = require('fs');
-const { computeLibraryPaths, applyLibraryPathsToServices } = require('../../main/utils/library-paths');
+const { computeLibraryPaths, applyLibraryPathsToServices } = require('../../main/utils/LibraryUtils');
 
 // Determine base paths based on whether running as CLI or within Electron
 // CLI is now at src/cli, so baseDir is 3 levels up from this file

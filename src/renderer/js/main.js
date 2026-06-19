@@ -2289,9 +2289,18 @@ function bindEvents() {
                 showAddLibraryError(`影视库 "${name}" 已存在`);
                 return;
             }
-            const config = {
-                dir: elements.addLibraryDirInput?.value || ''
-            };
+            const dir = (elements.addLibraryDirInput?.value || '').trim();
+            if (!dir) {
+                showAddLibraryError('请选择影视库目录');
+                return;
+            }
+            // 先在主进程准备好目录（不存在则创建子目录与默认配置文件），再写入设置
+            const prepared = await window.electronAPI.prepareLibraryDir(dir);
+            if (!prepared || !prepared.success) {
+                showAddLibraryError(prepared?.error || '准备影视库目录失败');
+                return;
+            }
+            const config = { dir };
             const result = await window.electronAPI.addLibrary({ name, config });
             if (result && result.success) {
                 // 重新加载设置以同步数据

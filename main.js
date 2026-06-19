@@ -31,7 +31,7 @@ const MovieHistoryService = require('./src/main/services/MovieHistoryService');
 const HttpService = require('./src/main/services/HttpService');
 const { setupIpcHandlers } = require('./src/main/ipc-handlers');
 const { setGlobalProxy } = require('./src/main/utils/HttpUtils');
-const { computeLibraryPaths, applyLibraryPathsToServices } = require('./src/main/utils/library-paths');
+const { computeLibraryPaths, applyLibraryPathsToServices } = require('./src/main/utils/LibraryUtils');
 
 // 全局变量
 let mainWindow = null;
@@ -70,7 +70,7 @@ async function initializeServices() {
     indexService = new IndexService();
     dbService = new DatabaseService(path.join(userDataPath, 'database', 'movies.db'));
     settingsService = new SettingsService(path.join(__dirname, 'config', 'settings.json'));
-    // 5 个配置服务先以占位路径构造；settings 加载完成后由 library-paths 工具重定向到当前库的 dir。
+    // 5 个配置服务先以占位路径构造；settings 加载完成后由 LibraryUtils 重定向到当前库的 dir。
     boxService = new BoxService(path.join(__dirname, 'config', 'boxes.json'));
     tagService = new TagService(path.join(__dirname, 'config', 'tags.json'));
     categoryService = new CategoryService(path.join(__dirname, 'config', 'categories.json'));
