@@ -1,4 +1,4 @@
-# 电影管理程序 (Movie Management)
+# Video Deck
 
 基于 Electron 的电影管理应用，提供图形界面 (GUI) 和命令行界面 (CLI) 两种使用方式。电影按分类组织，以 NFO 文件格式存储并配有封面图片。
 

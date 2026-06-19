@@ -13,7 +13,11 @@
       "Bash(find:*)",
       "Bash(npm ls:*)",
       "Bash(rm:*)",
-      "Bash(npm list:*)"
+      "Bash(npm list:*)",
+      "WebFetch(domain:en.wikipedia.org)",
+      "WebFetch(domain:www.plex.tv)",
+      "Bash(git stash *)",
+      "Bash(xargs grep -l \"settings\" -i)"
     ]
   }
 }

@@ -293,6 +293,17 @@
                 </div>
                 <!-- 路径配置 Tab -->
                 <div class="settings-tab-content" id="tab-path-settings">
+                    <!-- 影视库选择 -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">影视库</h3>
+                        <div class="settings-item">
+                            <label>影视库：</label>
+                            <div class="dir-input-group">
+                                <select id="library-name-select" class="filter-select"></select>
+                                <button id="add-library-btn" class="btn btn-small" title="新增影视库">+</button>
+                            </div>
+                        </div>
+                    </div>
                     <!-- 目录设置 -->
                     <div class="settings-section">
                         <h3 class="settings-section-title">目录</h3>
@@ -495,6 +506,48 @@
             <div class="modal-footer">
                 <button id="save-settings" class="btn btn-primary">保存</button>
                 <button id="cancel-settings" class="btn btn-secondary">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增影视库模态框 -->
+    <div id="add-library-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>新增影视库</h2>
+                <button class="close-btn" id="close-add-library">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>影视库名称 *</label>
+                    <input type="text" id="add-library-name-input" class="form-input" placeholder="例如：家庭影院、办公室">
+                </div>
+                <div class="form-group">
+                    <label>电影目录</label>
+                    <div class="dir-input-group">
+                        <input type="text" id="add-library-movies-input" class="form-input" placeholder="选择电影根目录">
+                        <button id="add-library-movies-btn" class="btn btn-small">选择</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>电影收藏夹目录</label>
+                    <div class="dir-input-group">
+                        <input type="text" id="add-library-moviebox-input" class="form-input" placeholder="选择电影收藏夹目录">
+                        <button id="add-library-moviebox-btn" class="btn btn-small">选择</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>演员照片目录</label>
+                    <div class="dir-input-group">
+                        <input type="text" id="add-library-actor-input" class="form-input" placeholder="选择演员照片目录">
+                        <button id="add-library-actor-btn" class="btn btn-small">选择</button>
+                    </div>
+                </div>
+                <div class="form-group" id="add-library-error" style="color: #ff5252; display: none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="confirm-add-library" class="btn btn-primary">确认</button>
+                <button id="cancel-add-library" class="btn btn-secondary">取消</button>
             </div>
         </div>
     </div>

@@ -29,7 +29,8 @@ describe('BatchSearchService', () => {
                 library: { moviesDir: '/test/movies' },
                 tmdb: { url: 'api.themoviedb.org', token: 'test-token', language: 'zh-CN' },
                 r18: { dbUrl: 'postgresql://localhost:5432/test' }
-            })
+            }),
+            getMoviesDir: jest.fn().mockReturnValue('/test/movies')
         };
 
         mockTmdbAdapterService = {
@@ -240,6 +241,7 @@ describe('BatchSearchService', () => {
             mockSettingsService.getSettings.mockReturnValue({
                 library: { moviesDir: '' }
             });
+            mockSettingsService.getMoviesDir.mockReturnValue('');
 
             const movieInfo = { id: 'movie-1', name: 'Test Movie' };
             const searchResult = { title: 'Test Movie', poster_url: null };

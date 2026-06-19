@@ -118,8 +118,8 @@ async function initializeServices(options = {}) {
     const settingsService = new SettingsService(settingsPath);
     const settings = settingsService.getSettings();
 
-    const moviesDir = options.moviesDir || settings.library.moviesDir || path.join(baseDir, 'movies');
-    const movieboxDir = options.movieboxDir || settings.moviebox.movieboxDir || path.join(baseDir, 'boxes');
+    const moviesDir = options.moviesDir || settingsService.getMoviesDir() || path.join(baseDir, 'movies');
+    const movieboxDir = options.movieboxDir || settingsService.getMovieboxDir() || path.join(baseDir, 'boxes');
 
     return loadServices(moviesDir, movieboxDir, settingsPath, tagsPath, categoryConfigPath, boxesConfigPath);
 }

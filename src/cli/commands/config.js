@@ -20,8 +20,14 @@ async function showConfig(services, options = {}) {
             console.log(JSON.stringify(settings, null, 2));
         } else {
             console.log('\n当前配置:');
-            console.log(`  电影目录: ${settings.library?.moviesDir || '-'}`);
-            console.log(`  电影收藏夹目录: ${settings.moviebox?.movieboxDir || '-'}`);
+            const currentLibraryName = settings.library?.currentLibrary || 'default';
+            const currentLib = settings.library?.libraries?.[currentLibraryName] || {};
+            console.log(`  当前影视库: ${currentLibraryName}`);
+            console.log(`  影视库列表: ${Object.keys(settings.library?.libraries || {}).join(', ') || '-'}`);
+            console.log(`  电影目录: ${currentLib.moviesDir || '-'}`);
+            console.log(`  电影收藏夹目录: ${currentLib.movieboxDir || '-'}`);
+            console.log(`  演员照片目录: ${currentLib.actorPhotoDir || '-'}`);
+            console.log(`  新电影小时数: ${settings.library?.newMovieHours || 72}`);
             console.log(`  主题: ${settings.appearance?.theme || 'dark'}`);
             console.log(`  语言: ${settings.appearance?.language || 'zh-CN'}`);
         }

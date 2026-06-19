@@ -32,6 +32,20 @@ contextBridge.exposeInMainWorld('electronAPI', {
     updateMoviesDir: (dirPath) => ipcRenderer.invoke('update-movies-dir', dirPath),
     getMoviesDir: () => ipcRenderer.invoke('get-movies-dir'),
     setTheme: (theme) => ipcRenderer.invoke('set-theme', theme),
+
+    // 多影视库管理
+    getLibraries: () => ipcRenderer.invoke('get-libraries'),
+    getCurrentLibrary: () => ipcRenderer.invoke('get-current-library'),
+    setCurrentLibrary: (name) => ipcRenderer.invoke('set-current-library', name),
+    addLibrary: (data) => ipcRenderer.invoke('add-library', data),
+    removeLibrary: (name) => ipcRenderer.invoke('remove-library', name),
+    updateLibrary: (data) => ipcRenderer.invoke('update-library', data),
+    onLibraryChanged: (callback) => {
+        ipcRenderer.on('library-changed', (event, name) => callback(name));
+    },
+    onLibraryUpdated: (callback) => {
+        ipcRenderer.on('library-updated', callback);
+    },
     getCategoryConfig: () => ipcRenderer.invoke('get-category-config'),
     getCategoriesFromCache: () => ipcRenderer.invoke('get-categories-from-cache'),
     getCategoryName: (categoryId) => ipcRenderer.invoke('get-category-name', categoryId),

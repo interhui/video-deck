@@ -133,8 +133,10 @@ async function initializeServices() {
  */
 async function checkAndRebuildIndexes() {
     try {
-        const settings = settingsService.getSettings();
-        const moviesDir = path.join(__dirname, settings.library.moviesDir || 'movies');
+        const rawMoviesDir = settingsService.getMoviesDir();
+        const moviesDir = path.isAbsolute(rawMoviesDir)
+            ? rawMoviesDir
+            : path.join(__dirname, rawMoviesDir || 'movies');
 
         const { allExist, missingCategories } = await indexService.checkIndexesExist(moviesDir);
 

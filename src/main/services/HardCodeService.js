@@ -31,13 +31,15 @@ class HardCodeService {
             },
 
             library: {
-                moviesDir: path.join(__dirname, 'movies'),
-                actorPhotoDir: path.join(__dirname, 'actors'),
+                libraries: {
+                    default: {
+                        moviesDir: path.join(__dirname, 'movies'),
+                        actorPhotoDir: path.join(__dirname, 'actors'),
+                        movieboxDir: path.join(__dirname, 'boxes')
+                    }
+                },
+                currentLibrary: 'default',
                 newMovieHours: 72
-            },
-
-            moviebox: {
-                movieboxDir: path.join(__dirname, 'boxes')
             },
 
             tmdb: {
