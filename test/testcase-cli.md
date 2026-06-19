@@ -258,7 +258,7 @@
 
 | 用例ID | 用例名称 | 测试方法 | 前置条件 | 预期结果 |
 |--------|----------|----------|----------|----------|
-| CLI-CONFIG-GET-001 | 获取moviesDir | 直接调用 | 配置存在 | 输出moviesDir值 |
+| CLI-CONFIG-GET-001 | 获取dir（当前库的影视库目录） | 直接调用 | 配置存在 | 输出dir值 |
 | CLI-CONFIG-GET-002 | 获取theme | 直接调用 | 配置存在 | 输出theme值 |
 | CLI-CONFIG-GET-003 | 获取不存在的键 | 直接调用 | 无 | 输出空值 |
 | CLI-CONFIG-GET-004 | 获取嵌套键值 | 直接调用 | 配置存在 | 输出嵌套键值 |
@@ -269,7 +269,7 @@
 | 用例ID | 用例名称 | 测试方法 | 前置条件 | 预期结果 |
 |--------|----------|----------|----------|----------|
 | CLI-CONFIG-SET-001 | 设置theme | 直接调用 | 配置存在 | theme已更新，settings.json已修改 |
-| CLI-CONFIG-SET-002 | 设置moviesDir | 直接调用 | 配置存在 | moviesDir已更新，settings.json已修改 |
+| CLI-CONFIG-SET-002 | 设置dir（当前库的影视库目录） | 直接调用 | 配置存在 | dir已更新，settings.json已修改 |
 | CLI-CONFIG-SET-003 | 设置language | 直接调用 | 配置存在 | language已更新，settings.json已修改 |
 | CLI-CONFIG-SET-004 | 设置无效键名 | 直接调用 | 配置存在 | 允许设置任意键 |
 | CLI-CONFIG-SET-005 | 设置空值 | 直接调用 | 配置存在 | 允许设置空值 |

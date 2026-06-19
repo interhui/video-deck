@@ -6,12 +6,12 @@ const fs = require('fs');
 beforeAll(() => {
     const testDataDir = path.join(__dirname, 'test-data');
 
-    // Create necessary directories
+    // 新结构：testDataDir 作为 library dir；movies/actors/boxes/配置 JSON 全部在 testDataDir 下
     const dirs = [
         testDataDir,
         path.join(testDataDir, 'boxes'),
         path.join(testDataDir, 'movies'),
-        path.join(testDataDir, 'config'),
+        path.join(testDataDir, 'actors'),
         path.join(testDataDir, 'movies', 'movie'),
         path.join(testDataDir, 'movies', 'movie', 'test-movie'),
         path.join(testDataDir, 'movies', 'tv'),
@@ -47,7 +47,7 @@ beforeAll(() => {
     const movieNfoPath = path.join(testDataDir, 'movies', 'movie', 'test-movie', 'movie.nfo');
     fs.writeFileSync(movieNfoPath, movieNfoContent);
 
-    // Create test box JSON file
+    // Create test box JSON file (movieboxDir 派生为 ${dir}/boxes)
     const boxContent = {
         name: 'Test Box',
         description: 'Test box description',
@@ -61,19 +61,22 @@ beforeAll(() => {
     const boxPath = path.join(testDataDir, 'boxes', 'Test Box.json');
     fs.writeFileSync(boxPath, JSON.stringify(boxContent, null, 2));
 
-    // Create test settings JSON
+    // 新结构 settings：仅声明 dir，子目录在 SettingsService 中按需派生
     const settingsContent = {
         version: '1.0.0',
         lastUpdate: Date.now(),
         appearance: { theme: 'dark', language: 'zh-CN' },
         layout: { sidebarWidth: 200, posterSize: 'large', columns: 6, viewMode: 'grid' },
-        library: { moviesDir: path.join(testDataDir, 'movies') },
-        moviebox: { movieboxDir: path.join(testDataDir, 'boxes') }
+        library: {
+            libraries: { default: { dir: testDataDir } },
+            currentLibrary: 'default',
+            newMovieHours: 72
+        }
     };
-    const settingsPath = path.join(testDataDir, 'config', 'settings.json');
+    const settingsPath = path.join(testDataDir, 'settings.json');
     fs.writeFileSync(settingsPath, JSON.stringify(settingsContent, null, 2));
 
-    // Create test tags JSON
+    // Create test tags JSON (放在 library dir 下)
     const tagsContent = [
         { id: 'action', name: '动作' },
         { id: 'scifi', name: '科幻' },
@@ -81,10 +84,10 @@ beforeAll(() => {
         { id: 'comedy', name: '喜剧' },
         { id: 'horror', name: '恐怖' }
     ];
-    const tagsPath = path.join(testDataDir, 'config', 'tags.json');
+    const tagsPath = path.join(testDataDir, 'tags.json');
     fs.writeFileSync(tagsPath, JSON.stringify(tagsContent, null, 2));
 
-    // Create test categories JSON
+    // Create test categories JSON (放在 library dir 下)
     const categoriesContent = {
         categories: [
             { id: 'movie', name: '电影', shortName: '电影', icon: 'film', color: '#003791', order: 1 },
@@ -95,8 +98,27 @@ beforeAll(() => {
         predefinedTags: [],
         customTags: []
     };
-    const categoriesPath = path.join(testDataDir, 'config', 'categories.json');
+    const categoriesPath = path.join(testDataDir, 'categories.json');
     fs.writeFileSync(categoriesPath, JSON.stringify(categoriesContent, null, 2));
+
+    // Create test boxes.json index (放在 library dir 下)
+    const boxesIndex = {
+        boxes: [
+            { name: 'Test Box', description: 'Test box description' }
+        ]
+    };
+    const boxesIndexPath = path.join(testDataDir, 'boxes.json');
+    fs.writeFileSync(boxesIndexPath, JSON.stringify(boxesIndex, null, 2));
+
+    // Create test actor.json (放在 library dir 下)
+    const actorContent = { actor: [] };
+    const actorPath = path.join(testDataDir, 'actor.json');
+    fs.writeFileSync(actorPath, JSON.stringify(actorContent, null, 2));
+
+    // Create test history.json (放在 library dir 下)
+    const historyContent = { history: [] };
+    const historyPath = path.join(testDataDir, 'history.json');
+    fs.writeFileSync(historyPath, JSON.stringify(historyContent, null, 2));
 
     // Create import test JSON
     const importContent = [

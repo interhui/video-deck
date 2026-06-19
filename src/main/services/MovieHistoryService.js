@@ -36,6 +36,22 @@ class MovieHistoryService {
         return this.loadPromise;
     }
 
+    /**
+     * 切换 history.json 文件路径（用于切换影视库时重定向）。
+     * 重置内存中的 history，并重新触发一次 loadPromise。
+     * @param {string} newPath - 新的 history.json 文件绝对路径；为空时使用空内存态
+     */
+    setHistoryFilePath(newPath) {
+        this.historyFilePath = newPath || '';
+        this.history = { history: [] };
+        if (!newPath) {
+            // 没有有效文件路径时直接以空状态 resolve，让调用方不会悬挂
+            this.loadPromise = Promise.resolve(this.history);
+            return;
+        }
+        this.loadPromise = this.loadHistory();
+    }
+
     async addRecord(movieName, movieId) {
         await this.loadPromise;
 

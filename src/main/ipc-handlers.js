@@ -9,6 +9,7 @@ const https = require('https');
 const http = require('http');
 const ExportService = require('./services/ExportService');
 const { setGlobalProxy } = require('./utils/HttpUtils');
+const { computeLibraryPaths, applyLibraryPathsToServices } = require('./utils/library-paths');
 
 // 程序根目录
 const APP_ROOT = path.join(__dirname, '..', '..');
@@ -489,6 +490,10 @@ function setupIpcHandlers(services) {
     ipcMain.handle('save-settings', async (event, newSettings) => {
         try {
             const oldSettings = settingsService.getSettings();
+            const oldCurrentLibName = oldSettings.library?.currentLibrary;
+            const oldDir = oldSettings.library?.libraries?.[oldCurrentLibName]?.dir || '';
+            const oldMoviesDir = oldDir ? path.join(oldDir, 'movies') : '';
+
             settingsService.saveSettings(newSettings);
 
             // 更新全局代理
@@ -496,10 +501,22 @@ function setupIpcHandlers(services) {
             setGlobalProxy(proxyUrl);
             console.debug('[ipc-handlers] Proxy updated:', proxyUrl);
 
-            // 如果电影目录或当前影视库改变，强制刷新缓存
-            const oldMoviesDir = oldSettings.library?.libraries?.[oldSettings.library?.currentLibrary]?.moviesDir;
-            const newCurrentLibrary = newSettings.library?.currentLibrary;
-            const newMoviesDir = newSettings.library?.libraries?.[newCurrentLibrary]?.moviesDir;
+            // 检查当前库或 dir 是否变化，必要时重定向 5 个配置服务 + 刷新缓存
+            const newCurrentLibName = settingsService.getCurrentLibraryName();
+            const newDir = settingsService.getLibraryDir();
+            const newMoviesDir = settingsService.getMoviesDir();
+            if (oldCurrentLibName !== newCurrentLibName || oldDir !== newDir) {
+                applyLibraryPathsToServices(
+                    computeLibraryPaths(settingsService),
+                    {
+                        tagService,
+                        categoryService,
+                        boxService,
+                        actorService,
+                        movieHistoryService
+                    }
+                );
+            }
             if (oldMoviesDir !== newMoviesDir) {
                 const moviesDir = getMoviesDirPath(newMoviesDir);
                 if (moviesDir) {
@@ -648,17 +665,6 @@ function setupIpcHandlers(services) {
         }
     });
 
-    // 更新电影目录配置
-    ipcMain.handle('update-movies-dir', async (event, dirPath) => {
-        try {
-            settingsService.setMoviesDir(dirPath);
-            return { success: true, dirPath };
-        } catch (error) {
-            console.error('Error updating movies dir:', error.message || error);
-            return { error: error.message };
-        }
-    });
-
     // 获取电影目录配置
     ipcMain.handle('get-movies-dir', async () => {
         try {
@@ -703,6 +709,17 @@ function setupIpcHandlers(services) {
             if (!ok) {
                 return { success: false, error: `影视库 "${name}" 不存在` };
             }
+            // 切换影视库后，重定向 5 个配置服务的文件路径并清空缓存
+            applyLibraryPathsToServices(
+                computeLibraryPaths(settingsService),
+                {
+                    tagService,
+                    categoryService,
+                    boxService,
+                    actorService,
+                    movieHistoryService
+                }
+            );
             // 切换影视库后强制刷新缓存
             const moviesDir = resolveCurrentMoviesDir(settingsService);
             try {
@@ -729,6 +746,19 @@ function setupIpcHandlers(services) {
             const result = settingsService.addLibrary(name, config || {});
             if (!result.success) {
                 return result;
+            }
+            // 若新增的是当前库，重定向配置服务
+            if (settingsService.getCurrentLibraryName() === name) {
+                applyLibraryPathsToServices(
+                    computeLibraryPaths(settingsService),
+                    {
+                        tagService,
+                        categoryService,
+                        boxService,
+                        actorService,
+                        movieHistoryService
+                    }
+                );
             }
             BrowserWindow.getAllWindows().forEach(win => {
                 if (!win.isDestroyed()) {
@@ -767,6 +797,19 @@ function setupIpcHandlers(services) {
             const result = settingsService.updateLibrary(name, config || {});
             if (!result.success) {
                 return result;
+            }
+            // 若修改的是当前库，重定向配置服务
+            if (settingsService.getCurrentLibraryName() === name) {
+                applyLibraryPathsToServices(
+                    computeLibraryPaths(settingsService),
+                    {
+                        tagService,
+                        categoryService,
+                        boxService,
+                        actorService,
+                        movieHistoryService
+                    }
+                );
             }
             BrowserWindow.getAllWindows().forEach(win => {
                 if (!win.isDestroyed()) {

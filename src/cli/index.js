@@ -29,8 +29,9 @@ program
 // Global options
 program
     .option('-c, --config <path>', 'Specify config file path')
-    .option('-m, --movies-dir <dir>', 'Specify movies directory')
-    .option('-b, --box-dir <dir>', 'Specify moviebox directory')
+    .option('-l, --library-dir <dir>', 'Specify library root directory (overrides the current library\'s dir from settings)')
+    .option('-m, --movies-dir <dir>', '(Deprecated) Specify movies directory; ignored. Use --library-dir instead.')
+    .option('-b, --box-dir <dir>', '(Deprecated) Specify moviebox directory; ignored. Use --library-dir instead.')
     .option('-o, --output <format>', 'Output format: table|json|simple', 'table')
     .option('--no-color', 'Disable color output')
     .option('-v, --verbose', 'Verbose output mode');
@@ -46,16 +47,24 @@ async function getServices(options) {
         // 获取可执行文件所在目录（兼容 pkg 打包后的运行方式）
         const exeDir = path.dirname(process.execPath);
 
-        // 设置默认值（基于应用启动目录）
+        // 默认 settings 路径
         const defaultSettingsPath = path.join(exeDir, 'config', 'settings.json');
-        const defaultMoviesDir = path.join(exeDir, 'movies');
-        const defaultMovieboxDir = path.join(exeDir, 'boxes');
+
+        if (options.moviesDir || options.boxDir) {
+            console.warn('[CLI] --movies-dir / --box-dir 已弃用，请使用 --library-dir 指定影视库根目录');
+        }
 
         servicesInstance = await initializeServices({
-            settingsPath: options.config || defaultSettingsPath,
-            moviesDir: options.moviesDir || defaultMoviesDir,
-            movieboxDir: options.boxDir || defaultMovieboxDir
+            settingsPath: options.config || defaultSettingsPath
         });
+
+        // 若用户在命令行中显式指定了 --library-dir，则覆盖当前库的 dir
+        if (options.libraryDir && servicesInstance.settingsService) {
+            servicesInstance.settingsService.setLibraryDir(options.libraryDir);
+            // 重新触发 5 个配置服务的路径重定向
+            const { computeLibraryPaths, applyLibraryPathsToServices } = require('../main/utils/library-paths');
+            applyLibraryPathsToServices(computeLibraryPaths(servicesInstance.settingsService), servicesInstance);
+        }
     }
     return servicesInstance;
 }

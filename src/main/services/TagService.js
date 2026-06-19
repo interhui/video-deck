@@ -116,6 +116,15 @@ class TagService {
     }
 
     /**
+     * 切换标签文件路径（用于切换影视库时重定向）
+     * @param {string} newPath - 新的标签 JSON 文件路径
+     */
+    setTagsPath(newPath) {
+        this.tagsPath = newPath;
+        this.tagsCache = null;
+    }
+
+    /**
      * 从 index.json 提取标签并进行比对
      * @param {Object} allIndexMovies - 所有分类的电影索引数据
      * @returns {Array} 未管理且使用次数 > 1 的标签列表

@@ -24,7 +24,8 @@ const testDataDir = path.join(__dirname, 'test-data');
 const mockSettingsService = {
     getSettings: jest.fn(),
     saveSettings: jest.fn(),
-    resetToDefaults: jest.fn()
+    resetToDefaults: jest.fn(),
+    getCurrentLibraryName: jest.fn().mockReturnValue('default')
 };
 
 jest.mock('../../src/cli/utils/service-loader', () => ({
@@ -38,13 +39,17 @@ const configCommands = require('../../src/cli/commands/config');
 describe('CLI Config Commands', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        mockSettingsService.getCurrentLibraryName.mockReturnValue('default');
     });
 
     describe('config show', () => {
         test('CLI-CONFIG-SHOW-001: 显示当前配置', async () => {
             mockSettingsService.getSettings.mockReturnValue({
-                library: { moviesDir: '/path/to/movies' },
-                moviebox: { movieboxDir: '/path/to/boxes' },
+                library: {
+                    libraries: { default: { dir: '/path/to/library' } },
+                    currentLibrary: 'default',
+                    newMovieHours: 72
+                },
                 appearance: { theme: 'dark', language: 'zh-CN' }
             });
 
@@ -59,7 +64,10 @@ describe('CLI Config Commands', () => {
 
         test('CLI-CONFIG-SHOW-002: JSON格式输出', async () => {
             mockSettingsService.getSettings.mockReturnValue({
-                library: { moviesDir: '/path/to/movies' },
+                library: {
+                    libraries: { default: { dir: '/path/to/library' } },
+                    currentLibrary: 'default'
+                },
                 appearance: { theme: 'dark' }
             });
 
@@ -102,18 +110,21 @@ describe('CLI Config Commands', () => {
     });
 
     describe('config get', () => {
-        test('CLI-CONFIG-GET-001: 获取moviesDir', async () => {
+        test('CLI-CONFIG-GET-001: 获取 dir（当前库）', async () => {
             mockSettingsService.getSettings.mockReturnValue({
-                library: { moviesDir: '/path/to/movies' }
+                library: {
+                    libraries: { default: { dir: '/path/to/library' } },
+                    currentLibrary: 'default'
+                }
             });
 
             const services = {
                 settingsService: mockSettingsService
             };
 
-            await configCommands.getConfig(services, 'moviesDir');
+            await configCommands.getConfig(services, 'dir');
 
-            expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('/path/to/movies'));
+            expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('/path/to/library'));
         });
 
         test('CLI-CONFIG-GET-002: 获取theme', async () => {
@@ -146,16 +157,19 @@ describe('CLI Config Commands', () => {
 
         test('CLI-CONFIG-GET-004: 获取嵌套键值', async () => {
             mockSettingsService.getSettings.mockReturnValue({
-                library: { moviesDir: '/path/to/movies' }
+                library: {
+                    libraries: { default: { dir: '/path/to/library' } },
+                    currentLibrary: 'default'
+                }
             });
 
             const services = {
                 settingsService: mockSettingsService
             };
 
-            await configCommands.getConfig(services, 'library.moviesDir');
+            await configCommands.getConfig(services, 'library.libraries.default.dir');
 
-            expect(consoleLogSpy).toHaveBeenCalled();
+            expect(consoleLogSpy).toHaveBeenCalledWith('/path/to/library');
         });
 
         test('CLI-CONFIG-GET-005: 获取配置服务异常处理', async () => {
@@ -192,9 +206,12 @@ describe('CLI Config Commands', () => {
             expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('已更新'));
         });
 
-        test('CLI-CONFIG-SET-002: 设置moviesDir', async () => {
+        test('CLI-CONFIG-SET-002: 设置当前库 dir', async () => {
             mockSettingsService.getSettings.mockReturnValue({
-                library: { moviesDir: '/old/path' }
+                library: {
+                    libraries: { default: { dir: '/old/path' } },
+                    currentLibrary: 'default'
+                }
             });
             mockSettingsService.saveSettings.mockReturnValue();
 
@@ -202,9 +219,12 @@ describe('CLI Config Commands', () => {
                 settingsService: mockSettingsService
             };
 
-            await configCommands.setConfig(services, 'moviesDir', '/new/path');
+            await configCommands.setConfig(services, 'dir', '/new/path');
 
             expect(mockSettingsService.saveSettings).toHaveBeenCalled();
+            // saveSettings 收到的 settings 中，当前库的 dir 已经被改成新值
+            const savedSettings = mockSettingsService.saveSettings.mock.calls[0][0];
+            expect(savedSettings.library.libraries.default.dir).toBe('/new/path');
         });
 
         test('CLI-CONFIG-SET-003: 设置language', async () => {
@@ -222,7 +242,7 @@ describe('CLI Config Commands', () => {
             expect(mockSettingsService.saveSettings).toHaveBeenCalled();
         });
 
-        test('CLI-CONFIG-SET-004: 设置无效键名', async () => {
+        test('CLI-CONFIG-SET-004: 未知键会被当作点号路径写入', async () => {
             mockSettingsService.getSettings.mockReturnValue({});
             mockSettingsService.saveSettings.mockReturnValue();
 
@@ -230,9 +250,12 @@ describe('CLI Config Commands', () => {
                 settingsService: mockSettingsService
             };
 
-            await configCommands.setConfig(services, 'invalidKey', 'value');
+            await configCommands.setConfig(services, 'some.nested.key', 'value');
 
+            // 任意点号路径都会被写入并触发 saveSettings
             expect(mockSettingsService.saveSettings).toHaveBeenCalled();
+            const savedSettings = mockSettingsService.saveSettings.mock.calls[0][0];
+            expect(savedSettings.some.nested.key).toBe('value');
         });
 
         test('CLI-CONFIG-SET-005: 设置空值', async () => {

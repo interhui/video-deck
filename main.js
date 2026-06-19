@@ -31,6 +31,7 @@ const MovieHistoryService = require('./src/main/services/MovieHistoryService');
 const HttpService = require('./src/main/services/HttpService');
 const { setupIpcHandlers } = require('./src/main/ipc-handlers');
 const { setGlobalProxy } = require('./src/main/utils/HttpUtils');
+const { computeLibraryPaths, applyLibraryPathsToServices } = require('./src/main/utils/library-paths');
 
 // 全局变量
 let mainWindow = null;
@@ -69,6 +70,7 @@ async function initializeServices() {
     indexService = new IndexService();
     dbService = new DatabaseService(path.join(userDataPath, 'database', 'movies.db'));
     settingsService = new SettingsService(path.join(__dirname, 'config', 'settings.json'));
+    // 5 个配置服务先以占位路径构造；settings 加载完成后由 library-paths 工具重定向到当前库的 dir。
     boxService = new BoxService(path.join(__dirname, 'config', 'boxes.json'));
     tagService = new TagService(path.join(__dirname, 'config', 'tags.json'));
     categoryService = new CategoryService(path.join(__dirname, 'config', 'categories.json'));
@@ -77,7 +79,15 @@ async function initializeServices() {
 
     // 等待设置加载完成后再初始化 R18AdapterService
     await settingsService.getSettingsPromise();
-    
+
+    // 将 5 个配置服务的路径重定向到当前库的 dir（若 dir 已配置）
+    applyLibraryPathsToServices(computeLibraryPaths(settingsService), {
+        tagService,
+        categoryService,
+        boxService,
+        actorService
+    });
+
     // 初始化全局代理
     const proxyUrl = settingsService.getProxyAgentUrl();
     if (proxyUrl) {
@@ -85,7 +95,7 @@ async function initializeServices() {
         const proxyConfig = settingsService.getProxyConfig();
         console.debug('Proxy initialized', proxyConfig.address);
     }
-    
+
     r18AdapterService = new R18AdapterService(settingsService, tmdbMovieAdapterService);
     playerService = new PlayerService();
     batchSearchService = new BatchSearchService(settingsService, tmdbMovieAdapterService, r18AdapterService, movieService, fileService);
@@ -108,6 +118,13 @@ async function initializeServices() {
 
     screenshotService = new ScreenshotService();
     movieHistoryService = new MovieHistoryService(path.join(__dirname, 'config'));
+    // movieHistoryService 构造时尚未包含在上面的批量重定向里；构造完后再单独切到当前库的 dir
+    const libraryPaths = computeLibraryPaths(settingsService);
+    if (movieHistoryService && typeof movieHistoryService.setHistoryFilePath === 'function') {
+        if (libraryPaths.dir) {
+            movieHistoryService.setHistoryFilePath(path.join(libraryPaths.dir, 'history.json'));
+        }
+    }
 
     // 初始化HTTP服务（按settings.http配置决定是否启动）
     httpService = new HttpService({

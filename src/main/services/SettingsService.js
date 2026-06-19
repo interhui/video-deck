@@ -2,6 +2,14 @@
  * 配置服务
  * 负责应用配置的读取、保存和管理
  * 包含多影视库（libraries / currentLibrary）能力的管理与兼容旧结构的迁移
+ *
+ * 影视库结构（自 v1.2 起）：
+ *   library.libraries.<name> = { dir }
+ *   其中 moviesDir   = ${dir}/movies
+ *        actorPhotoDir = ${dir}/actors
+ *        movieboxDir = ${dir}/boxes
+ * 旧的 { moviesDir, actorPhotoDir, movieboxDir } 结构在加载时被强制重置为 { dir: '' }，
+ * 强制用户重新配置 dir。
  */
 const FileService = require('./FileService');
 const HardCodeService = require('./HardCodeService');
@@ -9,6 +17,51 @@ const path = require('path');
 
 // 默认影视库名称
 const DEFAULT_LIBRARY_NAME = 'default';
+
+// 旧结构字段名（用于迁移检测）
+const LEGACY_LIB_FIELDS = ['moviesDir', 'actorPhotoDir', 'movieboxDir'];
+
+// 子目录常量
+const MOVIES_SUBDIR = 'movies';
+const ACTOR_PHOTO_SUBDIR = 'actors';
+const MOVIEBOX_SUBDIR = 'boxes';
+
+/**
+ * 判断是否为对象
+ * @param {any} item
+ * @returns {boolean}
+ */
+function isPlainObject(item) {
+    return item && typeof item === 'object' && !Array.isArray(item);
+}
+
+/**
+ * 检查库配置对象是否包含旧结构的字段
+ * @param {object} entry
+ * @returns {boolean}
+ */
+function hasLegacyLibFields(entry) {
+    if (!isPlainObject(entry)) return false;
+    return LEGACY_LIB_FIELDS.some(k => Object.prototype.hasOwnProperty.call(entry, k));
+}
+
+/**
+ * 从库的 dir 派生子目录路径
+ * @param {object} lib
+ * @returns {{dir: string, moviesDir: string, actorPhotoDir: string, movieboxDir: string}}
+ */
+function deriveLibraryPaths(lib) {
+    const dir = (isPlainObject(lib) && lib.dir) ? lib.dir : '';
+    if (!dir) {
+        return { dir: '', moviesDir: '', actorPhotoDir: '', movieboxDir: '' };
+    }
+    return {
+        dir,
+        moviesDir: path.join(dir, MOVIES_SUBDIR),
+        actorPhotoDir: path.join(dir, ACTOR_PHOTO_SUBDIR),
+        movieboxDir: path.join(dir, MOVIEBOX_SUBDIR)
+    };
+}
 
 class SettingsService {
     constructor(settingsPath) {
@@ -30,7 +83,7 @@ class SettingsService {
     }
 
     /**
-     * 加载配置；如检测到旧结构（library.moviesDir / moviebox.movieboxDir）则自动迁移到多库结构
+     * 加载配置；如检测到旧结构（library.moviesDir / moviebox.movieboxDir / library.libraries.*.moviesDir）则强制重置为新结构
      */
     async loadSettings() {
         try {
@@ -39,7 +92,7 @@ class SettingsService {
 
             let merged;
             if (settings) {
-                // 先将旧结构迁移到多库结构（修改的副本，不污染原对象）
+                // 先将旧结构迁移到新结构（修改的副本，不污染原对象）
                 const migratedSettings = this.migrateLegacySettings(settings);
                 // 合并默认配置和用户配置
                 merged = this.mergeDeep(defaultSettings, migratedSettings);
@@ -55,7 +108,7 @@ class SettingsService {
             // 保证 library 节点结构有效（兜底）
             this.ensureLibraryShape(merged);
 
-            // 旧结构中存在 moviebox 节点时，删除
+            // 新结构中不再有 moviebox 节点；若仍存在，直接删除
             if (merged && Object.prototype.hasOwnProperty.call(merged, 'moviebox')) {
                 delete merged.moviebox;
             }
@@ -71,9 +124,10 @@ class SettingsService {
     }
 
     /**
-     * 迁移旧 settings 结构至多库结构
-     * 旧结构：library.{moviesDir, actorPhotoDir, newMovieHours}, moviebox.{movieboxDir}
-     * 新结构：library.{libraries, currentLibrary, newMovieHours}
+     * 迁移旧 settings 结构至新结构
+     * 新结构：library.libraries.* = { dir }
+     * 旧结构（library.moviesDir / moviebox.movieboxDir 或 library.libraries.*.moviesDir）
+     * 一律被强制清空为 { dir: '' }，由用户重新配置。
      * @param {object} settings - 加载得到的原始 settings
      * @returns {object} 迁移后的 settings（浅拷贝，避免污染入参）
      */
@@ -83,55 +137,51 @@ class SettingsService {
         }
         const cloned = { ...settings };
         const legacyLibrary = cloned.library || {};
-        const legacyMoviebox = cloned.moviebox || {};
-        const hasLegacyMoviesDir = Object.prototype.hasOwnProperty.call(legacyLibrary, 'moviesDir');
-        const hasLegacyMoviebox = Object.prototype.hasOwnProperty.call(legacyMoviebox || {}, 'movieboxDir');
-        const alreadyMulti = legacyLibrary.libraries && typeof legacyLibrary.libraries === 'object'
-            && !Array.isArray(legacyLibrary.libraries);
+        const hasRootLegacyMoviesDir = Object.prototype.hasOwnProperty.call(legacyLibrary, 'moviesDir');
+        const hasRootLegacyMovieboxDir = cloned.moviebox && Object.prototype.hasOwnProperty.call(cloned.moviebox, 'movieboxDir');
 
-        if (alreadyMulti && !hasLegacyMoviesDir && !hasLegacyMoviebox) {
-            // 已经是新结构，无需迁移
-            return cloned;
+        // 强制重置 libraries 中所有遗留旧结构的条目
+        if (legacyLibrary.libraries && typeof legacyLibrary.libraries === 'object'
+            && !Array.isArray(legacyLibrary.libraries)) {
+            const newLibraries = {};
+            Object.entries(legacyLibrary.libraries).forEach(([name, entry]) => {
+                if (hasLegacyLibFields(entry)) {
+                    console.warn(`[SettingsService] Detected legacy library "${name}" with moviesDir/actorPhotoDir/movieboxDir. Forcing reconfiguration to { dir: '' }. Please set the library dir in settings.`);
+                    newLibraries[name] = { dir: '' };
+                } else if (isPlainObject(entry)) {
+                    // 已是新结构 { dir } 或 { dir: ... }，保留
+                    newLibraries[name] = { dir: entry.dir || '' };
+                } else {
+                    newLibraries[name] = { dir: '' };
+                }
+            });
+            legacyLibrary.libraries = newLibraries;
         }
 
-        // 组装 default 库配置
-        const defaultLib = {};
-        if (hasLegacyMoviesDir) defaultLib.moviesDir = legacyLibrary.moviesDir;
-        if (legacyLibrary.actorPhotoDir !== undefined) defaultLib.actorPhotoDir = legacyLibrary.actorPhotoDir;
-        if (hasLegacyMoviebox && legacyMoviebox.movieboxDir !== undefined) {
-            defaultLib.movieboxDir = legacyMoviebox.movieboxDir;
+        // 旧结构：library.{moviesDir, actorPhotoDir, newMovieHours}, moviebox.{movieboxDir}
+        // 这些顶层旧字段在新结构中没有意义，直接丢弃
+        if (hasRootLegacyMoviesDir || hasRootLegacyMovieboxDir) {
+            console.warn('[SettingsService] Detected legacy settings with library.moviesDir / moviebox.movieboxDir. These fields are no longer used; the new model requires library.libraries.<name>.dir.');
         }
 
-        // 构建新的 library 节点
-        const newLibrary = {
-            libraries: {}
-        };
-        // 继承已有的 libraries（如有）
-        if (alreadyMulti) {
-            newLibrary.libraries = { ...legacyLibrary.libraries };
-        }
-        // 如果 default 库尚未在新结构中出现，则写入
-        if (!newLibrary.libraries[DEFAULT_LIBRARY_NAME]) {
-            newLibrary.libraries[DEFAULT_LIBRARY_NAME] = defaultLib;
-        }
+        // 清理 library 根上的旧字段
+        ['moviesDir', 'actorPhotoDir'].forEach((k) => {
+            if (Object.prototype.hasOwnProperty.call(legacyLibrary, k)) {
+                delete legacyLibrary[k];
+            }
+        });
 
         // 保留 newMovieHours（如有）
-        if (legacyLibrary.newMovieHours !== undefined) {
-            newLibrary.newMovieHours = legacyLibrary.newMovieHours;
+        if (legacyLibrary.newMovieHours === undefined
+            && Object.prototype.hasOwnProperty.call(cloned, 'moviebox') === false) {
+            // 无新结构相关字段时不需要特殊处理
         }
 
-        // currentLibrary 默认指向 default（若旧值存在于 libraries，则沿用）
-        if (legacyLibrary.currentLibrary && newLibrary.libraries[legacyLibrary.currentLibrary]) {
-            newLibrary.currentLibrary = legacyLibrary.currentLibrary;
-        } else {
-            newLibrary.currentLibrary = DEFAULT_LIBRARY_NAME;
-        }
-
-        cloned.library = newLibrary;
         // 删除 moviebox 节点
         if (Object.prototype.hasOwnProperty.call(cloned, 'moviebox')) {
             delete cloned.moviebox;
         }
+        cloned.library = legacyLibrary;
         return cloned;
     }
 
@@ -147,13 +197,9 @@ class SettingsService {
         const lib = settings.library;
         if (!lib.libraries || typeof lib.libraries !== 'object' || Array.isArray(lib.libraries)
             || Object.keys(lib.libraries).length === 0) {
-            // 兜底：构造一个 default 库
+            // 兜底：构造一个 default 库（dir 为空，提示用户配置）
             lib.libraries = {
-                [DEFAULT_LIBRARY_NAME]: {
-                    moviesDir: path.join(__dirname, 'movies'),
-                    actorPhotoDir: path.join(__dirname, 'actors'),
-                    movieboxDir: path.join(__dirname, 'boxes')
-                }
+                [DEFAULT_LIBRARY_NAME]: { dir: '' }
             };
         }
         if (!lib.currentLibrary || !lib.libraries[lib.currentLibrary]) {
@@ -162,12 +208,19 @@ class SettingsService {
         if (lib.newMovieHours === undefined || lib.newMovieHours === null) {
             lib.newMovieHours = 72;
         }
-        // 兜底每个库都具备三个目录字段（即便为空字符串）
+        // 兜底每个库都具备 dir 字段，并剥离遗留的旧字段
         Object.keys(lib.libraries).forEach((name) => {
-            const entry = lib.libraries[name] || {};
-            entry.moviesDir = entry.moviesDir || '';
-            entry.actorPhotoDir = entry.actorPhotoDir || '';
-            entry.movieboxDir = entry.movieboxDir || '';
+            let entry = lib.libraries[name];
+            if (!isPlainObject(entry)) {
+                entry = {};
+            }
+            if (hasLegacyLibFields(entry)) {
+                console.warn(`[SettingsService] ensureLibraryShape: stripping legacy fields from library "${name}".`);
+                entry = { dir: '' };
+            }
+            if (!Object.prototype.hasOwnProperty.call(entry, 'dir')) {
+                entry.dir = '';
+            }
             lib.libraries[name] = entry;
         });
     }
@@ -234,7 +287,7 @@ class SettingsService {
     /**
      * 新增库
      * @param {string} name - 库名称（必须唯一）
-     * @param {object} config - 库配置 {moviesDir, actorPhotoDir, movieboxDir}
+     * @param {object} config - 库配置 {dir}
      * @returns {{success: boolean, error?: string}}
      */
     addLibrary(name, config) {
@@ -249,12 +302,11 @@ class SettingsService {
         if (this.settings.library.libraries[trimmed]) {
             return { success: false, error: `影视库 "${trimmed}" 已存在` };
         }
-        const cfg = config || {};
-        this.settings.library.libraries[trimmed] = {
-            moviesDir: cfg.moviesDir || '',
-            actorPhotoDir: cfg.actorPhotoDir || '',
-            movieboxDir: cfg.movieboxDir || ''
-        };
+        const cfg = (config && typeof config === 'object') ? config : {};
+        if (hasLegacyLibFields(cfg)) {
+            console.warn('[SettingsService] addLibrary: legacy keys (moviesDir/actorPhotoDir/movieboxDir) ignored, please use { dir }.');
+        }
+        this.settings.library.libraries[trimmed] = { dir: cfg.dir || '' };
         this.saveSettings(this.settings);
         return { success: true };
     }
@@ -280,7 +332,7 @@ class SettingsService {
     /**
      * 更新指定库的目录配置
      * @param {string} name - 库名称
-     * @param {object} patch - 待更新的字段 {moviesDir?, actorPhotoDir?, movieboxDir?}
+     * @param {object} patch - 待更新的字段 {dir}
      * @returns {{success: boolean, error?: string}}
      */
     updateLibrary(name, patch) {
@@ -290,14 +342,11 @@ class SettingsService {
         }
         const target = this.settings.library.libraries[name];
         if (patch && typeof patch === 'object') {
-            if (Object.prototype.hasOwnProperty.call(patch, 'moviesDir')) {
-                target.moviesDir = patch.moviesDir;
+            if (hasLegacyLibFields(patch)) {
+                console.warn('[SettingsService] updateLibrary: legacy keys (moviesDir/actorPhotoDir/movieboxDir) ignored, please use { dir }.');
             }
-            if (Object.prototype.hasOwnProperty.call(patch, 'actorPhotoDir')) {
-                target.actorPhotoDir = patch.actorPhotoDir;
-            }
-            if (Object.prototype.hasOwnProperty.call(patch, 'movieboxDir')) {
-                target.movieboxDir = patch.movieboxDir;
+            if (Object.prototype.hasOwnProperty.call(patch, 'dir')) {
+                target.dir = patch.dir || '';
             }
         }
         this.saveSettings(this.settings);
@@ -314,13 +363,9 @@ class SettingsService {
             this.settings = { ...this.settings, ...newSettings };
             // 重新规整 library 结构
             this.ensureLibraryShape(this.settings);
-            // 旧结构兼容：若 newSettings 中仍带 moviebox 节点，将其迁移至当前库并移除
-            if (newSettings && newSettings.moviebox) {
-                const current = this.getCurrentLibraryName();
-                const target = this.settings.library.libraries[current] || {};
-                if (!target.movieboxDir && newSettings.moviebox.movieboxDir) {
-                    target.movieboxDir = newSettings.moviebox.movieboxDir;
-                }
+            // 新结构不再需要 moviebox 根节点，若有则删除
+            if (this.settings && Object.prototype.hasOwnProperty.call(this.settings, 'moviebox')) {
+                console.warn('[SettingsService] saveSettings: top-level "moviebox" field is no longer supported and has been removed.');
                 delete this.settings.moviebox;
             }
             // 写文件：吞掉异常，避免上层未 await 时形成 Unhandled Rejection
@@ -379,57 +424,45 @@ class SettingsService {
     }
 
     /**
-     * 获取当前库的电影目录
+     * 获取当前库的影视库根目录
+     * @returns {string}
+     */
+    getLibraryDir() {
+        const lib = this.getLibrary();
+        return lib ? (lib.dir || '') : '';
+    }
+
+    /**
+     * 获取当前库的电影目录（派生自 lib.dir）
      * @returns {string}
      */
     getMoviesDir() {
-        const lib = this.getLibrary();
-        return lib ? lib.moviesDir : path.join(__dirname, 'movies');
+        return deriveLibraryPaths(this.getLibrary()).moviesDir;
     }
 
     /**
-     * 设置当前库的电影目录
-     * @param {string} dir - 电影目录路径
-     */
-    setMoviesDir(dir) {
-        const name = this.getCurrentLibraryName();
-        this.updateLibrary(name, { moviesDir: dir });
-    }
-
-    /**
-     * 获取当前库的演员照片目录
+     * 获取当前库的演员照片目录（派生自 lib.dir）
      * @returns {string}
      */
     getActorPhotoDir() {
-        const lib = this.getLibrary();
-        return lib ? (lib.actorPhotoDir || '') : '';
+        return deriveLibraryPaths(this.getLibrary()).actorPhotoDir;
     }
 
     /**
-     * 设置当前库的演员照片目录
-     * @param {string} dirPath - 演员照片目录路径
-     */
-    setActorPhotoDir(dirPath) {
-        const name = this.getCurrentLibraryName();
-        this.updateLibrary(name, { actorPhotoDir: dirPath });
-    }
-
-    /**
-     * 获取当前库的电影收藏夹目录
+     * 获取当前库的电影收藏夹目录（派生自 lib.dir）
      * @returns {string}
      */
     getMovieboxDir() {
-        const lib = this.getLibrary();
-        return lib ? (lib.movieboxDir || path.join(__dirname, 'boxes')) : path.join(__dirname, 'boxes');
+        return deriveLibraryPaths(this.getLibrary()).movieboxDir;
     }
 
     /**
-     * 设置当前库的电影收藏夹目录
-     * @param {string} dir - 电影收藏夹目录路径
+     * 设置当前库的影视库根目录
+     * @param {string} dir
      */
-    setMovieboxDir(dir) {
+    setLibraryDir(dir) {
         const name = this.getCurrentLibraryName();
-        this.updateLibrary(name, { movieboxDir: dir });
+        this.updateLibrary(name, { dir });
     }
 
     /**
@@ -626,7 +659,7 @@ class SettingsService {
 
     /**
      * 导入配置
-     * @param {string} jsonString - JSON 字符串
+     * @param {string} jsonString
      */
     importSettings(jsonString) {
         try {
@@ -643,3 +676,4 @@ class SettingsService {
 
 module.exports = SettingsService;
 module.exports.DEFAULT_LIBRARY_NAME = DEFAULT_LIBRARY_NAME;
+module.exports.deriveLibraryPaths = deriveLibraryPaths;

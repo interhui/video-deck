@@ -91,31 +91,34 @@ describe('SettingsService', () => {
         });
     });
 
-    describe('getMoviesDir / setMoviesDir', () => {
+    describe('getMoviesDir / setLibraryDir / getLibraryDir', () => {
         test('SVC-SETTINGS-009: 返回电影目录', async () => {
             await new Promise(resolve => setTimeout(resolve, 100));
             const moviesDir = service.getMoviesDir();
             expect(moviesDir).toBeDefined();
         });
 
-        test('SVC-SETTINGS-010: 设置电影目录', async () => {
+        test('SVC-SETTINGS-009A: 默认 dir 为空时 getMoviesDir 返回空字符串', async () => {
             await new Promise(resolve => setTimeout(resolve, 100));
-            service.setMoviesDir('/new/path');
-            expect(service.getMoviesDir()).toBe('/new/path');
-        });
-    });
-
-    describe('getMovieboxDir / setMovieboxDir', () => {
-        test('SVC-SETTINGS-011: 返回收藏夹目录', async () => {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            const boxDir = service.getMovieboxDir();
-            expect(boxDir).toBeDefined();
+            expect(service.getMoviesDir()).toBe('');
+            expect(service.getMovieboxDir()).toBe('');
+            expect(service.getActorPhotoDir()).toBe('');
         });
 
-        test('SVC-SETTINGS-012: 设置收藏夹目录', async () => {
+        test('SVC-SETTINGS-009B: 设置 dir 后子目录按约定派生', async () => {
             await new Promise(resolve => setTimeout(resolve, 100));
-            service.setMovieboxDir('/new/box/path');
-            expect(service.getMovieboxDir()).toBe('/new/box/path');
+            service.setLibraryDir('/data/jav');
+            expect(service.getLibraryDir()).toBe('/data/jav');
+            expect(service.getMoviesDir()).toBe(path.join('/data/jav', 'movies'));
+            expect(service.getActorPhotoDir()).toBe(path.join('/data/jav', 'actors'));
+            expect(service.getMovieboxDir()).toBe(path.join('/data/jav', 'boxes'));
+        });
+
+        test('SVC-SETTINGS-010: 旧 setMoviesDir 已移除', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            expect(typeof service.setMoviesDir).toBe('undefined');
+            expect(typeof service.setMovieboxDir).toBe('undefined');
+            expect(typeof service.setActorPhotoDir).toBe('undefined');
         });
     });
 
@@ -127,9 +130,11 @@ describe('SettingsService', () => {
             await new Promise(resolve => setTimeout(resolve, 100));
             const libs = service.getLibraries();
             expect(libs).toHaveProperty('default');
-            expect(libs.default).toHaveProperty('moviesDir');
-            expect(libs.default).toHaveProperty('actorPhotoDir');
-            expect(libs.default).toHaveProperty('movieboxDir');
+            // 新结构：仅保留 dir 字段
+            expect(libs.default).toHaveProperty('dir');
+            expect(libs.default).not.toHaveProperty('moviesDir');
+            expect(libs.default).not.toHaveProperty('actorPhotoDir');
+            expect(libs.default).not.toHaveProperty('movieboxDir');
         });
 
         test('SVC-SETTINGS-047: 默认 currentLibrary 值为 default', async () => {
@@ -139,31 +144,27 @@ describe('SettingsService', () => {
 
         test('SVC-SETTINGS-048: 新增影视库', async () => {
             await new Promise(resolve => setTimeout(resolve, 100));
-            const result = service.addLibrary('family', {
-                moviesDir: 'D:/movies/family',
-                actorPhotoDir: 'D:/actors/family',
-                movieboxDir: 'D:/boxes/family'
-            });
+            const result = service.addLibrary('family', { dir: 'D:/videolib/family' });
             expect(result.success).toBe(true);
             const libs = service.getLibraries();
             expect(libs).toHaveProperty('family');
-            expect(libs.family.moviesDir).toBe('D:/movies/family');
+            expect(libs.family.dir).toBe('D:/videolib/family');
         });
 
         test('SVC-SETTINGS-049: 重复新增同名影视库应失败', async () => {
             await new Promise(resolve => setTimeout(resolve, 100));
-            const r1 = service.addLibrary('home', { moviesDir: 'D:/m' });
+            const r1 = service.addLibrary('home', { dir: 'D:/m1' });
             expect(r1.success).toBe(true);
-            const r2 = service.addLibrary('home', { moviesDir: 'D:/m2' });
+            const r2 = service.addLibrary('home', { dir: 'D:/m2' });
             expect(r2.success).toBe(false);
             expect(r2.error).toBeDefined();
         });
 
         test('SVC-SETTINGS-050: 新增空名称影视库应失败', async () => {
             await new Promise(resolve => setTimeout(resolve, 100));
-            const r1 = service.addLibrary('', { moviesDir: 'D:/m' });
+            const r1 = service.addLibrary('', { dir: 'D:/m' });
             expect(r1.success).toBe(false);
-            const r2 = service.addLibrary('   ', { moviesDir: 'D:/m' });
+            const r2 = service.addLibrary('   ', { dir: 'D:/m' });
             expect(r2.success).toBe(false);
         });
 
@@ -172,19 +173,35 @@ describe('SettingsService', () => {
             const result = service.addLibrary('minimal', {});
             expect(result.success).toBe(true);
             const lib = service.getLibrary('minimal');
-            expect(lib.moviesDir).toBe('');
-            expect(lib.actorPhotoDir).toBe('');
-            expect(lib.movieboxDir).toBe('');
+            expect(lib.dir).toBe('');
+        });
+
+        test('SVC-SETTINGS-051A: 新增影视库时遗留 moviesDir/actorPhotoDir/movieboxDir 字段被忽略', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            const spy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+            const result = service.addLibrary('legacy', {
+                moviesDir: 'D:/movies/legacy',
+                actorPhotoDir: 'D:/actors/legacy',
+                movieboxDir: 'D:/boxes/legacy'
+            });
+            spy.mockRestore();
+            expect(result.success).toBe(true);
+            const lib = service.getLibrary('legacy');
+            expect(lib.dir).toBe('');
+            expect(lib).not.toHaveProperty('moviesDir');
+            expect(lib).not.toHaveProperty('actorPhotoDir');
+            expect(lib).not.toHaveProperty('movieboxDir');
         });
 
         test('SVC-SETTINGS-052: 切换当前影视库', async () => {
             await new Promise(resolve => setTimeout(resolve, 100));
-            service.addLibrary('work', { moviesDir: 'D:/work/movies', movieboxDir: 'D:/work/boxes' });
+            service.addLibrary('work', { dir: 'D:/videolib/work' });
             const ok = service.setCurrentLibrary('work');
             expect(ok).toBe(true);
             expect(service.getCurrentLibraryName()).toBe('work');
-            expect(service.getMoviesDir()).toBe('D:/work/movies');
-            expect(service.getMovieboxDir()).toBe('D:/work/boxes');
+            expect(service.getLibraryDir()).toBe('D:/videolib/work');
+            expect(service.getMoviesDir()).toBe(path.join('D:/videolib/work', 'movies'));
+            expect(service.getMovieboxDir()).toBe(path.join('D:/videolib/work', 'boxes'));
         });
 
         test('SVC-SETTINGS-053: 切换到不存在的影视库应失败', async () => {
@@ -197,7 +214,7 @@ describe('SettingsService', () => {
 
         test('SVC-SETTINGS-054: 切换时去除前后空格', async () => {
             await new Promise(resolve => setTimeout(resolve, 100));
-            service.addLibrary('office', { moviesDir: 'D:/office' });
+            service.addLibrary('office', { dir: 'D:/videolib/office' });
             const ok = service.setCurrentLibrary('  office  ');
             expect(ok).toBe(true);
             expect(service.getCurrentLibraryName()).toBe('office');
@@ -205,17 +222,14 @@ describe('SettingsService', () => {
 
         test('SVC-SETTINGS-055: 切换当前库后目录读取跟随', async () => {
             await new Promise(resolve => setTimeout(resolve, 100));
-            service.addLibrary('movieA', {
-                moviesDir: 'D:/a/movies',
-                actorPhotoDir: 'D:/a/actors',
-                movieboxDir: 'D:/a/boxes'
-            });
+            service.addLibrary('movieA', { dir: 'D:/a' });
             service.setCurrentLibrary('movieA');
-            expect(service.getMoviesDir()).toBe('D:/a/movies');
-            expect(service.getActorPhotoDir()).toBe('D:/a/actors');
-            expect(service.getMovieboxDir()).toBe('D:/a/boxes');
+            expect(service.getLibraryDir()).toBe('D:/a');
+            expect(service.getMoviesDir()).toBe(path.join('D:/a', 'movies'));
+            expect(service.getActorPhotoDir()).toBe(path.join('D:/a', 'actors'));
+            expect(service.getMovieboxDir()).toBe(path.join('D:/a', 'boxes'));
             service.setCurrentLibrary('default');
-            expect(service.getMoviesDir()).not.toBe('D:/a/movies');
+            expect(service.getLibraryDir()).not.toBe('D:/a');
         });
 
         test('SVC-SETTINGS-056: 不能删除当前影视库', async () => {
@@ -227,7 +241,7 @@ describe('SettingsService', () => {
 
         test('SVC-SETTINGS-057: 可以删除非当前影视库', async () => {
             await new Promise(resolve => setTimeout(resolve, 100));
-            service.addLibrary('temp', { moviesDir: 'D:/temp' });
+            service.addLibrary('temp', { dir: 'D:/temp' });
             const r = service.removeLibrary('temp');
             expect(r.success).toBe(true);
             expect(service.getLibraries()).not.toHaveProperty('temp');
@@ -241,55 +255,46 @@ describe('SettingsService', () => {
 
         test('SVC-SETTINGS-059: 更新指定影视库的目录', async () => {
             await new Promise(resolve => setTimeout(resolve, 100));
-            service.addLibrary('upd', { moviesDir: 'D:/old' });
-            const r = service.updateLibrary('upd', { moviesDir: 'D:/new', actorPhotoDir: 'D:/actors/new' });
+            service.addLibrary('upd', { dir: 'D:/old' });
+            const r = service.updateLibrary('upd', { dir: 'D:/new' });
             expect(r.success).toBe(true);
             const lib = service.getLibrary('upd');
-            expect(lib.moviesDir).toBe('D:/new');
-            expect(lib.actorPhotoDir).toBe('D:/actors/new');
-            // 未修改字段保持不变
-            expect(lib.movieboxDir).toBe('');
+            expect(lib.dir).toBe('D:/new');
+        });
+
+        test('SVC-SETTINGS-059A: 更新库时遗留旧字段被忽略', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            service.addLibrary('upd2', { dir: 'D:/kept' });
+            const spy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+            const r = service.updateLibrary('upd2', { moviesDir: 'D:/should/ignore' });
+            spy.mockRestore();
+            expect(r.success).toBe(true);
+            const lib = service.getLibrary('upd2');
+            expect(lib.dir).toBe('D:/kept');
+            expect(lib).not.toHaveProperty('moviesDir');
         });
 
         test('SVC-SETTINGS-060: 更新不存在的影视库应失败', async () => {
             await new Promise(resolve => setTimeout(resolve, 100));
-            const r = service.updateLibrary('not-here', { moviesDir: 'D:/x' });
+            const r = service.updateLibrary('not-here', { dir: 'D:/x' });
             expect(r.success).toBe(false);
         });
 
-        test('SVC-SETTINGS-061: setMoviesDir 作用于当前库', async () => {
+        test('SVC-SETTINGS-061: setLibraryDir 作用于当前库', async () => {
             await new Promise(resolve => setTimeout(resolve, 100));
-            service.addLibrary('S', { moviesDir: 'D:/S1' });
+            service.addLibrary('S', { dir: 'D:/S1' });
             service.setCurrentLibrary('S');
-            service.setMoviesDir('D:/S2');
-            expect(service.getMoviesDir()).toBe('D:/S2');
-            expect(service.getLibrary('S').moviesDir).toBe('D:/S2');
-        });
-
-        test('SVC-SETTINGS-062: setMovieboxDir 作用于当前库', async () => {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            service.addLibrary('B', { movieboxDir: 'D:/B1' });
-            service.setCurrentLibrary('B');
-            service.setMovieboxDir('D:/B2');
-            expect(service.getMovieboxDir()).toBe('D:/B2');
-            expect(service.getLibrary('B').movieboxDir).toBe('D:/B2');
-        });
-
-        test('SVC-SETTINGS-063: setActorPhotoDir 作用于当前库', async () => {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            service.addLibrary('A', { actorPhotoDir: 'D:/A1' });
-            service.setCurrentLibrary('A');
-            service.setActorPhotoDir('D:/A2');
-            expect(service.getActorPhotoDir()).toBe('D:/A2');
-            expect(service.getLibrary('A').actorPhotoDir).toBe('D:/A2');
+            service.setLibraryDir('D:/S2');
+            expect(service.getLibraryDir()).toBe('D:/S2');
+            expect(service.getLibrary('S').dir).toBe('D:/S2');
         });
 
         test('SVC-SETTINGS-064: getLibraries 返回深拷贝，不污染内部状态', async () => {
             await new Promise(resolve => setTimeout(resolve, 100));
             const libs = service.getLibraries();
-            libs.default.moviesDir = 'POISONED';
+            libs.default.dir = 'POISONED';
             // 内部 state 应保持不变
-            expect(service.getMoviesDir()).not.toBe('POISONED');
+            expect(service.getLibraryDir()).not.toBe('POISONED');
         });
 
         test('SVC-SETTINGS-065: getLibrary 在 name 为空时回退到当前库', async () => {
@@ -301,7 +306,7 @@ describe('SettingsService', () => {
 
         test('SVC-SETTINGS-066: getLibrary 找不到时回退到第一个可用库', async () => {
             await new Promise(resolve => setTimeout(resolve, 100));
-            service.addLibrary('fallback', { moviesDir: 'D:/fallback' });
+            service.addLibrary('fallback', { dir: 'D:/fallback' });
             // 强制把 currentLibrary 设到一个不存在的名字
             service.settings.library.currentLibrary = 'not-real';
             const lib = service.getLibrary();
@@ -322,12 +327,19 @@ describe('SettingsService', () => {
             }
         });
 
-        test('SVC-SETTINGS-067: 加载旧结构时自动迁移到多库结构', async () => {
+        test('SVC-SETTINGS-067: 加载旧结构时强制重置为 { dir: "" }', async () => {
+            const spy = jest.spyOn(console, 'warn').mockImplementation(() => {});
             const legacy = {
                 version: '1.0.0',
                 library: {
-                    moviesDir: 'D:/legacy/movies',
-                    actorPhotoDir: 'D:/legacy/actors',
+                    libraries: {
+                        default: {
+                            moviesDir: 'D:/legacy/movies',
+                            actorPhotoDir: 'D:/legacy/actors',
+                            movieboxDir: 'D:/legacy/boxes'
+                        }
+                    },
+                    currentLibrary: 'default',
                     newMovieHours: 96
                 },
                 moviebox: {
@@ -338,13 +350,16 @@ describe('SettingsService', () => {
             fs.writeFileSync(file, JSON.stringify(legacy, null, 2));
             const svc = new SettingsService(file);
             await new Promise(resolve => setTimeout(resolve, 200));
+            spy.mockRestore();
 
             const settings = svc.getSettings();
             expect(settings.library.libraries).toBeDefined();
             expect(settings.library.libraries.default).toBeDefined();
-            expect(settings.library.libraries.default.moviesDir).toBe('D:/legacy/movies');
-            expect(settings.library.libraries.default.actorPhotoDir).toBe('D:/legacy/actors');
-            expect(settings.library.libraries.default.movieboxDir).toBe('D:/legacy/boxes');
+            // 旧字段被强制清除，dir 强制重置为空
+            expect(settings.library.libraries.default.dir).toBe('');
+            expect(settings.library.libraries.default).not.toHaveProperty('moviesDir');
+            expect(settings.library.libraries.default).not.toHaveProperty('actorPhotoDir');
+            expect(settings.library.libraries.default).not.toHaveProperty('movieboxDir');
             expect(settings.library.currentLibrary).toBe('default');
             expect(settings.library.newMovieHours).toBe(96);
             expect(settings.moviebox).toBeUndefined();
@@ -356,9 +371,7 @@ describe('SettingsService', () => {
                 library: {
                     libraries: {
                         custom: {
-                            moviesDir: 'D:/custom',
-                            actorPhotoDir: 'D:/actors',
-                            movieboxDir: 'D:/boxes'
+                            dir: 'D:/custom'
                         }
                     },
                     currentLibrary: 'custom',
@@ -371,15 +384,24 @@ describe('SettingsService', () => {
             await new Promise(resolve => setTimeout(resolve, 200));
 
             const settings = svc.getSettings();
-            expect(settings.library.libraries.custom.moviesDir).toBe('D:/custom');
+            expect(settings.library.libraries.custom.dir).toBe('D:/custom');
             expect(settings.library.currentLibrary).toBe('custom');
             expect(settings.library.newMovieHours).toBe(48);
         });
 
         test('SVC-SETTINGS-069: 迁移后能保存到磁盘', async () => {
             const legacy = {
-                library: { moviesDir: 'D:/x' },
-                moviebox: { movieboxDir: 'D:/y' }
+                library: {
+                    libraries: {
+                        default: {
+                            moviesDir: 'D:/x',
+                            actorPhotoDir: 'D:/y',
+                            movieboxDir: 'D:/z'
+                        }
+                    },
+                    currentLibrary: 'default'
+                },
+                moviebox: { movieboxDir: 'D:/z' }
             };
             const file = path.join(subDir, 'settings.json');
             fs.writeFileSync(file, JSON.stringify(legacy, null, 2));
@@ -391,36 +413,48 @@ describe('SettingsService', () => {
             const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
             expect(raw.library.libraries).toBeDefined();
             expect(raw.library.currentLibrary).toBe('default');
+            // 旧字段在保存后也不会再回来
+            expect(raw.library.libraries.default).toEqual({ dir: '' });
+            expect(raw.moviebox).toBeUndefined();
         });
 
         test('SVC-SETTINGS-070: importSettings 也能迁移旧结构', async () => {
             await new Promise(resolve => setTimeout(resolve, 100));
             const legacyJson = JSON.stringify({
-                library: { moviesDir: 'D:/imp' },
+                library: {
+                    libraries: {
+                        default: {
+                            moviesDir: 'D:/imp',
+                            actorPhotoDir: 'D:/impa',
+                            movieboxDir: 'D:/impb'
+                        }
+                    },
+                    currentLibrary: 'default'
+                },
                 moviebox: { movieboxDir: 'D:/impb' }
             });
             service.importSettings(legacyJson);
             const settings = service.getSettings();
-            expect(settings.library.libraries.default.moviesDir).toBe('D:/imp');
-            expect(settings.library.libraries.default.movieboxDir).toBe('D:/impb');
+            expect(settings.library.libraries.default.dir).toBe('');
+            expect(settings.library.libraries.default).not.toHaveProperty('moviesDir');
             expect(settings.moviebox).toBeUndefined();
         });
 
-        test('SVC-SETTINGS-071: saveSettings 兼容旧 moviebox 字段并迁移到当前库', async () => {
+        test('SVC-SETTINGS-071: saveSettings 收到顶层 moviebox 字段时会被清除', async () => {
             await new Promise(resolve => setTimeout(resolve, 100));
+            const spy = jest.spyOn(console, 'warn').mockImplementation(() => {});
             service.saveSettings({
                 moviebox: { movieboxDir: 'D:/legacy/box' },
                 library: {
-                    libraries: {
-                        default: { moviesDir: 'D:/d/m', actorPhotoDir: '', movieboxDir: '' }
-                    },
+                    libraries: { default: { dir: 'D:/d' } },
                     currentLibrary: 'default',
                     newMovieHours: 72
                 }
             });
+            spy.mockRestore();
             const settings = service.getSettings();
-            expect(settings.library.libraries.default.movieboxDir).toBe('D:/legacy/box');
             expect(settings.moviebox).toBeUndefined();
+            expect(settings.library.libraries.default.dir).toBe('D:/d');
         });
     });
 

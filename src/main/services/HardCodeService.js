@@ -31,11 +31,10 @@ class HardCodeService {
             },
 
             library: {
+                // 每个影视库仅记录 dir 根目录；moviesDir/actorPhotoDir/movieboxDir 在 SettingsService 中按需派生
                 libraries: {
                     default: {
-                        moviesDir: path.join(__dirname, 'movies'),
-                        actorPhotoDir: path.join(__dirname, 'actors'),
-                        movieboxDir: path.join(__dirname, 'boxes')
+                        dir: ''
                     }
                 },
                 currentLibrary: 'default',

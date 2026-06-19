@@ -29,7 +29,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // 配置管理
     getSettings: () => ipcRenderer.invoke('get-settings'),
     saveSettings: (newSettings) => ipcRenderer.invoke('save-settings', newSettings),
-    updateMoviesDir: (dirPath) => ipcRenderer.invoke('update-movies-dir', dirPath),
     getMoviesDir: () => ipcRenderer.invoke('get-movies-dir'),
     setTheme: (theme) => ipcRenderer.invoke('set-theme', theme),
 

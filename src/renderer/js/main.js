@@ -36,7 +36,7 @@ const state = {
     onlyNewMovies: false, //只显示新电影
     newMovieHours: 72, //新电影小时数阈值
     currentLibrary: 'default', //当前影视库名称
-    libraries: {}, //所有影视库配置 { name: { moviesDir, actorPhotoDir, movieboxDir } }
+    libraries: {}, //所有影视库配置 { name: { dir } }
     batchSearchResults: [], //批量搜索结果
     batchSearchInProgress: false, //批量搜索进行中
     isScanning: false, //是否正在执行电影扫描
@@ -92,6 +92,8 @@ const elements = {
     selectMovieboxDirBtn: document.getElementById('select-moviebox-dir-btn'),
     actorPhotoDirInput: document.getElementById('actor-photo-dir-input'),
     selectActorPhotoDirBtn: document.getElementById('select-actor-photo-dir-btn'),
+    libraryDirInput: document.getElementById('library-dir-input'),
+    selectLibraryDirBtn: document.getElementById('select-library-dir-btn'),
     newMovieHoursInput: document.getElementById('new-movie-hours-input'),
     // 影视库管理
     libraryNameSelect: document.getElementById('library-name-select'),
@@ -101,12 +103,8 @@ const elements = {
     cancelAddLibrary: document.getElementById('cancel-add-library'),
     confirmAddLibrary: document.getElementById('confirm-add-library'),
     addLibraryNameInput: document.getElementById('add-library-name-input'),
-    addLibraryMoviesInput: document.getElementById('add-library-movies-input'),
-    addLibraryMoviesBtn: document.getElementById('add-library-movies-btn'),
-    addLibraryMovieboxInput: document.getElementById('add-library-moviebox-input'),
-    addLibraryMovieboxBtn: document.getElementById('add-library-moviebox-btn'),
-    addLibraryActorInput: document.getElementById('add-library-actor-input'),
-    addLibraryActorBtn: document.getElementById('add-library-actor-btn'),
+    addLibraryDirInput: document.getElementById('add-library-dir-input'),
+    addLibraryDirBtn: document.getElementById('add-library-dir-btn'),
     addLibraryError: document.getElementById('add-library-error'),
     // TMDB 设置
     tmdbUrlInput: document.getElementById('tmdb-url-input'),
@@ -714,9 +712,7 @@ async function loadSettings() {
         if (elements.sidebarWidth) elements.sidebarWidth.value = state.settings.layout?.sidebarWidth || 200;
         if (elements.posterSize) elements.posterSize.value = state.settings.layout?.posterSize || 'medium';
         if (elements.posterStyle) elements.posterStyle.value = state.settings.layout?.posterStyle || 'vertical';
-        if (elements.moviesDirInput) elements.moviesDirInput.value = state.settings.library?.moviesDir || '';
-        if (elements.movieboxDirInput) elements.movieboxDirInput.value = state.settings.moviebox?.movieboxDir || '';
-        if (elements.actorPhotoDirInput) elements.actorPhotoDirInput.value = state.settings.library?.actorPhotoDir || '';
+        if (elements.libraryDirInput) elements.libraryDirInput.value = state.settings.library?.libraries?.[state.settings.library?.currentLibrary || 'default']?.dir || '';
         if (elements.newMovieHoursInput) elements.newMovieHoursInput.value = state.settings.library?.newMovieHours || 72;
 
         // 初始化影视库状态
@@ -725,9 +721,7 @@ async function loadSettings() {
             ? state.settings.library.libraries
             : {
                 default: {
-                    moviesDir: state.settings.library?.moviesDir || '',
-                    actorPhotoDir: state.settings.library?.actorPhotoDir || '',
-                    movieboxDir: state.settings.moviebox?.movieboxDir || ''
+                    dir: ''
                 }
             };
         populateLibrarySelect();
@@ -820,9 +814,7 @@ async function loadSettings() {
 function syncDirectoryInputsFromCurrentLibrary() {
     const lib = state.libraries[state.currentLibrary];
     if (!lib) return;
-    if (elements.moviesDirInput) elements.moviesDirInput.value = lib.moviesDir || '';
-    if (elements.movieboxDirInput) elements.movieboxDirInput.value = lib.movieboxDir || '';
-    if (elements.actorPhotoDirInput) elements.actorPhotoDirInput.value = lib.actorPhotoDir || '';
+    if (elements.libraryDirInput) elements.libraryDirInput.value = lib.dir || '';
 }
 
 /**
@@ -863,9 +855,7 @@ function showAddLibraryError(msg) {
 function openAddLibraryModal() {
     if (!elements.addLibraryModal) return;
     if (elements.addLibraryNameInput) elements.addLibraryNameInput.value = '';
-    if (elements.addLibraryMoviesInput) elements.addLibraryMoviesInput.value = '';
-    if (elements.addLibraryMovieboxInput) elements.addLibraryMovieboxInput.value = '';
-    if (elements.addLibraryActorInput) elements.addLibraryActorInput.value = '';
+    if (elements.addLibraryDirInput) elements.addLibraryDirInput.value = '';
     showAddLibraryError('');
     elements.addLibraryModal.style.display = 'flex';
 }
@@ -2193,29 +2183,44 @@ function bindEvents() {
         });
     }
 
-    // 选择目录
-    elements.selectDirBtn.addEventListener('click', async () => {
-        const result = await window.electronAPI.selectDirectory();
-        if (!result.canceled && result.path) {
-            elements.moviesDirInput.value = result.path;
-        }
-    });
+    // 选择影视库目录（合并后的统一入口）
+    if (elements.selectLibraryDirBtn) {
+        elements.selectLibraryDirBtn.addEventListener('click', async () => {
+            const result = await window.electronAPI.selectDirectory();
+            if (!result.canceled && result.path) {
+                elements.libraryDirInput.value = result.path;
+            }
+        });
+    }
 
-    // 选择电影收藏夹目录
-    elements.selectMovieboxDirBtn.addEventListener('click', async () => {
-        const result = await window.electronAPI.selectDirectory();
-        if (!result.canceled && result.path) {
-            elements.movieboxDirInput.value = result.path;
-        }
-    });
-
-    // 选择演员照片目录
-    elements.selectActorPhotoDirBtn.addEventListener('click', async () => {
-        const result = await window.electronAPI.selectDirectory();
-        if (!result.canceled && result.path) {
-            elements.actorPhotoDirInput.value = result.path;
-        }
-    });
+    // 兼容旧的三个按钮：把它们的点击也写回到同一个 libraryDirInput 上，避免悬空事件
+    if (elements.selectDirBtn && !elements.selectDirBtn.dataset.bound) {
+        elements.selectDirBtn.dataset.bound = '1';
+        elements.selectDirBtn.addEventListener('click', async () => {
+            const result = await window.electronAPI.selectDirectory();
+            if (!result.canceled && result.path) {
+                elements.libraryDirInput.value = result.path;
+            }
+        });
+    }
+    if (elements.selectMovieboxDirBtn && !elements.selectMovieboxDirBtn.dataset.bound) {
+        elements.selectMovieboxDirBtn.dataset.bound = '1';
+        elements.selectMovieboxDirBtn.addEventListener('click', async () => {
+            const result = await window.electronAPI.selectDirectory();
+            if (!result.canceled && result.path) {
+                elements.libraryDirInput.value = result.path;
+            }
+        });
+    }
+    if (elements.selectActorPhotoDirBtn && !elements.selectActorPhotoDirBtn.dataset.bound) {
+        elements.selectActorPhotoDirBtn.dataset.bound = '1';
+        elements.selectActorPhotoDirBtn.addEventListener('click', async () => {
+            const result = await window.electronAPI.selectDirectory();
+            if (!result.canceled && result.path) {
+                elements.libraryDirInput.value = result.path;
+            }
+        });
+    }
 
     // 选择ffmpeg路径
     elements.selectFfmpegBtn.addEventListener('click', async () => {
@@ -2263,27 +2268,11 @@ function bindEvents() {
     }
 
     // 新增影视库 - 选择目录
-    if (elements.addLibraryMoviesBtn) {
-        elements.addLibraryMoviesBtn.addEventListener('click', async () => {
+    if (elements.addLibraryDirBtn) {
+        elements.addLibraryDirBtn.addEventListener('click', async () => {
             const result = await window.electronAPI.selectDirectory();
             if (!result.canceled && result.path) {
-                elements.addLibraryMoviesInput.value = result.path;
-            }
-        });
-    }
-    if (elements.addLibraryMovieboxBtn) {
-        elements.addLibraryMovieboxBtn.addEventListener('click', async () => {
-            const result = await window.electronAPI.selectDirectory();
-            if (!result.canceled && result.path) {
-                elements.addLibraryMovieboxInput.value = result.path;
-            }
-        });
-    }
-    if (elements.addLibraryActorBtn) {
-        elements.addLibraryActorBtn.addEventListener('click', async () => {
-            const result = await window.electronAPI.selectDirectory();
-            if (!result.canceled && result.path) {
-                elements.addLibraryActorInput.value = result.path;
+                elements.addLibraryDirInput.value = result.path;
             }
         });
     }
@@ -2301,9 +2290,7 @@ function bindEvents() {
                 return;
             }
             const config = {
-                moviesDir: elements.addLibraryMoviesInput?.value || '',
-                movieboxDir: elements.addLibraryMovieboxInput?.value || '',
-                actorPhotoDir: elements.addLibraryActorInput?.value || ''
+                dir: elements.addLibraryDirInput?.value || ''
             };
             const result = await window.electronAPI.addLibrary({ name, config });
             if (result && result.success) {
@@ -3742,13 +3729,11 @@ async function saveSettingsHandler() {
                 viewMode: state.viewMode
             },
             library: (() => {
-                // 构造新的 library 节点：以 state.libraries 为基础，将当前库的目录写回
+                // 构造新的 library 节点：以 state.libraries 为基础，将当前库的 dir 写回
                 const currentName = state.currentLibrary || 'default';
                 const existingLib = state.libraries[currentName] || {};
                 const updatedCurrentLib = {
-                    moviesDir: elements.moviesDirInput.value,
-                    movieboxDir: elements.movieboxDirInput.value,
-                    actorPhotoDir: elements.actorPhotoDirInput.value
+                    dir: elements.libraryDirInput?.value || ''
                 };
                 const libraries = { ...state.libraries };
                 libraries[currentName] = { ...existingLib, ...updatedCurrentLib };

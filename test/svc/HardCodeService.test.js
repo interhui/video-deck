@@ -56,11 +56,18 @@ describe('HardCodeService', () => {
             expect(settings.library).toBeDefined();
             expect(settings.library.libraries).toBeDefined();
             expect(settings.library.libraries.default).toBeDefined();
-            expect(settings.library.libraries.default.moviesDir).toBeDefined();
-            expect(settings.library.libraries.default.actorPhotoDir).toBeDefined();
-            expect(settings.library.libraries.default.movieboxDir).toBeDefined();
+            // 新结构：仅保留 dir 字段，moviesDir/actorPhotoDir/movieboxDir 不再硬编码
+            expect(settings.library.libraries.default).toEqual({ dir: '' });
             expect(settings.library.currentLibrary).toBe('default');
             expect(settings.library.newMovieHours).toBe(72);
+        });
+
+        test('SVC-HARDCODED-007: library.libraries.default 不含旧字段', () => {
+            const settings = service.getDefaultSettings();
+            const entry = settings.library.libraries.default;
+            expect(entry).not.toHaveProperty('moviesDir');
+            expect(entry).not.toHaveProperty('actorPhotoDir');
+            expect(entry).not.toHaveProperty('movieboxDir');
         });
 
         test('SVC-HARDCODED-008: moviebox 顶层节点已移除', () => {
