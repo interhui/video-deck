@@ -121,20 +121,12 @@ class HardCodeService {
                 order: 2
             },
             {
-                id: 'documentary',
-                name: '纪录片',
-                shortName: '纪录片',
-                icon: 'image/category-icons/documentary.png',
-                color: '#E60012',
-                order: 3
-            },
-            {
                 id: 'anime',
                 name: '动漫',
                 shortName: '动漫',
                 icon: 'image/category-icons/anime.png',
                 color: '#888888',
-                order: 4
+                order: 3
             }
         ];
     }

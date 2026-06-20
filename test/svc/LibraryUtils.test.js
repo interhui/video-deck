@@ -258,6 +258,66 @@ describe('LibraryUtils', () => {
                 expect(fs.existsSync(path.join(libDir, cfg.fileName))).toBe(true);
             }
         });
+
+        test('LIB-UTILS-025: 根据默认 categories.json 在 movies 下创建分类子目录', async () => {
+            const result = await prepareLibraryDir(libDir);
+
+            // 默认 categories.json 应至少包含 1 个分类；每个分类 ID 都需要在 movies 下建立子目录
+            const categories = JSON.parse(fs.readFileSync(path.join(libDir, 'categories.json'), 'utf-8'));
+            const ids = categories.categories.map(c => c.id);
+            expect(ids.length).toBeGreaterThan(0);
+            for (const id of ids) {
+                const categoryDir = path.join(libDir, 'movies', id);
+                expect(fs.existsSync(categoryDir)).toBe(true);
+                expect(result.createdDirs).toContain(categoryDir);
+            }
+        });
+
+        test('LIB-UTILS-026: 重复调用不会重复创建已存在的分类目录', async () => {
+            await prepareLibraryDir(libDir);
+            const second = await prepareLibraryDir(libDir);
+            const categories = JSON.parse(fs.readFileSync(path.join(libDir, 'categories.json'), 'utf-8'));
+            for (const cat of categories.categories) {
+                const categoryDir = path.join(libDir, 'movies', cat.id);
+                // 第二轮不再把分类目录写入 createdDirs
+                expect(second.createdDirs).not.toContain(categoryDir);
+                expect(fs.existsSync(categoryDir)).toBe(true);
+            }
+        });
+
+        test('LIB-UTILS-027: 自定义 categories.json 的分类 ID 也会触发创建对应子目录', async () => {
+            fs.mkdirSync(libDir, { recursive: true });
+            fs.mkdirSync(path.join(libDir, 'movies'), { recursive: true });
+            // 写入包含 3 个自定义分类的 categories.json
+            const custom = {
+                categories: [
+                    { id: 'movie', name: '电影' },
+                    { id: 'tv', name: '电视剧' },
+                    { id: 'anime', name: '动漫' }
+                ],
+                predefinedTags: [],
+                customTags: []
+            };
+            fs.writeFileSync(path.join(libDir, 'categories.json'), JSON.stringify(custom, 'utf-8'));
+
+            const result = await prepareLibraryDir(libDir);
+            for (const id of ['movie', 'tv', 'anime']) {
+                const categoryDir = path.join(libDir, 'movies', id);
+                expect(fs.existsSync(categoryDir)).toBe(true);
+                expect(result.createdDirs).toContain(categoryDir);
+            }
+        });
+
+        test('LIB-UTILS-028: categories.json 损坏时不抛错，且不创建任何分类目录', async () => {
+            fs.mkdirSync(libDir, { recursive: true });
+            fs.mkdirSync(path.join(libDir, 'movies'), { recursive: true });
+            fs.writeFileSync(path.join(libDir, 'categories.json'), '{ not valid json', 'utf-8');
+
+            await expect(prepareLibraryDir(libDir)).resolves.toBeDefined();
+            // movies 下应仅有 REQUIRED_SUBDIRS 之外的子目录（即无分类子目录）
+            const moviesEntries = fs.readdirSync(path.join(libDir, 'movies'));
+            expect(moviesEntries).toEqual([]);
+        });
     });
 
     describe('prepareLibraryDirSync', () => {
@@ -277,6 +337,18 @@ describe('LibraryUtils', () => {
         test('LIB-UTILS-031: 同步版本对空路径抛错', () => {
             expect(() => prepareLibraryDirSync('')).toThrow();
             expect(() => prepareLibraryDirSync(null)).toThrow();
+        });
+
+        test('LIB-UTILS-032: 同步版本也会根据 categories.json 在 movies 下创建分类子目录', () => {
+            const result = prepareLibraryDirSync(libDir);
+            const categories = JSON.parse(fs.readFileSync(path.join(libDir, 'categories.json'), 'utf-8'));
+            const ids = categories.categories.map(c => c.id);
+            expect(ids.length).toBeGreaterThan(0);
+            for (const id of ids) {
+                const categoryDir = path.join(libDir, 'movies', id);
+                expect(fs.existsSync(categoryDir)).toBe(true);
+                expect(result.createdDirs).toContain(categoryDir);
+            }
         });
     });
 });

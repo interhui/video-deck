@@ -118,6 +118,57 @@ const INIT_CONFIG_FILES = [
 ];
 
 /**
+ * 从 categories.json 中读取分类 ID 列表。
+ * 解析失败或文件不存在时返回空数组（不抛错），让上游决定如何降级。
+ * @param {string} filePath
+ * @returns {Array<{id: string}>}
+ */
+function readCategoryIdsFromFile(filePath) {
+    try {
+        if (!filePath || !fsSync.existsSync(filePath)) {
+            return [];
+        }
+        const raw = fsSync.readFileSync(filePath, 'utf-8');
+        const parsed = JSON.parse(raw);
+        if (!parsed || !Array.isArray(parsed.categories)) {
+            return [];
+        }
+        return parsed.categories.filter(c => c && typeof c.id === 'string' && c.id.trim());
+    } catch (error) {
+        console.error('[LibraryUtils] Failed to read categories.json:', error.message || error);
+        return [];
+    }
+}
+
+/**
+ * 同步版本：确保 moviesDir 下存在以每个分类 ID 命名的子目录。
+ * 已存在的目录跳过；新建的目录路径记录到 result.createdDirs。
+ * @param {string} moviesDir
+ * @param {string} categoriesFilePath
+ * @param {{createdDirs: string[]}} result
+ */
+function ensureCategoryDirsSync(moviesDir, categoriesFilePath, result) {
+    if (!moviesDir || !categoriesFilePath) {
+        return;
+    }
+    const categories = readCategoryIdsFromFile(categoriesFilePath);
+    for (const cat of categories) {
+        const categoryDir = path.join(moviesDir, cat.id.trim());
+        if (fsSync.existsSync(categoryDir)) {
+            continue;
+        }
+        try {
+            fsSync.mkdirSync(categoryDir, { recursive: true });
+            if (result) {
+                result.createdDirs.push(categoryDir);
+            }
+        } catch (error) {
+            console.error(`[LibraryUtils] Failed to create category dir ${categoryDir}:`, error.message || error);
+        }
+    }
+}
+
+/**
  * 确保 library 目录及子目录、5 个配置文件就绪。
  * @param {string} dir - 影视库根目录
  * @param {object} [opts]
@@ -192,6 +243,20 @@ async function prepareLibraryDir(dir, opts = {}) {
         result.createdFiles.push(filePath);
     }
 
+    // 4) 根据 categories.json 中的分类 ID，在 moviesDir 下创建对应的分类子目录
+    const moviesDir = path.join(target, 'movies');
+    const categoriesFilePath = path.join(target, PATH_CONFIG_FILES.categories);
+    if (await fileExists(moviesDir)) {
+        const categories = readCategoryIdsFromFile(categoriesFilePath);
+        for (const cat of categories) {
+            const categoryDir = path.join(moviesDir, cat.id.trim());
+            if (!(await fileExists(categoryDir))) {
+                await ensureDir(categoryDir);
+                result.createdDirs.push(categoryDir);
+            }
+        }
+    }
+
     return result;
 }
 
@@ -235,6 +300,13 @@ function prepareLibraryDirSync(dir) {
         const content = cfg.defaultContent(hardCode);
         fsSync.writeFileSync(filePath, JSON.stringify(content, null, 2), 'utf-8');
         result.createdFiles.push(filePath);
+    }
+
+    // 根据 categories.json 中的分类 ID，在 moviesDir 下创建对应的分类子目录
+    const moviesDir = path.join(target, 'movies');
+    const categoriesFilePath = path.join(target, PATH_CONFIG_FILES.categories);
+    if (fsSync.existsSync(moviesDir)) {
+        ensureCategoryDirsSync(moviesDir, categoriesFilePath, result);
     }
 
     return result;

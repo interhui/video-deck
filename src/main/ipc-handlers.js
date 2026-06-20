@@ -198,6 +198,29 @@ function resolveCurrentMoviesDir(settingsService) {
 }
 
 /**
+ * 确保 moviesDir 下存在以分类 ID 命名的子目录；若已存在则跳过。
+ * @param {string} categoryId
+ * @param {object} settingsService
+ * @param {object} fileService
+ * @returns {Promise<boolean>} true 表示新建了目录，false 表示目录已存在
+ */
+async function ensureCategoryDir(categoryId, settingsService, fileService) {
+    if (!categoryId || typeof categoryId !== 'string' || !categoryId.trim()) {
+        return false;
+    }
+    const moviesDir = resolveCurrentMoviesDir(settingsService);
+    if (!moviesDir) {
+        return false;
+    }
+    const categoryDir = path.join(moviesDir, categoryId.trim());
+    if (await fileService.fileExists(categoryDir)) {
+        return false;
+    }
+    await fileService.ensureDir(categoryDir);
+    return true;
+}
+
+/**
  * 解析当前影视库的电影收藏夹绝对路径
  * @param {object} settingsService
  * @returns {string}
@@ -1653,6 +1676,7 @@ function setupIpcHandlers(services) {
     ipcMain.handle('scan-movie-directory', async (event, { scanPath, scanType, category, dirNaming }) => {
         try {
             const moviesDir = resolveCurrentMoviesDir(settingsService);
+            const settings = settingsService.getSettings();
             const videoParsingConfig = settings.videoParsing || {};
             const webContents = event.sender;
 
@@ -1941,6 +1965,8 @@ function setupIpcHandlers(services) {
             }
             categories.push({ id, name, shortName, icon, color, emulatorId, order });
             await categoryService.saveCategories(categories);
+            // 确保在 moviesDir 下创建对应的分类目录
+            await ensureCategoryDir(id, settingsService, fileService);
             broadcastCategoriesUpdated();
             return { success: true };
         } catch (error) {
@@ -1965,6 +1991,8 @@ function setupIpcHandlers(services) {
             category.emulatorId = emulatorId;
             category.order = order;
             await categoryService.saveCategories(categories);
+            // 确保在 moviesDir 下存在对应的分类目录（ID 不可修改，仅补齐缺失的目录）
+            await ensureCategoryDir(id, settingsService, fileService);
             broadcastCategoriesUpdated();
             return { success: true };
         } catch (error) {
