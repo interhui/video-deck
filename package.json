@@ -1,7 +1,7 @@
 {
-  "name": "movie-mgt",
+  "name": "video-deck",
   "version": "1.0.0",
-  "description": "电影管理程序",
+  "description": "最优秀的电影管理软件",
   "main": "main.js",
   "bin": {
     "movie-mgt": "./src/cli/index.js"
@@ -53,8 +53,8 @@
     "xml2js": "^0.6.2"
   },
   "build": {
-    "appId": "org.pinae.movie-mgt",
-    "productName": "movie-mgt",
+    "appId": "org.pinae.video-deck",
+    "productName": "video-deck",
     "directories": {
       "output": "dist"
     },

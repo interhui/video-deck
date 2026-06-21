@@ -9,6 +9,7 @@ const https = require('https');
 const http = require('http');
 const ExportService = require('./services/ExportService');
 const { setGlobalProxy } = require('./utils/HttpUtils');
+const { computeLibraryPaths, applyLibraryPathsToServices, prepareLibraryDir } = require('./utils/LibraryUtils');
 
 // 程序根目录
 const APP_ROOT = path.join(__dirname, '..', '..');
@@ -188,6 +189,47 @@ function getMovieboxDirPath(movieboxDir) {
 }
 
 /**
+ * 解析当前影视库的电影目录绝对路径
+ * @param {object} settingsService
+ * @returns {string}
+ */
+function resolveCurrentMoviesDir(settingsService) {
+    return getMoviesDirPath(settingsService.getMoviesDir());
+}
+
+/**
+ * 确保 moviesDir 下存在以分类 ID 命名的子目录；若已存在则跳过。
+ * @param {string} categoryId
+ * @param {object} settingsService
+ * @param {object} fileService
+ * @returns {Promise<boolean>} true 表示新建了目录，false 表示目录已存在
+ */
+async function ensureCategoryDir(categoryId, settingsService, fileService) {
+    if (!categoryId || typeof categoryId !== 'string' || !categoryId.trim()) {
+        return false;
+    }
+    const moviesDir = resolveCurrentMoviesDir(settingsService);
+    if (!moviesDir) {
+        return false;
+    }
+    const categoryDir = path.join(moviesDir, categoryId.trim());
+    if (await fileService.fileExists(categoryDir)) {
+        return false;
+    }
+    await fileService.ensureDir(categoryDir);
+    return true;
+}
+
+/**
+ * 解析当前影视库的电影收藏夹绝对路径
+ * @param {object} settingsService
+ * @returns {string}
+ */
+function resolveCurrentMovieboxDir(settingsService) {
+    return getMovieboxDirPath(settingsService.getMovieboxDir());
+}
+
+/**
  * 设置所有 IPC 处理器
  * @param {Object} services - 服务实例对象
  */
@@ -210,6 +252,7 @@ function setupIpcHandlers(services) {
         batchActorSearchService,
         screenshotService,
         movieHistoryService,
+        httpService,
         getMainWindow,
         createMovieDetailWindow,
         createBoxWindow,
@@ -229,8 +272,7 @@ function setupIpcHandlers(services) {
     // 获取所有分类
     ipcMain.handle('get-categories', async () => {
         try {
-            const settings = settingsService.getSettings();
-            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
             const categories = await fileService.getCategoryFolders(moviesDir);
             const stats = await movieService.getCategoryStats(categories, moviesDir);
             return stats;
@@ -243,8 +285,7 @@ function setupIpcHandlers(services) {
     // 获取指定分类的电影列表
     ipcMain.handle('get-movies-by-category', async (event, filters) => {
         try {
-            const settings = settingsService.getSettings();
-            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
             const { category, status, sortBy, sortOrder, tagId, rating, actors } = filters || {};
             const categoryFilter = category;
             const movies = await movieService.getMoviesByCategory(categoryFilter, moviesDir, { status, sortBy, sortOrder, tagId, rating, actors });
@@ -258,8 +299,7 @@ function setupIpcHandlers(services) {
     // 搜索电影
     ipcMain.handle('search-movies', async (event, params) => {
         try {
-            const settings = settingsService.getSettings();
-            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
             const { keyword, filters = {} } = params;
             const movies = await movieService.searchMovies(keyword, moviesDir, filters);
             return movies;
@@ -272,8 +312,7 @@ function setupIpcHandlers(services) {
     // 获取所有电影
     ipcMain.handle('get-all-movies', async (event, filters) => {
         try {
-            const settings = settingsService.getSettings();
-            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
             const { sortBy, sortOrder, tagId, rating, actors } = filters || {};
             const movies = await movieService.getAllMovies(moviesDir, { sortBy, sortOrder, tagId, rating, actors });
             return movies;
@@ -286,8 +325,7 @@ function setupIpcHandlers(services) {
     // 从 index.json 获取所有电影（快速加载，用于首页卡片展示）
     ipcMain.handle('get-all-movies-from-index', async (event, filters) => {
         try {
-            const settings = settingsService.getSettings();
-            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
             const { sortBy, sortOrder } = filters || {};
             const movies = await movieService.getAllMoviesFromIndex(moviesDir, { sortBy, sortOrder });
             return movies;
@@ -300,8 +338,7 @@ function setupIpcHandlers(services) {
     // 获取分页电影列表（从缓存）
     ipcMain.handle('get-movies-paginated', async (event, params) => {
         try {
-            const settings = settingsService.getSettings();
-            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
             const { page, pageSize, sortBy, sortOrder, category, tagId, rating, actors } = params || {};
             const result = await movieService.getMoviesPaginated(moviesDir, {
                 page: page || 1,
@@ -323,8 +360,7 @@ function setupIpcHandlers(services) {
     // 获取分页电影列表（从index.json快速加载）
     ipcMain.handle('get-movies-paginated-from-index', async (event, params) => {
         try {
-            const settings = settingsService.getSettings();
-            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
             const { page, pageSize, sortBy, sortOrder } = params || {};
             const result = await movieService.getMoviesPaginatedFromIndex(moviesDir, {
                 page: page || 1,
@@ -342,8 +378,7 @@ function setupIpcHandlers(services) {
     // 获取分页电影列表（按分类）
     ipcMain.handle('get-movies-by-category-paginated', async (event, params) => {
         try {
-            const settings = settingsService.getSettings();
-            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
             const { category, page, pageSize, sortBy, sortOrder } = params || {};
             const result = await movieService.getMoviesPaginated(moviesDir, {
                 category,
@@ -362,8 +397,7 @@ function setupIpcHandlers(services) {
     // 从 index.json 获取指定分类的电影
     ipcMain.handle('get-movies-by-category-from-index', async (event, filters) => {
         try {
-            const settings = settingsService.getSettings();
-            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
             const { category, sortBy, sortOrder } = filters || {};
             const categoryFilter = category;
             const movies = await movieService.getMoviesByCategoryFromIndex(categoryFilter, moviesDir, { sortBy, sortOrder });
@@ -377,8 +411,7 @@ function setupIpcHandlers(services) {
     // 获取电影详情
     ipcMain.handle('get-movie-detail', async (event, movieId) => {
         try {
-            const settings = settingsService.getSettings();
-            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
             const detail = await movieService.getMovieDetail(movieId, moviesDir);
             return detail;
         } catch (error) {
@@ -390,8 +423,7 @@ function setupIpcHandlers(services) {
     // 刷新电影库缓存
     ipcMain.handle('refresh-movie-library', async (event) => {
         try {
-            const settings = settingsService.getSettings();
-            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
             const webContents = event.sender;
 
             const cacheInfo = await movieService.refreshCache(moviesDir, (current, total, movieName) => {
@@ -433,8 +465,7 @@ function setupIpcHandlers(services) {
     // 保存用户评分
     ipcMain.handle('save-movie-rating', async (event, data) => {
         try {
-            const settings = settingsService.getSettings();
-            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
             const { movieId, rating, comment } = data;
             await movieService.saveRating(movieId, rating, comment, moviesDir);
             await dbService.saveUserRating(movieId, rating, comment);
@@ -450,8 +481,7 @@ function setupIpcHandlers(services) {
     // 获取电影统计数据
     ipcMain.handle('get-movie-stats', async (event, category) => {
         try {
-            const settings = settingsService.getSettings();
-            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
             const stats = await movieService.getStats(category, moviesDir);
             // 获取演员数量
             const totalActorCount = await actorService.getActorCount();
@@ -483,6 +513,10 @@ function setupIpcHandlers(services) {
     ipcMain.handle('save-settings', async (event, newSettings) => {
         try {
             const oldSettings = settingsService.getSettings();
+            const oldCurrentLibName = oldSettings.library?.currentLibrary;
+            const oldDir = oldSettings.library?.libraries?.[oldCurrentLibName]?.dir || '';
+            const oldMoviesDir = oldDir ? path.join(oldDir, 'movies') : '';
+
             settingsService.saveSettings(newSettings);
 
             // 更新全局代理
@@ -490,10 +524,43 @@ function setupIpcHandlers(services) {
             setGlobalProxy(proxyUrl);
             console.debug('[ipc-handlers] Proxy updated:', proxyUrl);
 
-            // 如果电影目录改变，强制刷新缓存
-            if (newSettings.library && oldSettings.library.moviesDir !== newSettings.library.moviesDir) {
-                const moviesDir = getMoviesDirPath(newSettings.library.moviesDir);
-                await movieService.refreshCache(moviesDir);
+            // 检查当前库或 dir 是否变化，必要时重定向 5 个配置服务 + 刷新缓存
+            const newCurrentLibName = settingsService.getCurrentLibraryName();
+            const newDir = settingsService.getLibraryDir();
+            const newMoviesDir = settingsService.getMoviesDir();
+            if (oldCurrentLibName !== newCurrentLibName || oldDir !== newDir) {
+                applyLibraryPathsToServices(
+                    computeLibraryPaths(settingsService),
+                    {
+                        tagService,
+                        categoryService,
+                        boxService,
+                        actorService,
+                        movieHistoryService
+                    }
+                );
+            }
+            if (oldMoviesDir !== newMoviesDir) {
+                const moviesDir = getMoviesDirPath(newMoviesDir);
+                if (moviesDir) {
+                    await movieService.refreshCache(moviesDir);
+                }
+            }
+
+            // 如果HTTP配置改变，重启HTTP服务
+            if (httpService && newSettings.http) {
+                const oldHttp = oldSettings.http || {};
+                const newHttp = newSettings.http;
+                const httpChanged = oldHttp.enabled !== newHttp.enabled
+                    || oldHttp.listenAddress !== newHttp.listenAddress
+                    || oldHttp.listenPort !== newHttp.listenPort;
+                if (httpChanged) {
+                    try {
+                        await httpService.restart();
+                    } catch (httpError) {
+                        console.error('[ipc-handlers] HTTP service restart failed:', httpError.message || httpError);
+                    }
+                }
             }
 
             return { success: true };
@@ -621,17 +688,6 @@ function setupIpcHandlers(services) {
         }
     });
 
-    // 更新电影目录配置
-    ipcMain.handle('update-movies-dir', async (event, dirPath) => {
-        try {
-            settingsService.setMoviesDir(dirPath);
-            return { success: true, dirPath };
-        } catch (error) {
-            console.error('Error updating movies dir:', error.message || error);
-            return { error: error.message };
-        }
-    });
-
     // 获取电影目录配置
     ipcMain.handle('get-movies-dir', async () => {
         try {
@@ -640,6 +696,168 @@ function setupIpcHandlers(services) {
         } catch (error) {
             console.error('Error getting movies dir:', error.message || error);
             return { error: error.message };
+        }
+    });
+
+    // ==================== 多影视库管理 ====================
+
+    // 获取所有影视库
+    ipcMain.handle('get-libraries', async () => {
+        try {
+            const libraries = settingsService.getLibraries();
+            const currentLibrary = settingsService.getCurrentLibraryName();
+            return { libraries, currentLibrary };
+        } catch (error) {
+            console.error('Error getting libraries:', error.message || error);
+            return { error: error.message };
+        }
+    });
+
+    // 获取当前影视库信息
+    ipcMain.handle('get-current-library', async () => {
+        try {
+            const currentLibrary = settingsService.getCurrentLibraryName();
+            const config = settingsService.getLibrary(currentLibrary);
+            return { name: currentLibrary, config };
+        } catch (error) {
+            console.error('Error getting current library:', error.message || error);
+            return { error: error.message };
+        }
+    });
+
+    // 切换当前影视库
+    ipcMain.handle('set-current-library', async (event, name) => {
+        try {
+            const ok = settingsService.setCurrentLibrary(name);
+            if (!ok) {
+                return { success: false, error: `影视库 "${name}" 不存在` };
+            }
+            // 切换影视库后，重定向 5 个配置服务的文件路径并清空缓存
+            applyLibraryPathsToServices(
+                computeLibraryPaths(settingsService),
+                {
+                    tagService,
+                    categoryService,
+                    boxService,
+                    actorService,
+                    movieHistoryService
+                }
+            );
+            // 切换影视库后强制刷新缓存
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
+            try {
+                await movieService.refreshCache(moviesDir);
+            } catch (refreshErr) {
+                console.error('Refresh cache after library switch failed:', refreshErr.message || refreshErr);
+            }
+            // 通知所有窗口刷新
+            BrowserWindow.getAllWindows().forEach(win => {
+                if (!win.isDestroyed()) {
+                    win.webContents.send('library-changed', settingsService.getCurrentLibraryName());
+                }
+            });
+            return { success: true };
+        } catch (error) {
+            console.error('Error setting current library:', error.message || error);
+            return { error: error.message };
+        }
+    });
+
+    // 准备影视库目录：确保根目录、3 个子目录、5 个配置文件就绪
+    // 返回 { success, dir, createdDirs, createdFiles, skippedFiles }
+    ipcMain.handle('prepare-library-dir', async (event, dir) => {
+        try {
+            if (!dir || typeof dir !== 'string' || !dir.trim()) {
+                return { success: false, error: '影视库目录不能为空' };
+            }
+            const result = await prepareLibraryDir(dir, { fileService });
+            return { success: true, ...result };
+        } catch (error) {
+            console.error('Error preparing library dir:', error.message || error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 新增影视库
+    ipcMain.handle('add-library', async (event, { name, config }) => {
+        try {
+            const result = settingsService.addLibrary(name, config || {});
+            if (!result.success) {
+                return result;
+            }
+            // 若新增的是当前库，重定向配置服务
+            if (settingsService.getCurrentLibraryName() === name) {
+                applyLibraryPathsToServices(
+                    computeLibraryPaths(settingsService),
+                    {
+                        tagService,
+                        categoryService,
+                        boxService,
+                        actorService,
+                        movieHistoryService
+                    }
+                );
+            }
+            BrowserWindow.getAllWindows().forEach(win => {
+                if (!win.isDestroyed()) {
+                    win.webContents.send('library-updated');
+                }
+            });
+            return result;
+        } catch (error) {
+            console.error('Error adding library:', error.message || error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 删除影视库
+    ipcMain.handle('remove-library', async (event, name) => {
+        try {
+            const result = settingsService.removeLibrary(name);
+            if (!result.success) {
+                return result;
+            }
+            BrowserWindow.getAllWindows().forEach(win => {
+                if (!win.isDestroyed()) {
+                    win.webContents.send('library-updated');
+                }
+            });
+            return result;
+        } catch (error) {
+            console.error('Error removing library:', error.message || error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 更新指定影视库的目录配置
+    ipcMain.handle('update-library', async (event, { name, config }) => {
+        try {
+            const result = settingsService.updateLibrary(name, config || {});
+            if (!result.success) {
+                return result;
+            }
+            // 若修改的是当前库，重定向配置服务
+            if (settingsService.getCurrentLibraryName() === name) {
+                applyLibraryPathsToServices(
+                    computeLibraryPaths(settingsService),
+                    {
+                        tagService,
+                        categoryService,
+                        boxService,
+                        actorService,
+                        movieHistoryService
+                    }
+                );
+            }
+            BrowserWindow.getAllWindows().forEach(win => {
+                if (!win.isDestroyed()) {
+                    win.webContents.send('library-updated');
+                }
+            });
+            return result;
+        } catch (error) {
+            console.error('Error updating library:', error.message || error);
+            return { success: false, error: error.message };
         }
     });
 
@@ -707,8 +925,7 @@ function setupIpcHandlers(services) {
     // 批量删除电影
     ipcMain.handle('batch-delete-movies', async (event, { movieIds }) => {
         try {
-            const settings = settingsService.getSettings();
-            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
             const result = await movieService.batchDeleteMovies(movieIds, moviesDir);
             return result;
         } catch (error) {
@@ -720,8 +937,7 @@ function setupIpcHandlers(services) {
     // 保存电影编辑
     ipcMain.handle('save-movie-edit', async (event, movieData) => {
         try {
-            const settings = settingsService.getSettings();
-            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
 
             // 获取 category 和 folderName
             let category = movieData.category;
@@ -821,8 +1037,7 @@ function setupIpcHandlers(services) {
     // 下载电影封面到电影目录
     ipcMain.handle('download-movie-cover', async (event, { category, folderName, coverUrl }) => {
         try {
-            const settings = settingsService.getSettings();
-            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
             const movieFolderPath = path.join(moviesDir, category, folderName);
 
             // 确保电影目录存在
@@ -847,8 +1062,7 @@ function setupIpcHandlers(services) {
     // 删除单个电影
     ipcMain.handle('delete-movie', async (event, movieData) => {
         try {
-            const settings = settingsService.getSettings();
-            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
 
             let category = movieData.category;
             let folderName = movieData.folderName;
@@ -990,8 +1204,7 @@ function setupIpcHandlers(services) {
     // 获取所有电影收藏夹
     ipcMain.handle('get-all-boxes', async () => {
         try {
-            const settings = settingsService.getSettings();
-            const movieboxDir = getMovieboxDirPath(settings.moviebox?.movieboxDir);
+            const movieboxDir = resolveCurrentMovieboxDir(settingsService);
             const boxes = await boxService.getAllBoxes(movieboxDir);
             return boxes;
         } catch (error) {
@@ -1010,8 +1223,7 @@ function setupIpcHandlers(services) {
     // 创建电影收藏夹
     ipcMain.handle('create-box', async (event, { boxName, description }) => {
         try {
-            const settings = settingsService.getSettings();
-            const movieboxDir = getMovieboxDirPath(settings.moviebox?.movieboxDir);
+            const movieboxDir = resolveCurrentMovieboxDir(settingsService);
             const result = await boxService.createBox(boxName, description, movieboxDir);
             notifyBoxUpdated();
             return result;
@@ -1024,8 +1236,7 @@ function setupIpcHandlers(services) {
     // 更新电影收藏夹
     ipcMain.handle('update-box', async (event, { boxName, newName, description }) => {
         try {
-            const settings = settingsService.getSettings();
-            const movieboxDir = getMovieboxDirPath(settings.moviebox?.movieboxDir);
+            const movieboxDir = resolveCurrentMovieboxDir(settingsService);
             const result = await boxService.updateBox(boxName, newName, description, movieboxDir);
             notifyBoxUpdated();
             return result;
@@ -1038,8 +1249,7 @@ function setupIpcHandlers(services) {
     // 删除电影收藏夹
     ipcMain.handle('delete-box', async (event, boxName) => {
         try {
-            const settings = settingsService.getSettings();
-            const movieboxDir = getMovieboxDirPath(settings.moviebox?.movieboxDir);
+            const movieboxDir = resolveCurrentMovieboxDir(settingsService);
             const result = await boxService.deleteBox(boxName, movieboxDir);
             notifyBoxUpdated();
             return result;
@@ -1052,8 +1262,7 @@ function setupIpcHandlers(services) {
     // 获取收藏夹详情
     ipcMain.handle('get-box-detail', async (event, boxName) => {
         try {
-            const settings = settingsService.getSettings();
-            const movieboxDir = getMovieboxDirPath(settings.moviebox?.movieboxDir);
+            const movieboxDir = resolveCurrentMovieboxDir(settingsService);
             const result = await boxService.getBoxDetail(boxName, movieboxDir);
             return result;
         } catch (error) {
@@ -1065,8 +1274,7 @@ function setupIpcHandlers(services) {
     // 添加电影到收藏夹
     ipcMain.handle('add-movie-to-box', async (event, data) => {
         try {
-            const settings = settingsService.getSettings();
-            const movieboxDir = getMovieboxDirPath(settings.moviebox?.movieboxDir);
+            const movieboxDir = resolveCurrentMovieboxDir(settingsService);
             const { boxName, movieInfo } = data;
             const result = await boxService.addMovieToBox(boxName, movieInfo, movieboxDir);
             notifyBoxUpdated();
@@ -1080,8 +1288,7 @@ function setupIpcHandlers(services) {
     // 从收藏夹中移除电影
     ipcMain.handle('remove-movie-from-box', async (event, data) => {
         try {
-            const settings = settingsService.getSettings();
-            const movieboxDir = getMovieboxDirPath(settings.moviebox?.movieboxDir);
+            const movieboxDir = resolveCurrentMovieboxDir(settingsService);
             const { boxName, movieId } = data;
             const result = await boxService.removeMovieFromBox(boxName, movieId, movieboxDir);
             notifyBoxUpdated();
@@ -1095,8 +1302,7 @@ function setupIpcHandlers(services) {
     // 清理收藏夹中已删除的电影
     ipcMain.handle('clean-box', async (event, data) => {
         try {
-            const settings = settingsService.getSettings();
-            const movieboxDir = getMovieboxDirPath(settings.moviebox?.movieboxDir);
+            const movieboxDir = resolveCurrentMovieboxDir(settingsService);
             const { boxName, validMovieIds } = data;
             const result = await boxService.cleanBox(boxName, validMovieIds, movieboxDir);
             notifyBoxUpdated();
@@ -1110,8 +1316,7 @@ function setupIpcHandlers(services) {
     // 更新收藏夹中电影的状态
     ipcMain.handle('update-movie-in-box', async (event, data) => {
         try {
-            const settings = settingsService.getSettings();
-            const movieboxDir = getMovieboxDirPath(settings.moviebox?.movieboxDir);
+            const movieboxDir = resolveCurrentMovieboxDir(settingsService);
             const { boxName, movieId, movieInfo } = data;
             const result = await boxService.updateMovieInBox(boxName, movieId, movieInfo, movieboxDir);
             notifyBoxUpdated();
@@ -1256,8 +1461,7 @@ function setupIpcHandlers(services) {
     // 获取标签关联电影数量
     ipcMain.handle('get-tag-movie-count-map', async () => {
         try {
-            const settings = settingsService.getSettings();
-            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
             const allIndexMovies = await indexService.getAllCategoriesIndexMovies(moviesDir);
             const tags = tagService.getTagMovieCountMap(allIndexMovies);
             return tags;
@@ -1270,8 +1474,7 @@ function setupIpcHandlers(services) {
     // 获取演员关联电影列表
     ipcMain.handle('get-actor-movie-list', async (event, actorName) => {
         try {
-            const settings = settingsService.getSettings();
-            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
             const movies = await movieService.getActorMovieList(actorName, moviesDir);
             return movies;
         } catch (error) {
@@ -1283,8 +1486,7 @@ function setupIpcHandlers(services) {
     // 获取所有演员及其关联电影数量
     ipcMain.handle('get-actor-movie-count-map', async () => {
         try {
-            const settings = settingsService.getSettings();
-            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
             const actors = await movieService.getActorMovieCountMap(moviesDir);
             return actors;
         } catch (error) {
@@ -1422,8 +1624,7 @@ function setupIpcHandlers(services) {
     // 添加单部电影
     ipcMain.handle('add-movie', async (event, movieData) => {
         try {
-            const settings = settingsService.getSettings();
-            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
 
             // 处理封面图片（如果是 URL 或 base64 数据，则下载/保存为文件）
             let coverImagePath = null;
@@ -1474,8 +1675,8 @@ function setupIpcHandlers(services) {
     // 扫描电影目录
     ipcMain.handle('scan-movie-directory', async (event, { scanPath, scanType, category, dirNaming }) => {
         try {
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
             const settings = settingsService.getSettings();
-            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
             const videoParsingConfig = settings.videoParsing || {};
             const webContents = event.sender;
 
@@ -1545,11 +1746,7 @@ function setupIpcHandlers(services) {
     // 导入扫描的电影
     ipcMain.handle('import-scanned-movies', async (event, tempDir, excludeIds = [], importActors = false) => {
         try {
-            const settings = settingsService.getSettings();
-            if (!settings.library || settings.library.moviesDir === undefined) {
-                throw new Error('Library settings are not configured properly');
-            }
-            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
 
             const webContents = event.sender;
             const result = await movieService.importScannedMovies(tempDir, moviesDir, excludeIds, importActors, (current, total, movieName) => {
@@ -1711,8 +1908,7 @@ function setupIpcHandlers(services) {
     // 提取标签
     ipcMain.handle('extract-tags', async () => {
         try {
-            const settings = settingsService.getSettings();
-            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
             const allIndexMovies = await indexService.getAllCategoriesIndexMovies(moviesDir);
             
             const newTags = tagService.extractAndCompareTags(allIndexMovies);
@@ -1739,8 +1935,7 @@ function setupIpcHandlers(services) {
     // 根据标签ID获取电影列表
     ipcMain.handle('get-movies-by-tag', async (event, tagId) => {
         try {
-            const settings = settingsService.getSettings();
-            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
             const allIndexMovies = await indexService.getAllCategoriesIndexMovies(moviesDir);
             
             const movies = tagService.getMoviesByTagId(allIndexMovies, tagId);
@@ -1770,6 +1965,8 @@ function setupIpcHandlers(services) {
             }
             categories.push({ id, name, shortName, icon, color, emulatorId, order });
             await categoryService.saveCategories(categories);
+            // 确保在 moviesDir 下创建对应的分类目录
+            await ensureCategoryDir(id, settingsService, fileService);
             broadcastCategoriesUpdated();
             return { success: true };
         } catch (error) {
@@ -1794,6 +1991,8 @@ function setupIpcHandlers(services) {
             category.emulatorId = emulatorId;
             category.order = order;
             await categoryService.saveCategories(categories);
+            // 确保在 moviesDir 下存在对应的分类目录（ID 不可修改，仅补齐缺失的目录）
+            await ensureCategoryDir(id, settingsService, fileService);
             broadcastCategoriesUpdated();
             return { success: true };
         } catch (error) {
@@ -1837,9 +2036,8 @@ function setupIpcHandlers(services) {
 
     ipcMain.handle('export-box', async (event, { boxName, exportType, exportPath, movies }) => {
         try {
-            const settings = settingsService.getSettings();
-            const moviesDir = getMoviesDirPath(settings.library?.moviesDir);
-            
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
+
             const exportService = new ExportService();
             const result = await exportService.exportBox(exportType, movies, moviesDir, exportPath, boxName);
             return result;
@@ -1919,8 +2117,7 @@ function setupIpcHandlers(services) {
     ipcMain.handle('batch-save-movies', async (event, { batchResults }) => {
         try {
             const webContents = event.sender;
-            const settings = settingsService.getSettings();
-            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
             
             const savedResults = await batchSearchService.batchSaveMovies(batchResults, (progress) => {
                 webContents.send('batch-save-progress', progress);
@@ -2001,8 +2198,7 @@ function setupIpcHandlers(services) {
      */
     ipcMain.handle('extract-new-actors-from-movies', async () => {
         try {
-            const settings = settingsService.getSettings();
-            const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+            const moviesDir = resolveCurrentMoviesDir(settingsService);
 
             // 获取所有电影
             const allMovies = await movieService.getAllMovies(moviesDir);
@@ -2043,8 +2239,7 @@ function setupIpcHandlers(services) {
             let targetFolderPath = movieFolderPath;
 
             if (!targetFolderPath && movieId) {
-                const settings = settingsService.getSettings();
-                const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+                const moviesDir = resolveCurrentMoviesDir(settingsService);
                 const movieDetail = await movieService.getMovieDetail(movieId, moviesDir);
 
                 if (movieDetail) {
@@ -2084,8 +2279,7 @@ function setupIpcHandlers(services) {
             let targetFolderPath = movieFolderPath;
 
             if (!targetFolderPath && movieId) {
-                const settings = settingsService.getSettings();
-                const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+                const moviesDir = resolveCurrentMoviesDir(settingsService);
                 const movieDetail = await movieService.getMovieDetail(movieId, moviesDir);
 
                 if (movieDetail) {
@@ -2121,8 +2315,7 @@ function setupIpcHandlers(services) {
             let targetFolderPath = movieFolderPath;
 
             if (!targetFolderPath && movieId) {
-                const settings = settingsService.getSettings();
-                const moviesDir = getMoviesDirPath(settings.library.moviesDir);
+                const moviesDir = resolveCurrentMoviesDir(settingsService);
                 const movieDetail = await movieService.getMovieDetail(movieId, moviesDir);
 
                 if (movieDetail) {

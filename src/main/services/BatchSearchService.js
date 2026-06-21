@@ -84,9 +84,8 @@ class BatchSearchService {
     }
 
     async saveMovieInfo(movieInfo, searchResult, category, movieFolderPath, posterFileName = 'poster.jpg') {
-        const settings = this.settingsService.getSettings();
-        const moviesDir = settings.library?.moviesDir || '';
-        
+        const moviesDir = this.settingsService.getMoviesDir();
+
         if (!moviesDir) {
             throw new Error('Movies directory not configured');
         }

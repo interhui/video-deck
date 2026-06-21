@@ -293,28 +293,21 @@
                 </div>
                 <!-- 路径配置 Tab -->
                 <div class="settings-tab-content" id="tab-path-settings">
-                    <!-- 目录设置 -->
+                    <!-- 影视库选择 -->
                     <div class="settings-section">
-                        <h3 class="settings-section-title">目录</h3>
+                        <h3 class="settings-section-title">影视库</h3>
                         <div class="settings-item">
-                            <label>电影目录：</label>
+                            <label>当前影视库：</label>
                             <div class="dir-input-group">
-                                <input type="text" id="movies-dir-input" readonly>
-                                <button id="select-dir-btn" class="btn btn-small">选择</button>
+                                <select id="library-name-select" class="filter-select"></select>
+                                <button id="add-library-btn" class="btn btn-small" title="新增影视库">+</button>
                             </div>
                         </div>
                         <div class="settings-item">
-                            <label>电影收藏夹目录：</label>
+                            <label>影视库目录：</label>
                             <div class="dir-input-group">
-                                <input type="text" id="moviebox-dir-input" readonly>
-                                <button id="select-moviebox-dir-btn" class="btn btn-small">选择</button>
-                            </div>
-                        </div>
-                        <div class="settings-item">
-                            <label>演员照片目录：</label>
-                            <div class="dir-input-group">
-                                <input type="text" id="actor-photo-dir-input" readonly>
-                                <button id="select-actor-photo-dir-btn" class="btn btn-small">选择</button>
+                                <input type="text" id="library-dir-input" readonly>
+                                <button id="select-library-dir-btn" class="btn btn-small" title="路径选择">选择</button>
                             </div>
                         </div>
                     </div>
@@ -400,7 +393,7 @@
                         <div class="settings-item">
                             <label class="checkbox-label">
                                 <input type="checkbox" id="proxy-enabled">
-                                <span>启用代理</span>
+                                <span>启用HTTP代理</span>
                             </label>
                         </div>
                         <div class="settings-item">
@@ -416,9 +409,37 @@
                             <input type="password" id="proxy-password" placeholder="代理密码（可选）">
                         </div>
                     </div>
+                    <!-- HTTP服务设置 -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">HTTP服务</h3>
+                        <div class="settings-item">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="http-enabled">
+                                <span>启用HTTP服务</span>
+                            </label>
+                        </div>
+                        <div class="settings-item">
+                            <label>监听地址：</label>
+                            <input type="text" id="http-listen-address" placeholder="0.0.0.0">
+                        </div>
+                        <div class="settings-item">
+                            <label>监听端口：</label>
+                            <input type="number" id="http-listen-port" placeholder="8080" min="1" max="65535">
+                        </div>
+                    </div>
                 </div>
                 <!-- 播放器配置 Tab -->
                 <div class="settings-tab-content" id="tab-player-settings">
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">声音配置</h3>
+                        <div class="settings-item">
+                            <label>音量：</label>
+                            <div class="volume-setting">
+                                <input type="range" id="volume-setting" class="volume-bar" min="0" max="100" value="45" step="1">
+                                <span id="volume-setting-value" class="volume-setting-value">45</span>
+                            </div>
+                        </div>
+                    </div>
                     <div class="settings-section">
                         <h3 class="settings-section-title">字幕配置</h3>
                         <div class="settings-item">
@@ -467,6 +488,34 @@
             <div class="modal-footer">
                 <button id="save-settings" class="btn btn-primary">保存</button>
                 <button id="cancel-settings" class="btn btn-secondary">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增影视库模态框 -->
+    <div id="add-library-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>新增影视库</h2>
+                <button class="close-btn" id="close-add-library">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>影视库名称 *</label>
+                    <input type="text" id="add-library-name-input" class="form-input" placeholder="例如：家庭影院、办公室">
+                </div>
+                <div class="form-group">
+                    <label>影视库目录 *</label>
+                    <div class="dir-input-group">
+                        <input type="text" id="add-library-dir-input" class="form-input" placeholder="选择影视库根目录">
+                        <button id="add-library-dir-btn" class="btn btn-small">选择</button>
+                    </div>
+                </div>
+                <div class="form-group" id="add-library-error" style="color: #ff5252; display: none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="confirm-add-library" class="btn btn-primary">确认</button>
+                <button id="cancel-add-library" class="btn btn-secondary">取消</button>
             </div>
         </div>
     </div>

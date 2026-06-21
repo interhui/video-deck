@@ -35,6 +35,8 @@ const state = {
     lazyLoader: null, //懒加载管理器
     onlyNewMovies: false, //只显示新电影
     newMovieHours: 72, //新电影小时数阈值
+    currentLibrary: 'default', //当前影视库名称
+    libraries: {}, //所有影视库配置 { name: { dir } }
     batchSearchResults: [], //批量搜索结果
     batchSearchInProgress: false, //批量搜索进行中
     isScanning: false, //是否正在执行电影扫描
@@ -90,7 +92,20 @@ const elements = {
     selectMovieboxDirBtn: document.getElementById('select-moviebox-dir-btn'),
     actorPhotoDirInput: document.getElementById('actor-photo-dir-input'),
     selectActorPhotoDirBtn: document.getElementById('select-actor-photo-dir-btn'),
+    libraryDirInput: document.getElementById('library-dir-input'),
+    selectLibraryDirBtn: document.getElementById('select-library-dir-btn'),
     newMovieHoursInput: document.getElementById('new-movie-hours-input'),
+    // 影视库管理
+    libraryNameSelect: document.getElementById('library-name-select'),
+    addLibraryBtn: document.getElementById('add-library-btn'),
+    addLibraryModal: document.getElementById('add-library-modal'),
+    closeAddLibrary: document.getElementById('close-add-library'),
+    cancelAddLibrary: document.getElementById('cancel-add-library'),
+    confirmAddLibrary: document.getElementById('confirm-add-library'),
+    addLibraryNameInput: document.getElementById('add-library-name-input'),
+    addLibraryDirInput: document.getElementById('add-library-dir-input'),
+    addLibraryDirBtn: document.getElementById('add-library-dir-btn'),
+    addLibraryError: document.getElementById('add-library-error'),
     // TMDB 设置
     tmdbUrlInput: document.getElementById('tmdb-url-input'),
     tmdbLanguageSelect: document.getElementById('tmdb-language-select'),
@@ -111,6 +126,10 @@ const elements = {
     proxyAddress: document.getElementById('proxy-address'),
     proxyUsername: document.getElementById('proxy-username'),
     proxyPassword: document.getElementById('proxy-password'),
+    // HTTP服务设置
+    httpEnabled: document.getElementById('http-enabled'),
+    httpListenAddress: document.getElementById('http-listen-address'),
+    httpListenPort: document.getElementById('http-listen-port'),
     // 播放器设置
     subtitleBgMode: document.getElementById('subtitle-bg-mode'),
     subtitleBgColor: document.getElementById('subtitle-bg-color'),
@@ -118,6 +137,8 @@ const elements = {
     subtitleFontSize: document.getElementById('subtitle-font-size'),
     subtitleFontWeight: document.getElementById('subtitle-font-weight'),
     subtitleTextStroke: document.getElementById('subtitle-text-stroke'),
+    volumeSetting: document.getElementById('volume-setting'),
+    volumeSettingValue: document.getElementById('volume-setting-value'),
     // 设置 Tab
     settingsTabs: document.querySelector('.settings-tabs'),
     onlyNewMoviesCheckbox: document.getElementById('only-new-movies'),
@@ -281,6 +302,152 @@ const elements = {
 };
 
 /**
+ * 清空渲染进程持有的、与某一影视库相关的所有缓存与 UI。
+ * 用于影视库切换前先把当前画面归零，避免新库内容进来之前出现残影。
+ */
+function clearRendererStateForLibrarySwitch() {
+    // 1) 销毁懒加载器（旧的 DOM 节点 + 滚动监听都会被释放）
+    if (state.lazyLoader) {
+        try {
+            state.lazyLoader.destroy();
+        } catch (err) {
+            console.warn('Destroy lazyLoader failed:', err && err.message);
+        }
+        state.lazyLoader = null;
+    }
+
+    // 2) 清空内存中的列表缓存
+    state.movies = [];
+    state.boxes = [];
+    state.tags = [];
+    state.actors = [];
+    state.categories = [];
+    state.selectedMovies = new Set();
+    state.selectedTags = new Set();
+    state.currentActorFilter = [];
+
+    // 3) 复位筛选 / 搜索 / 视图状态
+    state.currentCategory = '';
+    state.currentBox = '';
+    state.currentTag = '';
+    state.currentTagFilter = '';
+    state.tagFilterSearchKeyword = '';
+    state.tempSelectedTag = null;
+    state.searchKeyword = '';
+    state.onlyNewMovies = false;
+    state.excludeBoxMode = false;
+    state.excludeBoxName = '';
+    state.excludedMovieIds = new Set();
+    state.sidebarSearchActive = false;
+    state.actorFilterModalVisible = false;
+    state.tagFilterModalVisible = false;
+    state.actorSelectorSearchKeyword = '';
+    state.actorSelectorCurrentPage = 1;
+
+    // 4) 复位搜索框 / 排序下拉 / 标签过滤下拉等表单
+    if (elements.searchInput) elements.searchInput.value = '';
+    if (elements.clearSearchBtn) elements.clearSearchBtn.style.display = 'none';
+    if (elements.sortSelect) elements.sortSelect.value = state.currentSort || 'name-asc';
+    if (elements.categoryFilter) elements.categoryFilter.value = '';
+    if (elements.tagFilterClearBtn) elements.tagFilterClearBtn.style.display = 'none';
+
+    // 5) 清空 DOM：电影墙 / 收藏夹 / 侧边栏分类
+    if (elements.moviesGrid) elements.moviesGrid.innerHTML = '';
+    if (elements.emptyState) elements.emptyState.style.display = 'none';
+    if (elements.boxList) elements.boxList.innerHTML = '';
+    if (elements.categoryList) elements.categoryList.innerHTML = '';
+
+    // 6) 关闭筛选模态窗
+    if (elements.actorFilterModal) elements.actorFilterModal.style.display = 'none';
+    if (elements.tagFilterModal) elements.tagFilterModal.style.display = 'none';
+}
+
+/**
+ * 影视库切换后重新加载全部数据并刷新 UI。
+ * 流程与 init() 一致：settings -> tags -> actors -> categories -> boxes -> movies。
+ * @param {{showModal?: boolean}} [opts]
+ */
+async function reloadAllAfterLibraryChange(opts = {}) {
+    const showModal = opts.showModal !== false;
+    try {
+        if (showModal && elements.movieLoadingModal) {
+            elements.movieLoadingModal.style.display = 'flex';
+        }
+
+        // 1) 重新加载设置（更新 state.currentLibrary / state.libraries / 影视库下拉）
+        await loadSettings();
+
+        // 2) 重新加载标签 / 演员 / 分类
+        await loadTags();
+        await loadActors();
+        await loadCategories();
+
+        // 3) 重新加载收藏夹（盒子）
+        await loadBoxes();
+
+        // 4) 重新加载电影（懒加载第一页加载完成后会触发渲染）
+        await loadMovies();
+    } catch (error) {
+        console.error('Reload after library change failed:', error && (error.message || error));
+    } finally {
+        if (showModal && elements.movieLoadingModal) {
+            elements.movieLoadingModal.style.display = 'none';
+        }
+    }
+}
+
+/**
+ * 处理影视库切换事件
+ *
+ * 切换流程（与用户预期一致）：
+ *   1) 展示 movie-loading-modal 模态窗（先遮住旧画面，避免出现空画面闪烁）
+ *   2) 清理电影 / 收藏 / 标签 / 演员 / 分类缓存，首页电影卡片和列表置空
+ *   3) 同步 state.currentLibrary
+ *   4) 重新加载全部数据（settings / tags / actors / categories / boxes / movies）
+ *   5) 关闭 movie-loading-modal 模态窗
+ *
+ * @param {string} name - 新的当前影视库名称
+ */
+async function handleLibraryChanged(name) {
+    // 1) 先展示 movie-loading-modal 模态窗（防止用户看到旧库内容清空瞬间的空画面）
+    if (elements.movieLoadingModal) {
+        elements.movieLoadingModal.style.display = 'flex';
+    }
+
+    // 2) 清理电影 / 收藏 / 标签 / 演员 / 分类缓存，并将首页电影卡片、列表置空
+    try {
+        clearRendererStateForLibrarySwitch();
+    } catch (clearErr) {
+        console.error('Clear renderer state failed:', clearErr && (clearErr.message || clearErr));
+    }
+
+    // 3) 同步 state.currentLibrary / state.libraries
+    try {
+        state.currentLibrary = name;
+        if (state.settings && state.settings.library) {
+            state.settings.library.currentLibrary = name;
+        }
+        state.libraries = (state.settings && state.settings.library && state.settings.library.libraries)
+            || state.libraries
+            || {};
+    } catch (err) {
+        console.warn('Sync current library in state failed:', err && err.message);
+    }
+
+    // 4) 重新拉取全部数据（模态窗持续显示，由本函数统一管理）
+    try {
+        await reloadAllAfterLibraryChange({ showModal: false });
+    } catch (reloadErr) {
+        console.error('Reload after library change failed:', reloadErr && (reloadErr.message || reloadErr));
+    }
+
+    // 5) 电影加载完成，关闭 movie-loading-modal 模态窗
+    if (elements.movieLoadingModal) {
+        elements.movieLoadingModal.style.display = 'none';
+    }
+}
+
+/**
  * 初始化应用
  */
 async function init() {
@@ -289,24 +456,7 @@ async function init() {
     // 显示电影加载进度弹窗（禁止关闭）
     elements.movieLoadingModal.style.display = 'flex';
 
-    // 加载设置
-    await loadSettings();
-
-    // 加载标签
-    await loadTags();
-
-    // 加载演员列表
-    await loadActors();
-
-    // 加载分类列表
-    await loadCategories();
-
-    // 加载收藏夹列表
-    await loadBoxes();
-
-
-    // 使用LazyLoader加载电影，第一页加载完成后自动关闭弹窗
-    await loadMovies();
+    await reloadAllAfterLibraryChange({ showModal: false });
 
     // 关闭加载进度弹窗
     elements.movieLoadingModal.style.display = 'none';
@@ -691,10 +841,19 @@ async function loadSettings() {
         if (elements.sidebarWidth) elements.sidebarWidth.value = state.settings.layout?.sidebarWidth || 200;
         if (elements.posterSize) elements.posterSize.value = state.settings.layout?.posterSize || 'medium';
         if (elements.posterStyle) elements.posterStyle.value = state.settings.layout?.posterStyle || 'vertical';
-        if (elements.moviesDirInput) elements.moviesDirInput.value = state.settings.library?.moviesDir || '';
-        if (elements.movieboxDirInput) elements.movieboxDirInput.value = state.settings.moviebox?.movieboxDir || '';
-        if (elements.actorPhotoDirInput) elements.actorPhotoDirInput.value = state.settings.library?.actorPhotoDir || '';
+        if (elements.libraryDirInput) elements.libraryDirInput.value = state.settings.library?.libraries?.[state.settings.library?.currentLibrary || 'default']?.dir || '';
         if (elements.newMovieHoursInput) elements.newMovieHoursInput.value = state.settings.library?.newMovieHours || 72;
+
+        // 初始化影视库状态
+        state.currentLibrary = state.settings.library?.currentLibrary || 'default';
+        state.libraries = state.settings.library?.libraries && Object.keys(state.settings.library.libraries).length > 0
+            ? state.settings.library.libraries
+            : {
+                default: {
+                    dir: ''
+                }
+            };
+        populateLibrarySelect();
 
         // 加载 TMDB 设置
         if (elements.tmdbUrlInput) elements.tmdbUrlInput.value = state.settings.tmdb?.url || 'api.themoviedb.org';
@@ -718,6 +877,11 @@ async function loadSettings() {
         if (elements.proxyUsername) elements.proxyUsername.value = state.settings.proxy?.username || '';
         if (elements.proxyPassword) elements.proxyPassword.value = state.settings.proxy?.password || '';
 
+        // HTTP服务设置回显
+        if (elements.httpEnabled) elements.httpEnabled.checked = state.settings.http?.enabled || false;
+        if (elements.httpListenAddress) elements.httpListenAddress.value = state.settings.http?.listenAddress || '0.0.0.0';
+        if (elements.httpListenPort) elements.httpListenPort.value = state.settings.http?.listenPort || 8080;
+
         // 初始化播放器设置
         if (state.settings.player && state.settings.player.subtitle) {
             const subtitleConfig = state.settings.player.subtitle;
@@ -740,10 +904,10 @@ async function loadSettings() {
 
             // 字体大小
             elements.subtitleFontSize.value = subtitleConfig.fontSize || '22px';
-            
+
             // 字体加粗
             elements.subtitleFontWeight.value = subtitleConfig.fontWeight || '500';
-            
+
             // 字体边框
             if (subtitleConfig.textStroke) {
                 const strokeColorMatch = subtitleConfig.textStroke.match(/(\d+px)\s+#([0-9a-fA-F]{6})/);
@@ -753,11 +917,85 @@ async function loadSettings() {
             }
         }
 
+        // 加载音量配置
+        if (elements.volumeSetting) {
+            const volume = state.settings.player?.volume;
+            const volumeValue = (typeof volume === 'number') ? volume : 45;
+            elements.volumeSetting.value = volumeValue;
+            if (elements.volumeSettingValue) {
+                elements.volumeSettingValue.textContent = volumeValue;
+            }
+        }
+
         state.viewMode = state.settings.layout.viewMode;
         state.newMovieHours = state.settings.library?.newMovieHours || 72;
+
+        // 根据当前影视库刷新目录输入框
+        syncDirectoryInputsFromCurrentLibrary();
     } catch (error) {
         console.error('Error loading settings:', error.message || error);
     }
+}
+
+/**
+ * 将 state.libraries 中当前库的目录信息同步到设置界面的输入框
+ */
+function syncDirectoryInputsFromCurrentLibrary() {
+    const lib = state.libraries[state.currentLibrary];
+    if (!lib) return;
+    if (elements.libraryDirInput) elements.libraryDirInput.value = lib.dir || '';
+}
+
+/**
+ * 填充影视库下拉框
+ */
+function populateLibrarySelect() {
+    if (!elements.libraryNameSelect) return;
+    const select = elements.libraryNameSelect;
+    select.innerHTML = '';
+    Object.keys(state.libraries).forEach((name) => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        if (name === state.currentLibrary) {
+            opt.selected = true;
+        }
+        select.appendChild(opt);
+    });
+}
+
+/**
+ * 显示新增影视库错误
+ */
+function showAddLibraryError(msg) {
+    if (!elements.addLibraryError) return;
+    if (!msg) {
+        elements.addLibraryError.style.display = 'none';
+        elements.addLibraryError.textContent = '';
+    } else {
+        elements.addLibraryError.style.display = 'block';
+        elements.addLibraryError.textContent = msg;
+    }
+}
+
+/**
+ * 打开新增影视库模态框（重置输入）
+ */
+function openAddLibraryModal() {
+    if (!elements.addLibraryModal) return;
+    if (elements.addLibraryNameInput) elements.addLibraryNameInput.value = '';
+    if (elements.addLibraryDirInput) elements.addLibraryDirInput.value = '';
+    showAddLibraryError('');
+    elements.addLibraryModal.style.display = 'flex';
+}
+
+/**
+ * 关闭新增影视库模态框
+ */
+function closeAddLibraryModal() {
+    if (!elements.addLibraryModal) return;
+    elements.addLibraryModal.style.display = 'none';
+    showAddLibraryError('');
 }
 
 /**
@@ -2067,29 +2305,51 @@ function bindEvents() {
         elements.subtitleTextStroke.textContent = hexColor;
     });
 
-    // 选择目录
-    elements.selectDirBtn.addEventListener('click', async () => {
-        const result = await window.electronAPI.selectDirectory();
-        if (!result.canceled && result.path) {
-            elements.moviesDirInput.value = result.path;
-        }
-    });
+    // 音量配置 - 实时显示数值
+    if (elements.volumeSetting && elements.volumeSettingValue) {
+        elements.volumeSetting.addEventListener('input', (e) => {
+            elements.volumeSettingValue.textContent = e.target.value;
+        });
+    }
 
-    // 选择电影收藏夹目录
-    elements.selectMovieboxDirBtn.addEventListener('click', async () => {
-        const result = await window.electronAPI.selectDirectory();
-        if (!result.canceled && result.path) {
-            elements.movieboxDirInput.value = result.path;
-        }
-    });
+    // 选择影视库目录（合并后的统一入口）
+    if (elements.selectLibraryDirBtn) {
+        elements.selectLibraryDirBtn.addEventListener('click', async () => {
+            const result = await window.electronAPI.selectDirectory();
+            if (!result.canceled && result.path) {
+                elements.libraryDirInput.value = result.path;
+            }
+        });
+    }
 
-    // 选择演员照片目录
-    elements.selectActorPhotoDirBtn.addEventListener('click', async () => {
-        const result = await window.electronAPI.selectDirectory();
-        if (!result.canceled && result.path) {
-            elements.actorPhotoDirInput.value = result.path;
-        }
-    });
+    // 兼容旧的三个按钮：把它们的点击也写回到同一个 libraryDirInput 上，避免悬空事件
+    if (elements.selectDirBtn && !elements.selectDirBtn.dataset.bound) {
+        elements.selectDirBtn.dataset.bound = '1';
+        elements.selectDirBtn.addEventListener('click', async () => {
+            const result = await window.electronAPI.selectDirectory();
+            if (!result.canceled && result.path) {
+                elements.libraryDirInput.value = result.path;
+            }
+        });
+    }
+    if (elements.selectMovieboxDirBtn && !elements.selectMovieboxDirBtn.dataset.bound) {
+        elements.selectMovieboxDirBtn.dataset.bound = '1';
+        elements.selectMovieboxDirBtn.addEventListener('click', async () => {
+            const result = await window.electronAPI.selectDirectory();
+            if (!result.canceled && result.path) {
+                elements.libraryDirInput.value = result.path;
+            }
+        });
+    }
+    if (elements.selectActorPhotoDirBtn && !elements.selectActorPhotoDirBtn.dataset.bound) {
+        elements.selectActorPhotoDirBtn.dataset.bound = '1';
+        elements.selectActorPhotoDirBtn.addEventListener('click', async () => {
+            const result = await window.electronAPI.selectDirectory();
+            if (!result.canceled && result.path) {
+                elements.libraryDirInput.value = result.path;
+            }
+        });
+    }
 
     // 选择ffmpeg路径
     elements.selectFfmpegBtn.addEventListener('click', async () => {
@@ -2111,10 +2371,85 @@ function bindEvents() {
         }
     });
 
+    // 影视库下拉框变化 - 切换当前影视库并刷新目录输入框
+    if (elements.libraryNameSelect) {
+        elements.libraryNameSelect.addEventListener('change', (e) => {
+            const newName = e.target.value;
+            if (!newName || newName === state.currentLibrary) return;
+            state.currentLibrary = newName;
+            syncDirectoryInputsFromCurrentLibrary();
+        });
+    }
+
+    // 新增影视库按钮
+    if (elements.addLibraryBtn) {
+        elements.addLibraryBtn.addEventListener('click', () => {
+            openAddLibraryModal();
+        });
+    }
+
+    // 关闭 / 取消新增影视库模态框
+    if (elements.closeAddLibrary) {
+        elements.closeAddLibrary.addEventListener('click', () => closeAddLibraryModal());
+    }
+    if (elements.cancelAddLibrary) {
+        elements.cancelAddLibrary.addEventListener('click', () => closeAddLibraryModal());
+    }
+
+    // 新增影视库 - 选择目录
+    if (elements.addLibraryDirBtn) {
+        elements.addLibraryDirBtn.addEventListener('click', async () => {
+            const result = await window.electronAPI.selectDirectory();
+            if (!result.canceled && result.path) {
+                elements.addLibraryDirInput.value = result.path;
+            }
+        });
+    }
+
+    // 确认新增影视库
+    if (elements.confirmAddLibrary) {
+        elements.confirmAddLibrary.addEventListener('click', async () => {
+            const name = (elements.addLibraryNameInput?.value || '').trim();
+            if (!name) {
+                showAddLibraryError('请输入影视库名称');
+                return;
+            }
+            if (state.libraries[name]) {
+                showAddLibraryError(`影视库 "${name}" 已存在`);
+                return;
+            }
+            const dir = (elements.addLibraryDirInput?.value || '').trim();
+            if (!dir) {
+                showAddLibraryError('请选择影视库目录');
+                return;
+            }
+            // 先在主进程准备好目录（不存在则创建子目录与默认配置文件），再写入设置
+            const prepared = await window.electronAPI.prepareLibraryDir(dir);
+            if (!prepared || !prepared.success) {
+                showAddLibraryError(prepared?.error || '准备影视库目录失败');
+                return;
+            }
+            const config = { dir };
+            const result = await window.electronAPI.addLibrary({ name, config });
+            if (result && result.success) {
+                // 重新加载设置以同步数据
+                await loadSettings();
+                closeAddLibraryModal();
+            } else {
+                showAddLibraryError(result?.error || '新增影视库失败');
+            }
+        });
+    }
+
     // 监听刷新事件
     window.electronAPI.onRefreshLibrary(() => {
         refreshLibraryWithProgress();
 
+    });
+
+    // 监听影视库切换事件
+    window.electronAPI.onLibraryChanged((name) => {
+        handleLibraryChanged(name);
     });
 
     // 监听电影更新事件（海报更新等）
@@ -3536,16 +3871,22 @@ async function saveSettingsHandler() {
                 posterStyle: elements.posterStyle.value,
                 viewMode: state.viewMode
             },
-            library: {
-                ...state.settings.library,
-                moviesDir: elements.moviesDirInput.value,
-                actorPhotoDir: elements.actorPhotoDirInput.value,
-                newMovieHours: parseInt(elements.newMovieHoursInput.value) || 72
-            },
-            moviebox: {
-                ...state.settings.moviebox,
-                movieboxDir: elements.movieboxDirInput.value
-            },
+            library: (() => {
+                // 构造新的 library 节点：以 state.libraries 为基础，将当前库的 dir 写回
+                const currentName = state.currentLibrary || 'default';
+                const existingLib = state.libraries[currentName] || {};
+                const updatedCurrentLib = {
+                    dir: elements.libraryDirInput?.value || ''
+                };
+                const libraries = { ...state.libraries };
+                libraries[currentName] = { ...existingLib, ...updatedCurrentLib };
+                return {
+                    ...state.settings.library,
+                    libraries,
+                    currentLibrary: currentName,
+                    newMovieHours: parseInt(elements.newMovieHoursInput.value) || 72
+                };
+            })(),
             tmdb: {
                 url: elements.tmdbUrlInput?.value || 'api.themoviedb.org',
                 language: elements.tmdbLanguageSelect?.value || 'zh-CN',
@@ -3568,6 +3909,11 @@ async function saveSettingsHandler() {
                 username: elements.proxyUsername?.value || '',
                 password: elements.proxyPassword?.value || ''
             },
+            http: {
+                enabled: elements.httpEnabled?.checked || false,
+                listenAddress: elements.httpListenAddress?.value || '0.0.0.0',
+                listenPort: parseInt(elements.httpListenPort?.value || '8080', 10)
+            },
             player: {
                 subtitle: {
                     backgroundColor: elements.subtitleBgMode.value === 'transparent'
@@ -3576,7 +3922,8 @@ async function saveSettingsHandler() {
                     fontSize: elements.subtitleFontSize?.value || '22px',
                     fontWeight: elements.subtitleFontWeight?.value || '500',
                     textStroke: `2px ${elements.subtitleTextStroke?.value || '#000'}`
-                }
+                },
+                volume: parseInt(elements.volumeSetting?.value || '45', 10)
             }
         };
 

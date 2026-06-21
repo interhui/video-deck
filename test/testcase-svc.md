@@ -858,8 +858,8 @@
 | SVC-HARDCODED-004 | appearance属性正确 | 直接调用 | 无 | theme=dark等 |
 | SVC-HARDCODED-005 | layout属性正确 | 直接调用 | 无 | sidebarWidth=200等 |
 | SVC-HARDCODED-006 | shortcuts属性正确 | 直接调用 | 无 | Ctrl+F等 |
-| SVC-HARDCODED-007 | library属性正确 | 直接调用 | 无 | moviesDir等 |
-| SVC-HARDCODED-008 | moviebox属性正确 | 直接调用 | 无 | movieboxDir等 |
+| SVC-HARDCODED-007 | library属性正确 | 直接调用 | 无 | 包含 libraries.default.dir="" 等 |
+| SVC-HARDCODED-008 | moviebox顶层节点已移除 | 直接调用 | 无 | settings.moviebox 为 undefined |
 
 #### 9.3 getDefaultTags - 获取默认标签
 
@@ -1047,10 +1047,12 @@
         "sidebarWidth": 200
     },
     "library": {
-        "moviesDir": "/path/to/movies"
-    },
-    "moviebox": {
-        "movieboxDir": "/path/to/boxes"
+        "libraries": {
+            "default": {
+                "dir": "/path/to/library"
+            }
+        },
+        "currentLibrary": "default"
     }
 }
 ```

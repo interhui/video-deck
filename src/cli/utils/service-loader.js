@@ -4,6 +4,7 @@
  */
 const path = require('path');
 const fs = require('fs');
+const { computeLibraryPaths, applyLibraryPathsToServices } = require('../../main/utils/LibraryUtils');
 
 // Determine base paths based on whether running as CLI or within Electron
 // CLI is now at src/cli, so baseDir is 3 levels up from this file
@@ -12,14 +13,10 @@ const baseDir = path.join(__dirname, '..', '..', '..');
 
 /**
  * Load all services for CLI use
- * @param {string} moviesDir - Movies directory path
- * @param {string} movieboxDir - Moviebox directory path
- * @param {string} settingsPath - Settings file path
- * @param {string} tagsPath - Tags file path
- * @param {string} categoryConfigPath - Category config file path
+ * @param {string} settingsPath - settings file path
  * @returns {object} Loaded services
  */
-function loadServices(moviesDir, movieboxDir, settingsPath, tagsPath, categoryConfigPath, boxesConfigPath) {
+function loadServices(settingsPath) {
     const MovieService = require(path.join(baseDir, 'src', 'main', 'services', 'MovieService'));
     const BoxService = require(path.join(baseDir, 'src', 'main', 'services', 'BoxService'));
     const TagService = require(path.join(baseDir, 'src', 'main', 'services', 'TagService'));
@@ -30,16 +27,18 @@ function loadServices(moviesDir, movieboxDir, settingsPath, tagsPath, categoryCo
     const IndexService = require(path.join(baseDir, 'src', 'main', 'services', 'IndexService'));
 
     const fileService = new FileService();
-    const categoryService = new CategoryService(categoryConfigPath);
+    const settingsService = new SettingsService(settingsPath);
+
+    // 占位路径；settings 加载完成后由 initializeServices 调 applyLibraryPathsToServices 重定向到当前库的 dir
+    const categoryService = new CategoryService(path.join(baseDir, 'config', 'categories.json'));
     const movieCacheService = new MovieCacheService();
     const indexService = new IndexService();
 
     const movieService = new MovieService(categoryService);
     movieService.setCacheService(movieCacheService);
 
-    const settingsService = new SettingsService(settingsPath);
-    const boxService = new BoxService(boxesConfigPath);
-    const tagService = new TagService(tagsPath);
+    const boxService = new BoxService(path.join(baseDir, 'config', 'boxes.json'));
+    const tagService = new TagService(path.join(baseDir, 'config', 'tags.json'));
 
     return {
         movieService,
@@ -50,8 +49,10 @@ function loadServices(moviesDir, movieboxDir, settingsPath, tagsPath, categoryCo
         fileService,
         movieCacheService,
         indexService,
-        getMoviesDir: () => moviesDir,
-        getMovieboxDir: () => movieboxDir
+        // 兼容旧代码：通过 settingsService 间接获取
+        getMoviesDir: () => settingsService.getMoviesDir(),
+        getMovieboxDir: () => settingsService.getMovieboxDir(),
+        getLibraryDir: () => settingsService.getLibraryDir()
     };
 }
 
@@ -61,7 +62,6 @@ function loadServices(moviesDir, movieboxDir, settingsPath, tagsPath, categoryCo
  * @returns {Promise<object>} Initialized services
  */
 async function initializeServices(options = {}) {
-    const baseDir = path.join(__dirname, '..', '..', '..');
     const configDir = path.join(baseDir, 'config');
 
     // Ensure directories exist
@@ -70,9 +70,6 @@ async function initializeServices(options = {}) {
     }
 
     const settingsPath = options.settingsPath || path.join(configDir, 'settings.json');
-    const tagsPath = options.tagsPath || path.join(configDir, 'tags.json');
-    const categoryConfigPath = options.categoryConfigPath || path.join(configDir, 'categories.json');
-    const boxesConfigPath = options.boxesConfigPath || path.join(configDir, 'boxes.json');
 
     // Create default settings if not exists
     if (!fs.existsSync(settingsPath)) {
@@ -81,47 +78,32 @@ async function initializeServices(options = {}) {
             lastUpdate: Date.now(),
             appearance: { theme: 'dark', language: 'zh-CN' },
             layout: { sidebarWidth: 200, posterSize: 'large', columns: 6, viewMode: 'grid' },
-            library: { moviesDir: path.join(baseDir, 'movies') },
-            moviebox: { movieboxDir: path.join(baseDir, 'boxes') }
+            // 新结构：仅声明 dir，子目录由 SettingsService 派生
+            library: {
+                libraries: { default: { dir: '' } },
+                currentLibrary: 'default',
+                newMovieHours: 72
+            }
         };
         fs.writeFileSync(settingsPath, JSON.stringify(defaultSettings, null, 2));
     }
 
-    // Create default tags if not exists
-    if (!fs.existsSync(tagsPath)) {
-        const defaultTags = [
-            { id: 'action', name: '动作' },
-            { id: 'scifi', name: '科幻' },
-            { id: 'drama', name: '剧情' },
-            { id: 'comedy', name: '喜剧' },
-            { id: 'horror', name: '恐怖' },
-            { id: 'thriller', name: '惊悚' },
-            { id: 'animation', name: '动画' },
-            { id: 'documentary', name: '纪录片' },
-            { id: 'romance', name: '爱情' },
-            { id: 'fantasy', name: '奇幻' }
-        ];
-        fs.writeFileSync(tagsPath, JSON.stringify(defaultTags, null, 2));
-    }
+    const services = loadServices(settingsPath);
 
-    // Create default categories if not exists
-    if (!fs.existsSync(categoryConfigPath)) {
-        const HardCodeService = require(path.join(baseDir, 'src', 'main', 'services', 'HardCodeService'));
-        const hardCodeService = new HardCodeService();
-        const defaultCategories = hardCodeService.getDefaultCategories();
-        const categoryConfig = { categories: defaultCategories, predefinedTags: [], customTags: [] };
-        fs.writeFileSync(categoryConfigPath, JSON.stringify(categoryConfig, null, 2));
-    }
+    // 等设置加载完成后，把 5 个配置服务的路径切到当前库的 dir
+    await services.settingsService.getSettingsPromise();
 
-    // Load settings to get directories
-    const SettingsService = require(path.join(baseDir, 'src', 'main', 'services', 'SettingsService'));
-    const settingsService = new SettingsService(settingsPath);
-    const settings = settingsService.getSettings();
+    // CLI 默认会把 actor 服务一并构造（main.js 里的 ActorService 在 CLI 路径下也常用）
+    const ActorService = require(path.join(baseDir, 'src', 'main', 'services', 'ActorService'));
+    const MovieHistoryService = require(path.join(baseDir, 'src', 'main', 'services', 'MovieHistoryService'));
+    const actorService = new ActorService(path.join(configDir, 'actor.json'));
+    const movieHistoryService = new MovieHistoryService(configDir);
+    services.actorService = actorService;
+    services.movieHistoryService = movieHistoryService;
 
-    const moviesDir = options.moviesDir || settings.library.moviesDir || path.join(baseDir, 'movies');
-    const movieboxDir = options.movieboxDir || settings.moviebox.movieboxDir || path.join(baseDir, 'boxes');
+    applyLibraryPathsToServices(computeLibraryPaths(services.settingsService), services);
 
-    return loadServices(moviesDir, movieboxDir, settingsPath, tagsPath, categoryConfigPath, boxesConfigPath);
+    return services;
 }
 
 module.exports = {

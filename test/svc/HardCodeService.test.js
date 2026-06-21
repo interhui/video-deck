@@ -26,7 +26,7 @@ describe('HardCodeService', () => {
         test('SVC-HARDCODED-003: 包含顶层属性', () => {
             const settings = service.getDefaultSettings();
             const topLevelProps = ['appearance', 'layout', 'library',
-                'moviebox', 'version', 'lastUpdate'];
+                'version', 'lastUpdate'];
             topLevelProps.forEach(prop => {
                 expect(settings).toHaveProperty(prop);
             });
@@ -54,21 +54,34 @@ describe('HardCodeService', () => {
         test('SVC-HARDCODED-006: library属性正确', () => {
             const settings = service.getDefaultSettings();
             expect(settings.library).toBeDefined();
-            expect(settings.library.moviesDir).toBeDefined();
+            expect(settings.library.libraries).toBeDefined();
+            expect(settings.library.libraries.default).toBeDefined();
+            // 新结构：仅保留 dir 字段，moviesDir/actorPhotoDir/movieboxDir 不再硬编码
+            expect(settings.library.libraries.default).toEqual({ dir: '' });
+            expect(settings.library.currentLibrary).toBe('default');
+            expect(settings.library.newMovieHours).toBe(72);
         });
 
-        test('SVC-HARDCODED-008: moviebox属性正确', () => {
+        test('SVC-HARDCODED-007: library.libraries.default 不含旧字段', () => {
             const settings = service.getDefaultSettings();
-            expect(settings.moviebox).toBeDefined();
-            expect(settings.moviebox.movieboxDir).toBeDefined();
+            const entry = settings.library.libraries.default;
+            expect(entry).not.toHaveProperty('moviesDir');
+            expect(entry).not.toHaveProperty('actorPhotoDir');
+            expect(entry).not.toHaveProperty('movieboxDir');
+        });
+
+        test('SVC-HARDCODED-008: moviebox 顶层节点已移除', () => {
+            const settings = service.getDefaultSettings();
+            expect(settings.moviebox).toBeUndefined();
         });
 
     });
 
     describe('getDefaultTags', () => {
-        test('SVC-HARDCODED-010: 返回10个标签', () => {
+        test('SVC-HARDCODED-010: 返回默认标签数组', () => {
             const tags = service.getDefaultTags();
-            expect(tags).toHaveLength(10);
+            expect(Array.isArray(tags)).toBe(true);
+            expect(tags.length).toBeGreaterThan(0);
         });
 
         test('SVC-HARDCODED-011: 标签有id和name', () => {

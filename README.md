@@ -1,4 +1,4 @@
-# 电影管理程序 (Movie Management)
+# Video Deck
 
 基于 Electron 的电影管理应用，提供图形界面 (GUI) 和命令行界面 (CLI) 两种使用方式。电影按分类组织，以 NFO 文件格式存储并配有封面图片。
 
@@ -61,16 +61,17 @@
     "sortOrder": "asc"             // 排序方向: asc | desc
   },
   "library": {
-    "moviesDir": "movies",         // 电影库目录
-    "actorPhotoDir": "actor",      // 演员照片目录
-    "newMovieHours": 168,          // 新电影判定时间（小时），默认168小时（7天）
-    "scanOnStartup": true,         // 启动时扫描
-    "autoRefresh": false,          // 自动刷新
-    "showHiddenFiles": false,      // 显示隐藏文件
-    "includeSubfolders": true      // 包含子文件夹
-  },
-  "moviebox": {
-    "movieboxDir": "boxes"         // 电影收藏夹目录
+    "libraries": {
+      "default": {
+        "dir": "D:\\VideoLib\\JAV"   // 影视库根目录；movies/actors/boxes 子目录由系统派生
+      }
+    },
+    "currentLibrary": "default",       // 当前使用的库名
+    "newMovieHours": 168,             // 新电影判定时间（小时），默认168小时（7天）
+    "scanOnStartup": true,            // 启动时扫描
+    "autoRefresh": false,             // 自动刷新
+    "showHiddenFiles": false,         // 显示隐藏文件
+    "includeSubfolders": true         // 包含子文件夹
   },
   "tmdb": {
     "url": "https://api.themoviedb.org",  // TMDB API地址
@@ -102,15 +103,13 @@
 ```
 
 首次使用需要在"设置"中配置以下必填项：
-- **moviesDir**: 电影库目录（存放按分类组织的电影文件夹）
-- **movieboxDir**: 电影收藏夹目录（存放收藏夹定义文件）
-- **actorPhotoDir**: 演员照片目录（存放演员头像图片）
+- **library.libraries.<name>.dir**: 影视库根目录。系统会自动派生出 `movies/`、`actors/`、`boxes/` 三个子目录，并在该根目录下存放 `actor.json`、`tags.json`、`categories.json`、`boxes.json`、`history.json` 这 5 个配置文件，每个影视库相互独立。
 - **tmdb.token**: TMDB API Token（如需使用TMDB搜索功能）
 - **r18.dbUrl**: R18数据库连接（如需使用R18数据源）
 
 ### 分类配置
 
-分类定义在 `config/categories.json`：
+分类定义在 `${currentLibrary.dir}/categories.json`（位于当前影视库根目录下）：
 
 ```json
 {
@@ -125,7 +124,7 @@
 
 ### 标签配置
 
-标签定义在 `config/tags.json`：
+标签定义在 `${currentLibrary.dir}/tags.json`（位于当前影视库根目录下）：
 
 ```json
 [

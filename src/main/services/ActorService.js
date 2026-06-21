@@ -183,6 +183,15 @@ class ActorService {
     }
 
     /**
+     * 切换演员配置文件路径（用于切换影视库时重定向）
+     * @param {string} newPath - 新的 actor.json 文件路径
+     */
+    setActorFilePath(newPath) {
+        this.actorFilePath = newPath;
+        this.actorsCache = null;
+    }
+
+    /**
      * 获取演员数量
      * @returns {Promise<number>} 演员数量
      */

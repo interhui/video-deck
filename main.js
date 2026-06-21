@@ -28,8 +28,10 @@ const BatchSearchService = require('./src/main/services/BatchSearchService');
 const BatchActorSearchService = require('./src/main/services/BatchActorSearchService');
 const ScreenshotService = require('./src/main/services/ScreenshotService');
 const MovieHistoryService = require('./src/main/services/MovieHistoryService');
+const HttpService = require('./src/main/services/HttpService');
 const { setupIpcHandlers } = require('./src/main/ipc-handlers');
 const { setGlobalProxy } = require('./src/main/utils/HttpUtils');
+const { computeLibraryPaths, applyLibraryPathsToServices } = require('./src/main/utils/LibraryUtils');
 
 // 全局变量
 let mainWindow = null;
@@ -54,6 +56,7 @@ let batchSearchService = null;
 let batchActorSearchService = null;
 let screenshotService = null;
 let movieHistoryService = null;
+let httpService = null;
 
 /**
  * 初始化服务
@@ -67,6 +70,7 @@ async function initializeServices() {
     indexService = new IndexService();
     dbService = new DatabaseService(path.join(userDataPath, 'database', 'movies.db'));
     settingsService = new SettingsService(path.join(__dirname, 'config', 'settings.json'));
+    // 5 个配置服务先以占位路径构造；settings 加载完成后由 LibraryUtils 重定向到当前库的 dir。
     boxService = new BoxService(path.join(__dirname, 'config', 'boxes.json'));
     tagService = new TagService(path.join(__dirname, 'config', 'tags.json'));
     categoryService = new CategoryService(path.join(__dirname, 'config', 'categories.json'));
@@ -75,7 +79,15 @@ async function initializeServices() {
 
     // 等待设置加载完成后再初始化 R18AdapterService
     await settingsService.getSettingsPromise();
-    
+
+    // 将 5 个配置服务的路径重定向到当前库的 dir（若 dir 已配置）
+    applyLibraryPathsToServices(computeLibraryPaths(settingsService), {
+        tagService,
+        categoryService,
+        boxService,
+        actorService
+    });
+
     // 初始化全局代理
     const proxyUrl = settingsService.getProxyAgentUrl();
     if (proxyUrl) {
@@ -83,7 +95,7 @@ async function initializeServices() {
         const proxyConfig = settingsService.getProxyConfig();
         console.debug('Proxy initialized', proxyConfig.address);
     }
-    
+
     r18AdapterService = new R18AdapterService(settingsService, tmdbMovieAdapterService);
     playerService = new PlayerService();
     batchSearchService = new BatchSearchService(settingsService, tmdbMovieAdapterService, r18AdapterService, movieService, fileService);
@@ -106,6 +118,29 @@ async function initializeServices() {
 
     screenshotService = new ScreenshotService();
     movieHistoryService = new MovieHistoryService(path.join(__dirname, 'config'));
+    // movieHistoryService 构造时尚未包含在上面的批量重定向里；构造完后再单独切到当前库的 dir
+    const libraryPaths = computeLibraryPaths(settingsService);
+    if (movieHistoryService && typeof movieHistoryService.setHistoryFilePath === 'function') {
+        if (libraryPaths.dir) {
+            movieHistoryService.setHistoryFilePath(path.join(libraryPaths.dir, 'history.json'));
+        }
+    }
+
+    // 初始化HTTP服务（按settings.http配置决定是否启动）
+    httpService = new HttpService({
+        settingsService,
+        movieService,
+        boxService,
+        categoryService,
+        tagService,
+        actorService,
+        movieHistoryService
+    });
+    try {
+        await httpService.start();
+    } catch (error) {
+        log.error('Failed to start HTTP service:', error.message || error);
+    }
 
     log.info('Services initialized successfully');
 }
@@ -115,8 +150,10 @@ async function initializeServices() {
  */
 async function checkAndRebuildIndexes() {
     try {
-        const settings = settingsService.getSettings();
-        const moviesDir = path.join(__dirname, settings.library.moviesDir || 'movies');
+        const rawMoviesDir = settingsService.getMoviesDir();
+        const moviesDir = path.isAbsolute(rawMoviesDir)
+            ? rawMoviesDir
+            : path.join(__dirname, rawMoviesDir || 'movies');
 
         const { allExist, missingCategories } = await indexService.checkIndexesExist(moviesDir);
 
@@ -171,6 +208,115 @@ function createMainWindow() {
 }
 
 /**
+ * 构建“切换电影库”子菜单项
+ * 从 settings.library.libraries 中读取所有库名称；当前库（currentLibrary）前打对勾
+ * @returns {Array<Electron.MenuItemConstructorOptions>}
+ */
+function buildSwitchLibrarySubmenu() {
+    if (!settingsService) {
+        return [];
+    }
+    const libraries = settingsService.getLibraries() || {};
+    const currentLibrary = settingsService.getCurrentLibraryName();
+    const names = Object.keys(libraries);
+
+    if (names.length === 0) {
+        return [{
+            label: '(暂无可用影视库)',
+            enabled: false
+        }];
+    }
+
+    return names.map((name) => ({
+        label: name,
+        type: 'checkbox',
+        checked: name === currentLibrary,
+        click: async () => {
+            if (name === settingsService.getCurrentLibraryName()) {
+                // 点击的已是当前库，无需切换
+                return;
+            }
+            await switchLibraryWithConfirm(name);
+        }
+    }));
+}
+
+/**
+ * 弹出确认框，确认后切换到指定影视库
+ * 切换逻辑与 ipc-handlers.js 的 'set-current-library' 处理一致：
+ *   1) settingsService.setCurrentLibrary(name)
+ *   2) applyLibraryPathsToServices(...)
+ *   3) 【先】向所有窗口广播 'library-changed'（让渲染进程立即展示加载模态窗并清空首页）
+ *   4) movieService.refreshCache(moviesDir)        ← 在模态窗背后执行
+ *   5) 重建菜单，使对勾位置更新
+ *
+ * 注意：原实现把广播放在 refreshCache 之后，会导致用户点击确定后要等很久
+ *       才能看到 movie-loading-modal 弹出，首页旧库内容长时间滞留。
+ *       这里把广播提前，刷新缓存在模态窗背后执行，体验与 ipc-handlers.js
+ *       中由渲染进程主动发起的 'set-current-library' 一致。
+ * @param {string} name - 目标库名称
+ */
+async function switchLibraryWithConfirm(name) {
+    if (!mainWindow || mainWindow.isDestroyed()) {
+        return;
+    }
+    const result = await dialog.showMessageBox(mainWindow, {
+        type: 'question',
+        title: '切换电影库',
+        message: `将切换至 ${name} 电影库`,
+        buttons: ['确定', '取消'],
+        defaultId: 0,
+        cancelId: 1,
+        noLink: true
+    });
+    if (result.response !== 0) {
+        return;
+    }
+
+    // 步骤 1：切换当前库（同步更新内存中的 settings，写盘为异步）
+    const ok = settingsService.setCurrentLibrary(name);
+    if (!ok) {
+        dialog.showErrorBox('切换电影库失败', `影视库 "${name}" 不存在`);
+        return;
+    }
+
+    // 步骤 2：重定向 5 个配置服务的文件路径，并清空它们的内存缓存
+    applyLibraryPathsToServices(
+        computeLibraryPaths(settingsService),
+        {
+            tagService,
+            categoryService,
+            boxService,
+            actorService,
+            movieHistoryService
+        }
+    );
+
+    // 步骤 3：【关键】先向所有窗口广播 library-changed，让渲染进程立即展示
+    //         movie-loading-modal 并清空首页的电影卡片/列表，再在模态窗背后进行缓存重建。
+    //         这解决了之前"点击确定后要等 refreshCache 完成才看到模态窗弹出"的问题。
+    BrowserWindow.getAllWindows().forEach((win) => {
+        if (!win.isDestroyed()) {
+            win.webContents.send('library-changed', settingsService.getCurrentLibraryName());
+        }
+    });
+
+    // 步骤 4：强制刷新电影缓存（可能耗时，模态窗持续显示）
+    const moviesDir = settingsService.getMoviesDir();
+    const absMoviesDir = moviesDir && path.isAbsolute(moviesDir)
+        ? moviesDir
+        : path.join(__dirname, moviesDir || 'movies');
+    try {
+        await movieService.refreshCache(absMoviesDir);
+    } catch (refreshErr) {
+        log.error('Refresh cache after library switch failed:', refreshErr.message || refreshErr);
+    }
+
+    // 步骤 5：重建菜单，使对勾位置更新到新当前库
+    createApplicationMenu();
+}
+
+/**
  * 创建应用菜单
  */
 function createApplicationMenu() {
@@ -210,6 +356,10 @@ function createApplicationMenu() {
                         }
                     }
                 },
+                {
+                    label: '切换电影库',
+                    submenu: buildSwitchLibrarySubmenu()
+                },
                 { type: 'separator' },
                 {
                     label: '设置',
@@ -221,10 +371,10 @@ function createApplicationMenu() {
                     }
                 },
                 { type: 'separator' },
-                { 
-                    label: '退出', 
+                {
+                    label: '退出',
                     accelerator: 'CmdOrCtrl+Q',
-                    role: 'quit' 
+                    role: 'quit'
                 }
             ]
         },
@@ -716,6 +866,7 @@ app.whenReady().then(async () => {
         batchActorSearchService,
         screenshotService,
         movieHistoryService,
+        httpService,
         getMainWindow: () => mainWindow,
         createMovieDetailWindow,
         createBoxWindow,
@@ -754,6 +905,9 @@ app.on('before-quit', () => {
     log.info('App quitting...');
     if (dbService) {
         dbService.close();
+    }
+    if (httpService && httpService.isRunning()) {
+        httpService.stop().catch(err => log.error('Stop httpService error:', err));
     }
 });
 

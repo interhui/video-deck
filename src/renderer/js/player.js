@@ -77,6 +77,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 应用字幕设置
     await applySubtitleSettings();
 
+    // 应用音量设置
+    await applyVolumeSettings();
+
+    async function applyVolumeSettings() {
+        try {
+            const settings = await window.electronAPI.getSettings();
+            const volume = (settings && settings.player && typeof settings.player.volume === 'number')
+                ? settings.player.volume
+                : 45;
+            elements.volumeBar.value = volume;
+            elements.videoPlayer.volume = volume / 100;
+            updateMuteBtn();
+        } catch (error) {
+            console.error('Failed to apply volume settings:', error.message || error);
+            elements.volumeBar.value = 45;
+            elements.videoPlayer.volume = 0.45;
+        }
+    }
+
     async function applySubtitleSettings() {
         try {
             const settings = await window.electronAPI.getSettings();

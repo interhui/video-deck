@@ -31,13 +31,14 @@ class HardCodeService {
             },
 
             library: {
-                moviesDir: path.join(__dirname, 'movies'),
-                actorPhotoDir: path.join(__dirname, 'actors'),
+                // 每个影视库仅记录 dir 根目录；moviesDir/actorPhotoDir/movieboxDir 在 SettingsService 中按需派生
+                libraries: {
+                    default: {
+                        dir: ''
+                    }
+                },
+                currentLibrary: 'default',
                 newMovieHours: 72
-            },
-
-            moviebox: {
-                movieboxDir: path.join(__dirname, 'boxes')
             },
 
             tmdb: {
@@ -64,6 +65,12 @@ class HardCodeService {
                 address: '',
                 username: '',
                 password: ''
+            },
+
+            http: {
+                enabled: false,
+                listenAddress: '0.0.0.0',
+                listenPort: 8080
             },
 
             player: {
@@ -114,20 +121,12 @@ class HardCodeService {
                 order: 2
             },
             {
-                id: 'documentary',
-                name: '纪录片',
-                shortName: '纪录片',
-                icon: 'image/category-icons/documentary.png',
-                color: '#E60012',
-                order: 3
-            },
-            {
                 id: 'anime',
                 name: '动漫',
                 shortName: '动漫',
                 icon: 'image/category-icons/anime.png',
                 color: '#888888',
-                order: 4
+                order: 3
             }
         ];
     }

@@ -146,6 +146,15 @@ class CategoryService {
     }
 
     /**
+     * 切换分类配置文件路径（用于切换影视库时重定向）
+     * @param {string} newPath - 新的分类 JSON 文件路径
+     */
+    setCategoryConfigPath(newPath) {
+        this.categoryConfigPath = newPath;
+        this.categoriesCache = null;
+    }
+
+    /**
      * 获取分类数量
      * @returns {Promise<number>} 分类数量
      */
