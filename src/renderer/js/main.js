@@ -302,6 +302,152 @@ const elements = {
 };
 
 /**
+ * 清空渲染进程持有的、与某一影视库相关的所有缓存与 UI。
+ * 用于影视库切换前先把当前画面归零，避免新库内容进来之前出现残影。
+ */
+function clearRendererStateForLibrarySwitch() {
+    // 1) 销毁懒加载器（旧的 DOM 节点 + 滚动监听都会被释放）
+    if (state.lazyLoader) {
+        try {
+            state.lazyLoader.destroy();
+        } catch (err) {
+            console.warn('Destroy lazyLoader failed:', err && err.message);
+        }
+        state.lazyLoader = null;
+    }
+
+    // 2) 清空内存中的列表缓存
+    state.movies = [];
+    state.boxes = [];
+    state.tags = [];
+    state.actors = [];
+    state.categories = [];
+    state.selectedMovies = new Set();
+    state.selectedTags = new Set();
+    state.currentActorFilter = [];
+
+    // 3) 复位筛选 / 搜索 / 视图状态
+    state.currentCategory = '';
+    state.currentBox = '';
+    state.currentTag = '';
+    state.currentTagFilter = '';
+    state.tagFilterSearchKeyword = '';
+    state.tempSelectedTag = null;
+    state.searchKeyword = '';
+    state.onlyNewMovies = false;
+    state.excludeBoxMode = false;
+    state.excludeBoxName = '';
+    state.excludedMovieIds = new Set();
+    state.sidebarSearchActive = false;
+    state.actorFilterModalVisible = false;
+    state.tagFilterModalVisible = false;
+    state.actorSelectorSearchKeyword = '';
+    state.actorSelectorCurrentPage = 1;
+
+    // 4) 复位搜索框 / 排序下拉 / 标签过滤下拉等表单
+    if (elements.searchInput) elements.searchInput.value = '';
+    if (elements.clearSearchBtn) elements.clearSearchBtn.style.display = 'none';
+    if (elements.sortSelect) elements.sortSelect.value = state.currentSort || 'name-asc';
+    if (elements.categoryFilter) elements.categoryFilter.value = '';
+    if (elements.tagFilterClearBtn) elements.tagFilterClearBtn.style.display = 'none';
+
+    // 5) 清空 DOM：电影墙 / 收藏夹 / 侧边栏分类
+    if (elements.moviesGrid) elements.moviesGrid.innerHTML = '';
+    if (elements.emptyState) elements.emptyState.style.display = 'none';
+    if (elements.boxList) elements.boxList.innerHTML = '';
+    if (elements.categoryList) elements.categoryList.innerHTML = '';
+
+    // 6) 关闭筛选模态窗
+    if (elements.actorFilterModal) elements.actorFilterModal.style.display = 'none';
+    if (elements.tagFilterModal) elements.tagFilterModal.style.display = 'none';
+}
+
+/**
+ * 影视库切换后重新加载全部数据并刷新 UI。
+ * 流程与 init() 一致：settings -> tags -> actors -> categories -> boxes -> movies。
+ * @param {{showModal?: boolean}} [opts]
+ */
+async function reloadAllAfterLibraryChange(opts = {}) {
+    const showModal = opts.showModal !== false;
+    try {
+        if (showModal && elements.movieLoadingModal) {
+            elements.movieLoadingModal.style.display = 'flex';
+        }
+
+        // 1) 重新加载设置（更新 state.currentLibrary / state.libraries / 影视库下拉）
+        await loadSettings();
+
+        // 2) 重新加载标签 / 演员 / 分类
+        await loadTags();
+        await loadActors();
+        await loadCategories();
+
+        // 3) 重新加载收藏夹（盒子）
+        await loadBoxes();
+
+        // 4) 重新加载电影（懒加载第一页加载完成后会触发渲染）
+        await loadMovies();
+    } catch (error) {
+        console.error('Reload after library change failed:', error && (error.message || error));
+    } finally {
+        if (showModal && elements.movieLoadingModal) {
+            elements.movieLoadingModal.style.display = 'none';
+        }
+    }
+}
+
+/**
+ * 处理影视库切换事件
+ *
+ * 切换流程（与用户预期一致）：
+ *   1) 展示 movie-loading-modal 模态窗（先遮住旧画面，避免出现空画面闪烁）
+ *   2) 清理电影 / 收藏 / 标签 / 演员 / 分类缓存，首页电影卡片和列表置空
+ *   3) 同步 state.currentLibrary
+ *   4) 重新加载全部数据（settings / tags / actors / categories / boxes / movies）
+ *   5) 关闭 movie-loading-modal 模态窗
+ *
+ * @param {string} name - 新的当前影视库名称
+ */
+async function handleLibraryChanged(name) {
+    // 1) 先展示 movie-loading-modal 模态窗（防止用户看到旧库内容清空瞬间的空画面）
+    if (elements.movieLoadingModal) {
+        elements.movieLoadingModal.style.display = 'flex';
+    }
+
+    // 2) 清理电影 / 收藏 / 标签 / 演员 / 分类缓存，并将首页电影卡片、列表置空
+    try {
+        clearRendererStateForLibrarySwitch();
+    } catch (clearErr) {
+        console.error('Clear renderer state failed:', clearErr && (clearErr.message || clearErr));
+    }
+
+    // 3) 同步 state.currentLibrary / state.libraries
+    try {
+        state.currentLibrary = name;
+        if (state.settings && state.settings.library) {
+            state.settings.library.currentLibrary = name;
+        }
+        state.libraries = (state.settings && state.settings.library && state.settings.library.libraries)
+            || state.libraries
+            || {};
+    } catch (err) {
+        console.warn('Sync current library in state failed:', err && err.message);
+    }
+
+    // 4) 重新拉取全部数据（模态窗持续显示，由本函数统一管理）
+    try {
+        await reloadAllAfterLibraryChange({ showModal: false });
+    } catch (reloadErr) {
+        console.error('Reload after library change failed:', reloadErr && (reloadErr.message || reloadErr));
+    }
+
+    // 5) 电影加载完成，关闭 movie-loading-modal 模态窗
+    if (elements.movieLoadingModal) {
+        elements.movieLoadingModal.style.display = 'none';
+    }
+}
+
+/**
  * 初始化应用
  */
 async function init() {
@@ -310,24 +456,7 @@ async function init() {
     // 显示电影加载进度弹窗（禁止关闭）
     elements.movieLoadingModal.style.display = 'flex';
 
-    // 加载设置
-    await loadSettings();
-
-    // 加载标签
-    await loadTags();
-
-    // 加载演员列表
-    await loadActors();
-
-    // 加载分类列表
-    await loadCategories();
-
-    // 加载收藏夹列表
-    await loadBoxes();
-
-
-    // 使用LazyLoader加载电影，第一页加载完成后自动关闭弹窗
-    await loadMovies();
+    await reloadAllAfterLibraryChange({ showModal: false });
 
     // 关闭加载进度弹窗
     elements.movieLoadingModal.style.display = 'none';
@@ -2316,6 +2445,11 @@ function bindEvents() {
     window.electronAPI.onRefreshLibrary(() => {
         refreshLibraryWithProgress();
 
+    });
+
+    // 监听影视库切换事件
+    window.electronAPI.onLibraryChanged((name) => {
+        handleLibraryChanged(name);
     });
 
     // 监听电影更新事件（海报更新等）
