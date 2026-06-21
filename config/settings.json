@@ -15,31 +15,48 @@
     "sortOrder": "asc"
   },
   "library": {
-    "moviesDir": "D:\\git\\movie-mgt\\movies",
-    "actorPhotoDir": "D:\\git\\movie-mgt\\actor",
+    "libraries": {
+      "default": {
+        "dir": "D:\\VideoLib\\default"
+      }
+    },
+    "currentLibrary": "default",
     "newMovieHours": 72
-  },
-  "moviebox": {
-    "movieboxDir": "D:\\git\\movie-mgt\\boxes"
   },
   "tmdb": {
     "url": "api.themoviedb.org",
+    "token": "",
     "language": "zh-CN",
-    "token": ""
+    "posterUrl": "https://image.tmdb.org/t/p"
   },
   "r18": {
-    "dbUrl": "postgresql://localhost:5432/public",
-    "dbUsername": "postgres",
-    "dbPassword": ""
+    "dbUrl": "postgresql://127.0.0.1:5435/postgres",
+    "dbUsername": "",
+    "dbPassword": "",
+    "posterUrl": "https://pics.dmm.co.jp"
   },
   "videoParsing": {
-    "ffmpegPath": "",
-    "ffprobePath": ""
+    "ffmpegPath": "D:\\Tools\\ffmpeg\\bin\\ffmpeg.exe",
+    "ffprobePath": "D:\\Tools\\ffmpeg\\bin\\ffprobe.exe"
   },
   "proxy": {
     "enabled": false,
     "address": "http://localhost:8080",
     "username": "",
     "password": ""
+  },
+  "http": {
+    "enabled": true,
+    "listenAddress": "0.0.0.0",
+    "listenPort": 8080
+  },
+  "player": {
+    "subtitle": {
+      "backgroundColor": "rgba(0, 0, 0, 0.7)",
+      "fontSize": "22px",
+      "fontWeight": "800",
+      "textStroke": "2px #000000"
+    },
+    "volume": 4
   }
 }
