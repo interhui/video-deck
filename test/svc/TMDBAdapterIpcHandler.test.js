@@ -20,6 +20,11 @@ describe('TMDBAdapter IPC Handler', () => {
         const settingsPath = path.join(testDataDir, 'settings.json');
         settingsService = new SettingsService(settingsPath);
         service = new TMDBMovieAdapterService(settingsService);
+        // 屏蔽 SettingsService 内 fire-and-forget 的异步设置写入（saveSettings 不 await 写文件），
+        // 避免与 afterEach 清理目录竞争，产生 "Cannot log after tests are done" 异步日志
+        if (settingsService.fileService && typeof settingsService.fileService.writeJson === 'function') {
+            jest.spyOn(settingsService.fileService, 'writeJson').mockResolvedValue({ success: true });
+        }
     });
 
     afterEach(() => {
@@ -303,7 +308,8 @@ describe('TMDBAdapter IPC Handler', () => {
                 movie_id: 'tt0111161',
                 title: '肖申克的救赎',
                 overview: '经典电影简介',
-                genres: ['剧情', '犯罪'],
+                // 当前实现已从 genres 字段改名为 tags
+                tags: ['剧情', '犯罪'],
                 production_companies: ['哥伦比亚电影公司'],
                 runtime: 142,
                 poster_url: 'https://image.tmdb.org/t/p/original/poster.jpg',

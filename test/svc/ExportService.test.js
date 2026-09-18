@@ -5,6 +5,34 @@ const ExportService = require('../../src/main/services/ExportService');
 const path = require('path');
 const fs = require('fs');
 
+/**
+ * 使用 yauzl 列出 ZIP 内的所有条目名（替代项目中未安装的 adm-zip）
+ * @param {string} zipPath - ZIP 文件路径
+ * @returns {Promise<string[]>} 条目名数组
+ */
+function getZipEntryNames(zipPath) {
+    return new Promise((resolve, reject) => {
+        const yauzl = require('yauzl');
+        const names = [];
+        yauzl.open(zipPath, { lazyEntries: true }, (err, zipfile) => {
+            if (err) return reject(err);
+            zipfile.on('entry', (entry) => {
+                names.push(entry.fileName);
+                zipfile.readEntry();
+            });
+            zipfile.on('end', () => {
+                try { zipfile.close(); } catch (e) { /* ignore */ }
+                resolve(names);
+            });
+            zipfile.on('error', (e) => {
+                try { zipfile.close(); } catch (ignored) { /* ignore */ }
+                reject(e);
+            });
+            zipfile.readEntry();
+        });
+    });
+}
+
 describe('ExportService', () => {
     let service;
     let testDataDir;
@@ -287,10 +315,8 @@ describe('ExportService', () => {
             await service.exportBoxToZip(movies, testMoviesDir, exportPath);
 
             expect(fs.existsSync(exportPath)).toBe(true);
-            const AdmZip = require('adm-zip');
-            const zip = new AdmZip(exportPath);
-            const entries = zip.getEntries();
-            expect(entries.some(e => e.entryName === `${movieId}/movie.nfo`)).toBe(true);
+            const entries = await getZipEntryNames(exportPath);
+            expect(entries).toContain(`${movieId}/movie.nfo`);
         });
 
         test('SVC-EXPORT-015a: 使用basePath而非拼接路径', async () => {
@@ -304,10 +330,8 @@ describe('ExportService', () => {
 
             await service.exportBoxToZip(movies, testMoviesDir, exportPath);
 
-            const AdmZip = require('adm-zip');
-            const zip = new AdmZip(exportPath);
-            const entries = zip.getEntries();
-            expect(entries.some(e => e.entryName === `${movieId}/movie.nfo`)).toBe(true);
+            const entries = await getZipEntryNames(exportPath);
+            expect(entries).toContain(`${movieId}/movie.nfo`);
         });
 
         test('SVC-EXPORT-016: ZIP包含poster文件', async () => {
@@ -322,10 +346,8 @@ describe('ExportService', () => {
 
             await service.exportBoxToZip(movies, testMoviesDir, exportPath);
 
-            const AdmZip = require('adm-zip');
-            const zip = new AdmZip(exportPath);
-            const entries = zip.getEntries();
-            expect(entries.some(e => e.entryName === `${movieId}/poster.jpg`)).toBe(true);
+            const entries = await getZipEntryNames(exportPath);
+            expect(entries).toContain(`${movieId}/poster.jpg`);
         });
 
         test('SVC-EXPORT-017: ZIP包含多种poster格式', async () => {
@@ -341,11 +363,9 @@ describe('ExportService', () => {
 
             await service.exportBoxToZip(movies, testMoviesDir, exportPath);
 
-            const AdmZip = require('adm-zip');
-            const zip = new AdmZip(exportPath);
-            const entries = zip.getEntries();
-            expect(entries.some(e => e.entryName === `${movieId}/poster.jpg`)).toBe(true);
-            expect(entries.some(e => e.entryName === `${movieId}/movie-poster.png`)).toBe(true);
+            const entries = await getZipEntryNames(exportPath);
+            expect(entries).toContain(`${movieId}/poster.jpg`);
+            expect(entries).toContain(`${movieId}/movie-poster.png`);
         });
 
         test('SVC-EXPORT-018: 电影目录不存在时跳过', async () => {
@@ -355,9 +375,7 @@ describe('ExportService', () => {
             const result = await service.exportBoxToZip(movies, testMoviesDir, exportPath);
 
             expect(fs.existsSync(exportPath)).toBe(true);
-            const AdmZip = require('adm-zip');
-            const zip = new AdmZip(exportPath);
-            const entries = zip.getEntries();
+            const entries = await getZipEntryNames(exportPath);
             expect(entries.length).toBe(0);
             expect(result.count).toBe(0);
             expect(result.skipped).toContain('nonexistent');

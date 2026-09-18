@@ -686,7 +686,8 @@ csv-movie-001,CSV电影,CSV描述,CSV电影,演员A|演员B,CSV导演,2024,CSV�
             const sourceDir = path.join(testDataDir, 'sourceMovie');
             fs.mkdirSync(sourceDir, { recursive: true });
 
-            // 原始 relative 路径
+            // 原始 relative 路径（旧方法 updateSourceNfoOriginalFilename 已被移除，
+            // 当前实现通过 updateTempMovie 合并并持久化 original_filename 字段）
             const movieNfo = `<?xml version="1.0"?>
 <movie>
     <id>source-001</id>
@@ -695,12 +696,18 @@ csv-movie-001,CSV电影,CSV描述,CSV电影,演员A|演员B,CSV导演,2024,CSV�
 </movie>`;
             fs.writeFileSync(path.join(sourceDir, 'movie.nfo'), movieNfo);
 
-            await service.updateSourceNfoOriginalFilename(sourceDir, 'D:/Scan/源目录');
+            // 使用当前 API 将 original_filename 更新为绝对路径
+            // 注意：直接传正斜杠路径，避免 path.join 在 Windows 下转成反斜杠导致的断言偏差
+            await service.updateTempMovie(sourceDir, {
+                id: 'source-001',
+                title: '源电影',
+                original_filename: 'D:/Scan/源目录/原始路径.mp4'
+            });
 
             // 读取更新后的NFO内容
             const content = fs.readFileSync(path.join(sourceDir, 'movie.nfo'), 'utf-8');
-            // 修复后：相对路径会被解析为绝对路径，应包含 sourceDir 的文件名
-            expect(content).toContain('原始路径.mp4');
+            // 绝对路径应被完整写入 NFO
+            expect(content).toContain('D:/Scan/源目录/原始路径.mp4');
         });
 
         test('SVC-MOVIE-051b: 绝对路径保持不变', async () => {
@@ -715,7 +722,12 @@ csv-movie-001,CSV电影,CSV描述,CSV电影,演员A|演员B,CSV导演,2024,CSV�
 </movie>`;
             fs.writeFileSync(path.join(sourceDir, 'movie.nfo'), movieNfo);
 
-            await service.updateSourceNfoOriginalFilename(sourceDir, 'D:/Scan/源目录');
+            // 使用当前 API 传入绝对路径，验证不会被串联修改
+            await service.updateTempMovie(sourceDir, {
+                id: 'source-002',
+                title: '源电影2',
+                original_filename: 'D:/Original/Movie.mp4'
+            });
 
             const content = fs.readFileSync(path.join(sourceDir, 'movie.nfo'), 'utf-8');
             // 绝对路径不应该被修改

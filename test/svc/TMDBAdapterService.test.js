@@ -19,6 +19,11 @@ describe('TMDBMovieAdapterService', () => {
         const settingsPath = path.join(testDataDir, 'settings.json');
         settingsService = new SettingsService(settingsPath);
         service = new TMDBMovieAdapterService(settingsService);
+        // 屏蔽 SettingsService 内 fire-and-forget 的异步设置写入（saveSettings 不 await 写文件），
+        // 避免与 afterEach 清理目录竞争，产生 "Cannot log after tests are done" 异步日志
+        if (settingsService.fileService && typeof settingsService.fileService.writeJson === 'function') {
+            jest.spyOn(settingsService.fileService, 'writeJson').mockResolvedValue({ success: true });
+        }
     });
 
     afterEach(() => {

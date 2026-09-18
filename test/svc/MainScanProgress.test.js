@@ -307,6 +307,9 @@ describe('主界面扫描进度功能', () => {
             // 模拟用户中断
             isScanning = false;
 
+            // 停止定时器，避免 jest 运行结束后残留未清理的 interval 句柄
+            clearInterval(intervalId);
+
             // 定时器内部会检测到 isScanning = false 并清理自己
             expect(isScanning).toBe(false);
         });

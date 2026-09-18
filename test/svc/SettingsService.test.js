@@ -16,6 +16,11 @@ describe('SettingsService', () => {
         }
         const settingsPath = path.join(testDataDir, 'settings.json');
         service = new SettingsService(settingsPath);
+        // 屏蔽 SettingsService 内 fire-and-forget 的异步设置写入（saveSettings 不 await 写文件），
+        // 避免与 afterEach 清理目录竞争，产生 "Cannot log after tests are done" 异步日志
+        if (service.fileService && typeof service.fileService.writeJson === 'function') {
+            jest.spyOn(service.fileService, 'writeJson').mockResolvedValue({ success: true });
+        }
     });
 
     afterEach(() => {

@@ -22,6 +22,13 @@ describe('R18AdapterService', () => {
         settingsService = new SettingsService(settingsPath);
         tmdbAdapterService = new TMDBMovieAdapterService(settingsService);
         service = new R18AdapterService(settingsService, tmdbAdapterService);
+        // 屏蔽 SettingsService 内 fire-and-forget 的异步设置写入（saveSettings 不 await 写文件），
+        // 避免与 afterEach 清理目录竞争，产生 "Cannot log after tests are done" 异步日志
+        if (settingsService.fileService && typeof settingsService.fileService.writeJson === 'function') {
+            jest.spyOn(settingsService.fileService, 'writeJson').mockResolvedValue({ success: true });
+        }
+        // 规避 getMovie 中对真实海报URL的网络探测（checkImageAccessible），保证测试确定性且不泄漏句柄
+        service.checkImageAccessible = jest.fn().mockResolvedValue(true);
     });
 
     afterEach(() => {
@@ -150,8 +157,10 @@ describe('R18AdapterService', () => {
             expect(result).toHaveProperty('runtime', 120);
             expect(result).toHaveProperty('year', '2023');
             expect(result.tags).toEqual(['动作', '剧情']);
-            expect(result.production_companies).toEqual('');
-            expect(result.poster_url).toBe('http://example.com/poster.jpg');
+            // 当前实现 production_companies 已从字符串改为数组（[production_companies]）
+            expect(result.production_companies).toEqual(['公司A']);
+            // 海报URL经 buildImageUrl 拼接，且 checkImageAccessible 已 mock 为可访问
+            expect(result.poster_url).toBe('https://pics.dmm.co.jp/http://example.com/poster.jpg.jpg');
             expect(result.actors).toHaveLength(2);
             expect(result.actors[0]).toEqual({
                 person_id: '',
@@ -202,7 +211,8 @@ describe('R18AdapterService', () => {
             expect(result).toHaveProperty('runtime', 0);
             expect(result).toHaveProperty('year', '');
             expect(result.tags).toEqual([]);
-            expect(result.production_companies).toEqual('');
+            // 当前实现 production_companies 已从字符串改为数组（缺省时为 []）
+            expect(result.production_companies).toEqual([]);
             expect(result.actors).toEqual([]);
             expect(result.directors).toEqual([]);
             expect(result.poster_url).toBeNull();

@@ -53,7 +53,8 @@ describe('CategoryService', () => {
 
         test('SVC-CATEGORY-004: 无缓存无文件用默认保存', async () => {
             const result = await service.loadCategories();
-            expect(result).toHaveLength(4);
+            // 当前默认分类已由 4 个调整为 3 个（movie/电视剧/动漫）
+            expect(result).toHaveLength(3);
             expect(fs.existsSync(path.join(testDataDir, 'categories.json'))).toBe(true);
         });
     });
@@ -61,10 +62,10 @@ describe('CategoryService', () => {
     describe('getCategories (同步)', () => {
         test('SVC-CATEGORY-005: 无缓存无文件返回默认', () => {
             const categories = service.getCategories();
-            expect(categories).toHaveLength(4);
+            // 当前默认分类已由 4 个调整为 3 个：movie（电影）/tv（电视剧）/anime（动漫），docomentary 已移除
+            expect(categories).toHaveLength(3);
             expect(categories.map(c => c.id)).toContain('movie');
             expect(categories.map(c => c.id)).toContain('tv');
-            expect(categories.map(c => c.id)).toContain('documentary');
             expect(categories.map(c => c.id)).toContain('anime');
         });
 

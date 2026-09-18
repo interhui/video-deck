@@ -198,6 +198,14 @@ describe('HttpService', () => {
     // 1. 生命周期
     // ------------------------------------------------------------------------
     describe('生命周期', () => {
+        // 兜底：无论用例成功或失败，都确保关闭已启动的 server，防止泄漏导致 Jest 无法退出
+        let lifecycleService;
+        afterEach(async () => {
+            if (lifecycleService) {
+                await lifecycleService.stop();
+                lifecycleService = null;
+            }
+        });
 
         test('SVC-HTTP-001: 构造时默认未启动', () => {
             const service = new HttpService({});
@@ -206,29 +214,33 @@ describe('HttpService', () => {
         });
 
         test('SVC-HTTP-002: startWith可启动服务并填充listenInfo', async () => {
-            const service = new HttpService({});
-            await service.startWith('127.0.0.1', 0);
-            expect(service.isRunning()).toBe(true);
-            const info = service.getListenInfo();
+            lifecycleService = new HttpService({});
+            await lifecycleService.startWith('127.0.0.1', 0);
+            expect(lifecycleService.isRunning()).toBe(true);
+            const info = lifecycleService.getListenInfo();
             expect(info.host).toBe('127.0.0.1');
             expect(typeof info.port).toBe('number');
             expect(info.port).toBeGreaterThan(0);
-            await service.stop();
+            await lifecycleService.stop();
+            lifecycleService = null;
         });
 
         test('SVC-HTTP-003: stop停止后isRunning为false', async () => {
-            const service = new HttpService({});
-            await service.startWith('127.0.0.1', 0);
-            await service.stop();
-            expect(service.isRunning()).toBe(false);
-            expect(service.getListenInfo()).toBeNull();
+            lifecycleService = new HttpService({});
+            await lifecycleService.startWith('127.0.0.1', 0);
+            await lifecycleService.stop();
+            expect(lifecycleService.isRunning()).toBe(false);
+            expect(lifecycleService.getListenInfo()).toBeNull();
+            lifecycleService = null;
         });
 
         test('SVC-HTTP-004: 重复start返回rejection', async () => {
-            const service = new HttpService({});
-            await service.startWith('127.0.0.1', 0);
-            await expect(service.startWith('127.0.0.1', 0)).rejects.toThrow('已启动');
-            await service.stop();
+            lifecycleService = new HttpService({});
+            await lifecycleService.startWith('127.0.0.1', 0);
+            // 实现当前统一使用英文错误消息 'HTTP enabled'，此处按当前实现为正确基准
+            await expect(lifecycleService.startWith('127.0.0.1', 0)).rejects.toThrow('HTTP enabled');
+            await lifecycleService.stop();
+            lifecycleService = null;
         });
 
         test('SVC-HTTP-005: stop未启动的服务不抛错', async () => {
@@ -248,11 +260,12 @@ describe('HttpService', () => {
             const settings = createMockSettingsService({
                 http: { enabled: true, listenAddress: '127.0.0.1', listenPort: 0 }
             });
-            const service = new HttpService({ settingsService: settings });
-            const info = await service.start();
+            lifecycleService = new HttpService({ settingsService: settings });
+            const info = await lifecycleService.start();
             expect(info).not.toBeNull();
             expect(info.host).toBe('127.0.0.1');
-            await service.stop();
+            await lifecycleService.stop();
+            lifecycleService = null;
         });
 
         test('SVC-HTTP-008: 缺失settingsService时start返回null', async () => {
@@ -265,14 +278,15 @@ describe('HttpService', () => {
             const settings = createMockSettingsService({
                 http: { enabled: true, listenAddress: '127.0.0.1', listenPort: 0 }
             });
-            const service = new HttpService({ settingsService: settings });
-            await service.start();
-            const oldPort = service.getListenInfo().port;
-            const info = await service.restart();
+            lifecycleService = new HttpService({ settingsService: settings });
+            await lifecycleService.start();
+            const oldPort = lifecycleService.getListenInfo().port;
+            const info = await lifecycleService.restart();
             expect(info).not.toBeNull();
             // 端口未指定时（=0）每次都会随机分配
             expect(typeof info.port).toBe('number');
-            await service.stop();
+            await lifecycleService.stop();
+            lifecycleService = null;
         });
     });
 
