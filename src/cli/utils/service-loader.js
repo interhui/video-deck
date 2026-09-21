@@ -25,6 +25,7 @@ function loadServices(settingsPath) {
     const FileService = require(path.join(baseDir, 'src', 'main', 'services', 'FileService'));
     const MovieCacheService = require(path.join(baseDir, 'src', 'main', 'services', 'MovieCacheService'));
     const IndexService = require(path.join(baseDir, 'src', 'main', 'services', 'IndexService'));
+    const EmbyAdapterService = require(path.join(baseDir, 'src', 'main', 'services', 'EmbyAdapterService'));
 
     const fileService = new FileService();
     const settingsService = new SettingsService(settingsPath);
@@ -39,6 +40,7 @@ function loadServices(settingsPath) {
 
     const boxService = new BoxService(path.join(baseDir, 'config', 'boxes.json'));
     const tagService = new TagService(path.join(baseDir, 'config', 'tags.json'));
+    const embyAdapterService = new EmbyAdapterService(settingsService);
 
     return {
         movieService,
@@ -49,6 +51,7 @@ function loadServices(settingsPath) {
         fileService,
         movieCacheService,
         indexService,
+        embyAdapterService,
         // 兼容旧代码：通过 settingsService 间接获取
         getMoviesDir: () => settingsService.getMoviesDir(),
         getMovieboxDir: () => settingsService.getMovieboxDir(),

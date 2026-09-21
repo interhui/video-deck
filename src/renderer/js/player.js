@@ -394,8 +394,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Convert Windows path to file:// URL
         // UNC paths (\\server\share) need to become file:////server/share
+        // http(s) 远程流（如 Emby 直连播放地址）直接使用，不再拼接 file:// 前缀
         let videoPath = item.path;
-        if (videoPath.startsWith('\\\\')) {
+        if (videoPath.startsWith('http://') || videoPath.startsWith('https://')) {
+            // Remote URL - use as-is
+        } else if (videoPath.startsWith('\\\\')) {
             // UNC path - convert to file URL with proper format
             videoPath = 'file:////' + videoPath.substring(2).replace(/\\/g, '/');
         } else {

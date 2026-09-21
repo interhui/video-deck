@@ -3777,3 +3777,17 @@ body {
     color: var(--danger-color);
 }
 
+
+/* ==================== Emby 设置 ==================== */
+.emby-connection-result {
+    font-size: 12px;
+    color: var(--text-secondary, #999);
+}
+
+.emby-connection-result.success {
+    color: #4caf50;
+}
+
+.emby-connection-result.error {
+    color: #f44336;
+}

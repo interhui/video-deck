@@ -247,6 +247,7 @@ function setupIpcHandlers(services) {
         actorService,
         tmdbMovieAdapterService,
         r18AdapterService,
+        embyAdapterService,
         playerService,
         batchSearchService,
         batchActorSearchService,
@@ -257,6 +258,7 @@ function setupIpcHandlers(services) {
         createMovieDetailWindow,
         createBoxWindow,
         createBoxViewWindow,
+        createEmbyViewWindow,
         createActorViewWindow,
         createTagViewWindow,
         createActorManagementWindow,
@@ -1195,6 +1197,134 @@ function setupIpcHandlers(services) {
             return person;
         } catch (error) {
             console.error('Error getting R18 person:', error.message);
+            return { error: error.message };
+        }
+    });
+
+    // ==================== Emby 影视库 ====================
+
+    if (!embyAdapterService) {
+        console.warn('[ipc-handlers] embyAdapterService 未注入，Emby 相关接口不可用');
+    }
+
+    // 获取 Emby 配置
+    ipcMain.handle('emby-get-config', async () => {
+        try {
+            if (!embyAdapterService) throw new Error('embyAdapterService 未初始化');
+            return embyAdapterService.getConfig();
+        } catch (error) {
+            console.error('Error getting Emby config:', error.message || error);
+            return { error: error.message };
+        }
+    });
+
+    // 保存 Emby 配置
+    ipcMain.handle('emby-save-config', async (event, config) => {
+        try {
+            if (!embyAdapterService) throw new Error('embyAdapterService 未初始化');
+            embyAdapterService.setConfig(config || {});
+            return { success: true, config: embyAdapterService.getConfig() };
+        } catch (error) {
+            console.error('Error saving Emby config:', error.message || error);
+            return { error: error.message };
+        }
+    });
+
+    // 测试 Emby 服务器连接
+    ipcMain.handle('emby-test-connection', async () => {
+        try {
+            if (!embyAdapterService) throw new Error('embyAdapterService 未初始化');
+            return await embyAdapterService.testConnection();
+        } catch (error) {
+            console.error('Error testing Emby connection:', error.message || error);
+            return { reachable: false, error: error.message };
+        }
+    });
+
+    // 获取 Emby 库视图列表
+    ipcMain.handle('emby-get-views', async () => {
+        try {
+            if (!embyAdapterService) throw new Error('embyAdapterService 未初始化');
+            return await embyAdapterService.getViews();
+        } catch (error) {
+            console.error('Error getting Emby views:', error.message || error);
+            return { error: error.message };
+        }
+    });
+
+    // 获取 Emby 电影列表（分页/搜索/排序）
+    ipcMain.handle('emby-get-movies', async (event, options) => {
+        try {
+            if (!embyAdapterService) throw new Error('embyAdapterService 未初始化');
+            return await embyAdapterService.getMovies(options || {});
+        } catch (error) {
+            console.error('Error getting Emby movies:', error.message || error);
+            return { error: error.message };
+        }
+    });
+
+    // 获取 Emby 电影详情
+    ipcMain.handle('emby-get-movie-detail', async (event, itemId) => {
+        try {
+            if (!embyAdapterService) throw new Error('embyAdapterService 未初始化');
+            return await embyAdapterService.getMovieDetail(itemId);
+        } catch (error) {
+            console.error('Error getting Emby movie detail:', error.message || error);
+            return { error: error.message };
+        }
+    });
+
+    // 获取 Emby 直连播放 URL
+    ipcMain.handle('emby-get-playback-url', async (event, { itemId, mediaSourceId }) => {
+        try {
+            if (!embyAdapterService) throw new Error('embyAdapterService 未初始化');
+            const url = embyAdapterService.getPlaybackUrl(itemId, mediaSourceId);
+            return { url };
+        } catch (error) {
+            console.error('Error getting Emby playback URL:', error.message || error);
+            return { error: error.message };
+        }
+    });
+
+    // 打开 Emby 影视库窗口
+    ipcMain.handle('open-emby-view-window', async () => {
+        try {
+            if (typeof createEmbyViewWindow !== 'function') {
+                throw new Error('createEmbyViewWindow 未注入');
+            }
+            createEmbyViewWindow();
+            return { success: true };
+        } catch (error) {
+            console.error('Error opening Emby view window:', error.message || error);
+            return { error: error.message };
+        }
+    });
+
+    // 播放 Emby 电影（直连流 → 内置播放器）
+    ipcMain.handle('emby-play-movie', async (event, { itemId, mediaSourceId, title }) => {
+        try {
+            if (!embyAdapterService) throw new Error('embyAdapterService 未初始化');
+            const streamUrl = embyAdapterService.getPlaybackUrl(itemId, mediaSourceId);
+            if (!streamUrl) {
+                throw new Error('无法生成 Emby 播放地址');
+            }
+            const playlist = [{
+                path: streamUrl,
+                title: title || 'Emby 电影',
+                movieId: itemId,
+                category: null
+            }];
+            createPlayerWindow({
+                playlist,
+                currentIndex: 0,
+                movieTitle: title || 'Emby 电影播放',
+                movieId: itemId,
+                movieFolderPath: null,
+                startTime: 0
+            });
+            return { success: true, url: streamUrl };
+        } catch (error) {
+            console.error('Error playing Emby movie:', error.message || error);
             return { error: error.message };
         }
     });

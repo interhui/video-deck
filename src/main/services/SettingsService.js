@@ -555,6 +555,25 @@ class SettingsService {
         this.saveSettings(this.settings);
     }
 
+    getEmbyConfig() {
+        return this.settings.emby || {
+            enabled: false,
+            serverUrl: '',
+            apiKey: '',
+            username: '',
+            password: '',
+            userId: '',
+            accessToken: '',
+            language: 'zh-CN',
+            libraryId: ''
+        };
+    }
+
+    setEmbyConfig(config) {
+        this.settings.emby = { ...this.settings.emby, ...config };
+        this.saveSettings(this.settings);
+    }
+
     getProxyConfig() {
         return this.settings.proxy || { enabled: false, address: '', username: '', password: '' };
     }

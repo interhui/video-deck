@@ -226,6 +226,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
     r18SearchPerson: (actorName) => ipcRenderer.invoke('r18-search-person', actorName),
     r18GetPerson: (actorId) => ipcRenderer.invoke('r18-get-person', actorId),
 
+    // Emby 影视库
+    embyGetConfig: () => ipcRenderer.invoke('emby-get-config'),
+    embySaveConfig: (config) => ipcRenderer.invoke('emby-save-config', config),
+    embyTestConnection: () => ipcRenderer.invoke('emby-test-connection'),
+    embyGetViews: () => ipcRenderer.invoke('emby-get-views'),
+    embyGetMovies: (options) => ipcRenderer.invoke('emby-get-movies', options),
+    embyGetMovieDetail: (itemId) => ipcRenderer.invoke('emby-get-movie-detail', itemId),
+    embyGetPlaybackUrl: (data) => ipcRenderer.invoke('emby-get-playback-url', data),
+    embyPlayMovie: (data) => ipcRenderer.invoke('emby-play-movie', data),
+    openEmbyViewWindow: () => ipcRenderer.invoke('open-emby-view-window'),
+
     // 视频信息获取
     getVideoInfo: (videoPath) => ipcRenderer.invoke('get-video-info', videoPath),
 

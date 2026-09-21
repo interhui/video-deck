@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: file: http: https:;">
+    <title>Emby 影视库</title>
+    <link rel="stylesheet" href="css/themes/dark.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/view.css">
+</head>
+<body>
+    <div id="app">
+        <header class="toolbar">
+            <div class="toolbar-left">
+                <h2 class="view-title">Emby 影视库</h2>
+                <div class="filter-group">
+                    <select id="library-select" class="filter-select">
+                        <option value="">全部库视图</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <select id="sort-select" class="filter-select">
+                        <option value="name-asc">名称 ↑</option>
+                        <option value="name-desc">名称 ↓</option>
+                        <option value="year-desc">发行时间 ↓</option>
+                        <option value="year-asc">发行时间 ↑</option>
+                        <option value="rating-desc">评分 ↓</option>
+                        <option value="rating-asc">评分 ↑</option>
+                        <option value="dateAdded-desc">添加时间 ↓</option>
+                        <option value="dateAdded-asc">添加时间 ↑</option>
+                    </select>
+                </div>
+            </div>
+            <div class="toolbar-right">
+                <span id="connection-status" class="emby-connection-status" title="Emby 服务器连接状态"></span>
+                <div class="search-box">
+                    <input type="text" id="search-input" placeholder="搜索 Emby 电影...">
+                    <button id="search-btn" class="icon-btn">🔍</button>
+                    <button id="clear-search-btn" class="icon-btn clear-search-btn" style="display: none;">✕</button>
+                </div>
+                <button id="refresh-btn" class="icon-btn" title="刷新">⟳</button>
+                <button id="minimize-btn" class="titlebar-minimize-btn" title="最小化">─</button>
+                <button id="close-btn" class="titlebar-close-btn" title="关闭">&times;</button>
+            </div>
+        </header>
+
+        <main class="box-main-content">
+            <section class="box-movie-wall" id="emby-movie-wall">
+                <div class="emby-movies-grid" id="movies-grid">
+                </div>
+                <div class="empty-state" id="empty-state" style="display: none;">
+                    <p id="empty-state-text">暂无电影</p>
+                    <button id="goto-settings-btn" class="btn btn-primary" style="display: none;">去设置 Emby 服务器</button>
+                </div>
+                <div class="load-more-bar" id="load-more-bar" style="display: none;">
+                    <button id="load-more-btn" class="btn btn-secondary">加载更多</button>
+                    <span id="loaded-count" class="loaded-count"></span>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 电影详情模态框 -->
+    <div id="movie-detail-modal" class="modal" style="display: none;">
+        <div class="modal-content emby-detail-content">
+            <div class="modal-header">
+                <h2 id="detail-title">电影详情</h2>
+                <button class="close-btn" id="close-detail">&times;</button>
+            </div>
+            <div class="modal-body emby-detail-body">
+                <div class="emby-detail-poster">
+                    <img id="detail-poster" src="" alt="海报">
+                </div>
+                <div class="emby-detail-info">
+                    <div class="emby-detail-meta">
+                        <span id="detail-year"></span>
+                        <span id="detail-rating"></span>
+                        <span id="detail-runtime"></span>
+                        <span id="detail-official-rating"></span>
+                    </div>
+                    <div class="emby-detail-genres" id="detail-genres"></div>
+                    <p class="emby-detail-overview" id="detail-overview"></p>
+                    <div class="emby-detail-section">
+                        <h4>演员</h4>
+                        <div class="emby-detail-actors" id="detail-actors"></div>
+                    </div>
+                    <div class="emby-detail-section">
+                        <h4>导演</h4>
+                        <div class="emby-detail-directors" id="detail-directors"></div>
+                    </div>
+                    <div class="emby-detail-section">
+                        <h4>制片公司</h4>
+                        <div class="emby-detail-studios" id="detail-studios"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="detail-play-btn" class="btn btn-primary">播放</button>
+                <button id="close-detail-bottom" class="btn btn-secondary">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/utils/common-utils.js"></script>
+    <script src="js/emby-view.js"></script>
+</body>
+</html>

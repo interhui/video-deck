@@ -384,6 +384,46 @@
                             <input type="text" id="r18-poster-url-input" placeholder="https://pics.dmm.co.jp">
                         </div>
                     </div>
+                    <!-- Emby 设置 -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">Emby设置</h3>
+                        <div class="settings-item">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="emby-enabled">
+                                <span>启用 Emby 影视库</span>
+                            </label>
+                        </div>
+                        <div class="settings-item">
+                            <label>服务器地址：</label>
+                            <div class="dir-input-group">
+                                <input type="text" id="emby-server-url-input" placeholder="http://192.168.1.100:8096">
+                                <button id="emby-test-connection-btn" class="btn btn-small">测试连接</button>
+                            </div>
+                        </div>
+                        <div class="settings-item">
+                            <label>API Key：</label>
+                            <input type="password" id="emby-api-key-input" placeholder="Emby Dashboard → 高级 → API 密钥（可选）">
+                        </div>
+                        <div class="settings-item">
+                            <label>用户名：</label>
+                            <input type="text" id="emby-username-input" placeholder="未配置 API Key 时用于登录（可选）">
+                        </div>
+                        <div class="settings-item">
+                            <label>密码：</label>
+                            <input type="password" id="emby-password-input" placeholder="登录密码（可选）">
+                        </div>
+                        <div class="settings-item">
+                            <label>语言：</label>
+                            <select id="emby-language-select">
+                                <option value="zh-CN">中文（简体）</option>
+                                <option value="zh-TW">中文（繁体）</option>
+                                <option value="en-US">English</option>
+                            </select>
+                        </div>
+                        <div class="settings-item">
+                            <span id="emby-connection-result" class="emby-connection-result"></span>
+                        </div>
+                    </div>
                 </div>
                 <!-- 网络配置 Tab -->
                 <div class="settings-tab-content" id="tab-network-settings">

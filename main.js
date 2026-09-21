@@ -23,6 +23,7 @@ const IndexService = require('./src/main/services/IndexService');
 const ActorService = require('./src/main/services/ActorService');
 const TMDBMovieAdapterService = require('./src/main/services/TMDBAdapterService');
 const R18AdapterService = require('./src/main/services/R18AdapterService');
+const EmbyAdapterService = require('./src/main/services/EmbyAdapterService');
 const PlayerService = require('./src/main/services/PlayerService');
 const BatchSearchService = require('./src/main/services/BatchSearchService');
 const BatchActorSearchService = require('./src/main/services/BatchActorSearchService');
@@ -51,6 +52,7 @@ let indexService = null;
 let actorService = null;
 let tmdbMovieAdapterService = null;
 let r18AdapterService = null;
+let embyAdapterService = null;
 let playerService = null;
 let batchSearchService = null;
 let batchActorSearchService = null;
@@ -97,6 +99,7 @@ async function initializeServices() {
     }
 
     r18AdapterService = new R18AdapterService(settingsService, tmdbMovieAdapterService);
+    embyAdapterService = new EmbyAdapterService(settingsService);
     playerService = new PlayerService();
     batchSearchService = new BatchSearchService(settingsService, tmdbMovieAdapterService, r18AdapterService, movieService, fileService);
     batchActorSearchService = new BatchActorSearchService(settingsService, tmdbMovieAdapterService, r18AdapterService, actorService);
@@ -419,6 +422,13 @@ function createApplicationMenu() {
                         createTagViewWindow();
                     }
                 },
+                {
+                    label: 'Emby 影视库',
+                    accelerator: 'CmdOrCtrl+E',
+                    click: () => {
+                        createEmbyViewWindow();
+                    }
+                },
                 { type: 'separator' },
                 { role: 'forceReload' },
                 { role: 'toggleDevTools' },
@@ -539,6 +549,43 @@ function createBoxWindow(boxName) {
 
     boxWindow.on('closed', () => {
         boxWindow = null;
+    });
+}
+
+let embyViewWindow = null;
+
+function createEmbyViewWindow() {
+    if (embyViewWindow) {
+        embyViewWindow.focus();
+        return;
+    }
+
+    embyViewWindow = new BrowserWindow({
+        width: 1280,
+        height: 800,
+        minWidth: 800,
+        minHeight: 600,
+        title: 'Emby 影视库',
+        frame: false,
+        autoHideMenuBar: true,
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
+            contextIsolation: true,
+            nodeIntegration: false,
+            sandbox: false
+        },
+        show: false
+    });
+
+    embyViewWindow.loadFile(path.join(__dirname, 'src', 'renderer', 'emby-view.html'));
+
+    embyViewWindow.once('ready-to-show', () => {
+        embyViewWindow.show();
+        embyViewWindow.maximize();
+    });
+
+    embyViewWindow.on('closed', () => {
+        embyViewWindow = null;
     });
 }
 
@@ -861,6 +908,7 @@ app.whenReady().then(async () => {
         actorService,
         tmdbMovieAdapterService,
         r18AdapterService,
+        embyAdapterService,
         playerService,
         batchSearchService,
         batchActorSearchService,
@@ -871,6 +919,7 @@ app.whenReady().then(async () => {
         createMovieDetailWindow,
         createBoxWindow,
         createBoxViewWindow,
+        createEmbyViewWindow,
         createActorViewWindow,
         createTagViewWindow,
         createActorManagementWindow,

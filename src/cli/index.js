@@ -13,6 +13,7 @@ const boxCommands = require('./commands/box');
 const configCommands = require('./commands/config');
 const categoryCommands = require('./commands/category');
 const tagCommands = require('./commands/tag');
+const embyCommands = require('./commands/emby');
 
 // Import service loader
 const { initializeServices } = require('./utils/service-loader');
@@ -357,6 +358,86 @@ configProgram
     .action(async () => {
         const services = await getServices(program.opts());
         await configCommands.resetConfig(services);
+    });
+
+// ==================== Emby Commands ====================
+
+const embyProgram = program
+    .command('emby')
+    .alias('e')
+    .description('Emby 媒体服务器管理命令');
+
+embyProgram
+    .command('status')
+    .description('显示 Emby 连接状态与服务器信息')
+    .option('-o, --output <format>', 'Output format')
+    .action(async (cmdOptions) => {
+        const services = await getServices(program.opts());
+        await embyCommands.embyStatus(services, cmdOptions);
+    });
+
+embyProgram
+    .command('config')
+    .description('显示 / 修改 Emby 配置')
+    .action(async () => {
+        const services = await getServices(program.opts());
+        await embyCommands.embyShowConfig(services, {});
+    });
+
+embyProgram
+    .command('config-set')
+    .argument('<key>', '配置键（enabled/serverUrl/apiKey/username/password/language/libraryId）')
+    .argument('<value>', '配置值')
+    .description('修改 Emby 配置项')
+    .action(async (key, value) => {
+        const services = await getServices(program.opts());
+        await embyCommands.embySetConfig(services, key, value);
+    });
+
+embyProgram
+    .command('views')
+    .alias('libraries')
+    .description('列出 Emby 库视图')
+    .option('-o, --output <format>', 'Output format')
+    .action(async (cmdOptions) => {
+        const services = await getServices(program.opts());
+        await embyCommands.embyViews(services, cmdOptions);
+    });
+
+embyProgram
+    .command('list')
+    .alias('ls')
+    .description('列出 Emby 电影')
+    .option('-l, --library <id>', '库视图 ID')
+    .option('-s, --search <keyword>', '搜索关键字')
+    .option('--limit <number>', '数量上限', '60')
+    .option('--sort <field>', '排序：name[-asc|desc]/year/rating/dateAdded')
+    .option('-o, --output <format>', 'Output format')
+    .action(async (cmdOptions) => {
+        const services = await getServices(program.opts());
+        await embyCommands.embyList(services, cmdOptions);
+    });
+
+embyProgram
+    .command('show')
+    .alias('info')
+    .argument('<itemId>', 'Emby Item ID')
+    .description('显示 Emby 电影详情')
+    .option('-o, --output <format>', 'Output format')
+    .action(async (itemId, cmdOptions) => {
+        const services = await getServices(program.opts());
+        await embyCommands.embyShow(services, itemId, cmdOptions);
+    });
+
+embyProgram
+    .command('play')
+    .argument('<itemId>', 'Emby Item ID')
+    .description('输出 Emby 直连播放地址')
+    .option('--media-source-id <id>', '媒体源 ID')
+    .option('-o, --output <format>', 'Output format')
+    .action(async (itemId, cmdOptions) => {
+        const services = await getServices(program.opts());
+        await embyCommands.embyPlay(services, itemId, cmdOptions);
     });
 
 // ==================== Stats Command ====================

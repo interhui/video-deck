@@ -55,6 +55,21 @@ class HardCodeService {
                 posterUrl: 'https://pics.dmm.co.jp'
             },
 
+            emby: {
+                enabled: false,
+                serverUrl: '',
+                apiKey: '',
+                username: '',
+                password: '',
+                userId: '',
+                accessToken: '',
+                language: 'zh-CN',
+                libraryId: '',
+                deviceName: 'video-deck',
+                clientName: 'video-deck',
+                deviceId: 'video-deck-device'
+            },
+
             videoParsing: {
                 ffmpegPath: '',
                 ffprobePath: ''

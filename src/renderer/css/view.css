@@ -358,3 +358,148 @@
     cursor: pointer;
     accent-color: var(--accent-color, #4a9eff);
 }
+
+/* ==================== Emby 影视库视图 ==================== */
+.emby-connection-status {
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-right: 8px;
+    white-space: nowrap;
+}
+
+.emby-connection-status.connected {
+    background: rgba(76, 175, 80, 0.2);
+    color: #4caf50;
+}
+
+.emby-connection-status.disconnected {
+    background: rgba(244, 67, 54, 0.2);
+    color: #f44336;
+}
+
+.emby-movies-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--poster-min-width, 140px), var(--poster-max-width, 220px)));
+    gap: 16px;
+    padding: 20px;
+    justify-content: center;
+    align-content: start;
+}
+
+.load-more-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px;
+}
+
+.loaded-count {
+    color: var(--text-secondary, #999);
+    font-size: 12px;
+}
+
+/* 详情模态框 */
+.emby-detail-content {
+    width: 780px;
+    max-width: 90vw;
+}
+
+.emby-detail-body {
+    display: flex;
+    gap: 20px;
+    padding: 16px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.emby-detail-poster {
+    flex-shrink: 0;
+    width: 220px;
+}
+
+.emby-detail-poster img {
+    width: 100%;
+    border-radius: 6px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
+.emby-detail-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.emby-detail-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+    color: var(--text-secondary, #aaa);
+    font-size: 13px;
+}
+
+.emby-detail-genres {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.emby-genre-tag {
+    background: rgba(74, 158, 255, 0.15);
+    color: #4a9eff;
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-size: 12px;
+}
+
+.emby-detail-overview {
+    color: var(--text-secondary, #bbb);
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 16px;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.emby-detail-section {
+    margin-bottom: 12px;
+}
+
+.emby-detail-section h4 {
+    color: var(--text-secondary, #aaa);
+    font-size: 13px;
+    margin-bottom: 6px;
+}
+
+.emby-detail-actors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.emby-actor-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 90px;
+    font-size: 12px;
+    text-align: center;
+    color: var(--text-primary, #eee);
+}
+
+.emby-actor-photo {
+    width: 60px;
+    height: 84px;
+    object-fit: cover;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.emby-detail-directors,
+.emby-detail-studios {
+    color: var(--text-primary, #eee);
+    font-size: 13px;
+}

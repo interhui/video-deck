@@ -116,6 +116,15 @@ const elements = {
     r18DbUsernameInput: document.getElementById('r18-db-username-input'),
     r18DbPasswordInput: document.getElementById('r18-db-password-input'),
     r18PosterUrlInput: document.getElementById('r18-poster-url-input'),
+    // Emby 设置
+    embyEnabled: document.getElementById('emby-enabled'),
+    embyServerUrlInput: document.getElementById('emby-server-url-input'),
+    embyApiKeyInput: document.getElementById('emby-api-key-input'),
+    embyUsernameInput: document.getElementById('emby-username-input'),
+    embyPasswordInput: document.getElementById('emby-password-input'),
+    embyLanguageSelect: document.getElementById('emby-language-select'),
+    embyTestConnectionBtn: document.getElementById('emby-test-connection-btn'),
+    embyConnectionResult: document.getElementById('emby-connection-result'),
     // 视频解析设置
     ffmpegPathInput: document.getElementById('ffmpeg-path-input'),
     ffprobePathInput: document.getElementById('ffprobe-path-input'),
@@ -873,6 +882,14 @@ async function loadSettings() {
         if (elements.r18DbUsernameInput) elements.r18DbUsernameInput.value = state.settings.r18?.dbUsername || '';
         if (elements.r18DbPasswordInput) elements.r18DbPasswordInput.value = state.settings.r18?.dbPassword || '';
         if (elements.r18PosterUrlInput) elements.r18PosterUrlInput.value = state.settings.r18?.posterUrl || '';
+
+        // 加载 Emby 设置
+        if (elements.embyEnabled) elements.embyEnabled.checked = state.settings.emby?.enabled || false;
+        if (elements.embyServerUrlInput) elements.embyServerUrlInput.value = state.settings.emby?.serverUrl || '';
+        if (elements.embyApiKeyInput) elements.embyApiKeyInput.value = state.settings.emby?.apiKey || '';
+        if (elements.embyUsernameInput) elements.embyUsernameInput.value = state.settings.emby?.username || '';
+        if (elements.embyPasswordInput) elements.embyPasswordInput.value = state.settings.emby?.password || '';
+        if (elements.embyLanguageSelect) elements.embyLanguageSelect.value = state.settings.emby?.language || 'zh-CN';
 
         // 加载视频解析设置
         if (elements.ffmpegPathInput) elements.ffmpegPathInput.value = state.settings.videoParsing?.ffmpegPath || '';
@@ -2418,6 +2435,61 @@ function bindEvents() {
             elements.ffprobePathInput.value = result.path;
         }
     });
+
+    // 测试 Emby 服务器连接
+    if (elements.embyTestConnectionBtn) {
+        elements.embyTestConnectionBtn.addEventListener('click', async () => {
+            const serverUrl = elements.embyServerUrlInput?.value || '';
+            if (!serverUrl) {
+                if (elements.embyConnectionResult) {
+                    elements.embyConnectionResult.textContent = '请先填写服务器地址';
+                    elements.embyConnectionResult.className = 'emby-connection-result error';
+                }
+                return;
+            }
+            elements.embyTestConnectionBtn.disabled = true;
+            elements.embyTestConnectionBtn.textContent = '测试中...';
+            if (elements.embyConnectionResult) {
+                elements.embyConnectionResult.textContent = '';
+            }
+
+            try {
+                // 临时保存配置以便服务端读取
+                const prevServerUrl = state.settings.emby?.serverUrl || '';
+                const prevApiKey = state.settings.emby?.apiKey || '';
+                await window.electronAPI.embySaveConfig({
+                    serverUrl,
+                    apiKey: elements.embyApiKeyInput?.value || '',
+                    username: elements.embyUsernameInput?.value || '',
+                    password: elements.embyPasswordInput?.value || ''
+                });
+                const result = await window.electronAPI.embyTestConnection();
+                // 恢复原配置（未点保存前不落盘）
+                await window.electronAPI.embySaveConfig({
+                    serverUrl: prevServerUrl,
+                    apiKey: prevApiKey
+                });
+
+                if (elements.embyConnectionResult) {
+                    if (result && result.reachable) {
+                        elements.embyConnectionResult.textContent = `连接成功：${result.serverName} v${result.version}`;
+                        elements.embyConnectionResult.className = 'emby-connection-result success';
+                    } else {
+                        elements.embyConnectionResult.textContent = `连接失败：${(result && result.error) || '未知错误'}`;
+                        elements.embyConnectionResult.className = 'emby-connection-result error';
+                    }
+                }
+            } catch (error) {
+                if (elements.embyConnectionResult) {
+                    elements.embyConnectionResult.textContent = `连接失败：${error.message || error}`;
+                    elements.embyConnectionResult.className = 'emby-connection-result error';
+                }
+            } finally {
+                elements.embyTestConnectionBtn.disabled = false;
+                elements.embyTestConnectionBtn.textContent = '测试连接';
+            }
+        });
+    }
 
     // 默认播放器切换 - 联动显示 / 隐藏 PotPlayer 路径选择项
     if (elements.defaultPlayerSelect) {
@@ -3983,6 +4055,21 @@ async function saveSettingsHandler() {
                 dbUsername: elements.r18DbUsernameInput?.value || '',
                 dbPassword: elements.r18DbPasswordInput?.value || '',
                 posterUrl: elements.r18PosterUrlInput?.value || 'https://pics.dmm.co.jp'
+            },
+            emby: {
+                enabled: elements.embyEnabled?.checked || false,
+                serverUrl: elements.embyServerUrlInput?.value || '',
+                apiKey: elements.embyApiKeyInput?.value || '',
+                username: elements.embyUsernameInput?.value || '',
+                password: elements.embyPasswordInput?.value || '',
+                language: elements.embyLanguageSelect?.value || 'zh-CN',
+                // 保留 userId / accessToken / libraryId 等不通过设置面板编辑的字段
+                userId: state.settings.emby?.userId || '',
+                accessToken: state.settings.emby?.accessToken || '',
+                libraryId: state.settings.emby?.libraryId || '',
+                deviceName: state.settings.emby?.deviceName || 'video-deck',
+                clientName: state.settings.emby?.clientName || 'video-deck',
+                deviceId: state.settings.emby?.deviceId || 'video-deck-device'
             },
             videoParsing: {
                 ffmpegPath: elements.ffmpegPathInput?.value || '',
